@@ -71,6 +71,23 @@ struct HookMergeTests {
         #expect(root["model"] as? String == "opus")
     }
 
+    /// H0: o nosso `PostToolUse` entra depois do seu, sem matcher, e não duplica.
+    @Test func postToolUseDoUsuarioFica() throws {
+        let original = try json(#"""
+        {"hooks":{"PostToolUse":[{"matcher":"Edit","hooks":[{"type":"command","command":"prettier --write"}]}]}}
+        """#)
+        let root = HookInstaller.install(original, binary: binary)
+        #expect(handlers(root, "PostToolUse").map { $0["command"] as? String } == ["prettier --write", binary])
+        for event in ["PostToolUse", "PostToolUseFailure"] {
+            let ours = try #require(handlers(root, event).last)
+            #expect(ours["args"] as? [String] == ["working", "--if-waiting"])
+            #expect(ours["timeout"] as? Int == 5)
+        }
+        let groups = try #require((root["hooks"] as? [String: Any])?["PostToolUseFailure"] as? [[String: Any]])
+        #expect(groups.count == 1 && groups[0]["matcher"] == nil)
+        #expect(same(HookInstaller.install(root, binary: binary), root))
+    }
+
     /// O bug do Peep: remover o grupo inteiro apagaria o `say` que divide o grupo.
     @Test func grupoMistoPerdeSoONosso() throws {
         let original = try json(#"""

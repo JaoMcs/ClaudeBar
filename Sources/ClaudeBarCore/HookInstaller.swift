@@ -93,6 +93,10 @@ public enum HookInstaller {
         // nem chamam o binário.
         Entry(event: "Notification", matcher: "permission_prompt", args: ["waiting", "--kind", "permission"]),
         Entry(event: "Notification", matcher: "elicitation_dialog", args: ["waiting", "--kind", "question"]),
+        // Permissão aprovada (ou ferramenta que falhou) tira a sessão de
+        // "esperando". Sem matcher: qualquer ferramenta pode ter pedido permissão.
+        Entry(event: "PostToolUse", args: ["working", "--if-waiting"]),
+        Entry(event: "PostToolUseFailure", args: ["working", "--if-waiting"]),
         Entry(event: "SessionEnd", args: ["end"]),
     ]
 

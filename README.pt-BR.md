@@ -191,6 +191,7 @@ reserva.
 | `Stop` | `idle` |
 | `Notification` (`permission_prompt`) | `waiting --kind permission` |
 | `Notification` (`elicitation_dialog`) | `waiting --kind question` |
+| `PostToolUse`, `PostToolUseFailure` | `working`, só se a sessão estava `waiting` (uma permissão acabou de ser aprovada) |
 | `SessionEnd` | apaga o arquivo |
 
 Os outros tipos de notificação (lembrete de ociosidade, autenticação, cota…)
@@ -322,7 +323,7 @@ A versão fica em `VERSION` (X.Y.Z). O número de build é a contagem de commits
 Uso do CLI do hook:
 
 ```
-claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <pid do claude>]
+claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
 claudebar-hook install|uninstall [--dry-run]
 ```
 
@@ -332,6 +333,8 @@ ao gravar, só registra no stderr e sai normalmente — um hook nunca deve
 derrubar a sessão do Claude. Sem `--pid` (exec form não tem `$PPID`) ele usa o
 processo pai, mas só se for um executável `claude`; senão grava `pid: 0`.
 `--kind` só vale com `waiting`; valor desconhecido é descartado (espera genérica).
+`--if-waiting` só grava se o arquivo da sessão estiver em `waiting`; senão (ou
+sem arquivo) sai 0 sem tocar nele.
 Estado ausente ou inválido sai com **1**, nunca 2: no Claude Code, exit 2
 bloqueia o prompt.
 

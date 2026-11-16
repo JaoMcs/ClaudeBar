@@ -192,6 +192,7 @@ used instead.
 | `Stop` | `idle` |
 | `Notification` (`permission_prompt`) | `waiting --kind permission` |
 | `Notification` (`elicitation_dialog`) | `waiting --kind question` |
+| `PostToolUse`, `PostToolUseFailure` | `working`, only if the session was `waiting` (a permission was just approved) |
 | `SessionEnd` | deletes the file |
 
 Other notification types (idle reminder, auth, quota…) are not registered: the
@@ -324,7 +325,7 @@ The version lives in `VERSION` (X.Y.Z). The build number is the commit count
 Hook CLI usage:
 
 ```
-claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <claude pid>]
+claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>]
 claudebar-hook install|uninstall [--dry-run]
 ```
 
@@ -334,7 +335,8 @@ fails to write, it only logs to stderr and exits cleanly — a hook must never
 break the Claude session. Without `--pid` (exec form has no `$PPID`) it uses
 its parent process, but only if that is a `claude` executable; otherwise it
 writes `pid: 0`. `--kind` is kept only with `waiting`; an unknown value is
-dropped (generic wait). A missing or invalid state exits with **1**, never 2: in
+dropped (generic wait). `--if-waiting` writes only if the session's file currently
+says `waiting`; otherwise (or with no file) it exits 0 without touching it. A missing or invalid state exits with **1**, never 2: in
 Claude Code, exit 2 blocks the prompt.
 
 `install`/`uninstall` print the diff of the `hooks` block and apply it with a
