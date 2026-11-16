@@ -114,32 +114,36 @@ struct MenuContent: View {
     }
 
     private func label(for row: SessionRow) -> String {
-        var text = "\(icon(for: row.state))  "
+        var text = "\(icon(for: row))  "
         if row.isSubagent {
             text += "[subagente] "
         }
-        text += "\(row.name) — \(description(for: row.state))"
+        text += "\(row.name) — \(description(for: row))"
         if let updatedAt = row.updatedAt {
             text += " (\(Self.relativeFormatter.localizedString(for: updatedAt, relativeTo: Date())))"
         }
         return text
     }
 
-    private func icon(for state: SessionState) -> String {
-        switch state {
-        case .working: "⏳"
-        case .idle: "✅"
-        case .waiting: "🔸"
-        case .error: "⚠️"
+    private func icon(for row: SessionRow) -> String {
+        switch (row.state, row.kind) {
+        case (.working, _): "⏳"
+        case (.idle, _): "✅"
+        case (.waiting, .permission): "✋"
+        case (.waiting, .question): "❓"
+        case (.waiting, nil): "🔸"
+        case (.error, _): "⚠️"
         }
     }
 
-    private func description(for state: SessionState) -> String {
-        switch state {
-        case .working: "processando"
-        case .idle: "pronto"
-        case .waiting: "aguardando você"
-        case .error: "falhou"
+    private func description(for row: SessionRow) -> String {
+        switch (row.state, row.kind) {
+        case (.working, _): "processando"
+        case (.idle, _): "pronto"
+        case (.waiting, .permission): "pede permissão"
+        case (.waiting, .question): "fez uma pergunta"
+        case (.waiting, nil): "aguardando você"
+        case (.error, _): "falhou"
         }
     }
 }

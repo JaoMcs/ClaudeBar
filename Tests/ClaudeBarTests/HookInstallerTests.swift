@@ -95,6 +95,24 @@ struct HookMergeTests {
         #expect(same(HookInstaller.install(root, binary: binary), root))
     }
 
+    /// F24: o nosso `PreToolUse` só casa com `AskUserQuestion` e entra ao lado
+    /// do seu. Nenhum `PostToolUse` com esse matcher: o `--if-waiting` já cobre.
+    @Test func preToolUseDoUsuarioFica() throws {
+        let original = try json(#"""
+        {"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"./guard.sh"}]}]}}
+        """#)
+        let root = HookInstaller.install(original, binary: binary)
+        #expect(handlers(root, "PreToolUse").map { $0["command"] as? String } == ["./guard.sh", binary])
+        let hooks = try #require(root["hooks"] as? [String: Any])
+        let groups = try #require(hooks["PreToolUse"] as? [[String: Any]])
+        #expect(groups.map { $0["matcher"] as? String } == ["Bash", "AskUserQuestion"])
+        #expect(handlers(root, "PreToolUse").last?["args"] as? [String] == ["waiting", "--kind", "question"])
+        let post = try #require(hooks["PostToolUse"] as? [[String: Any]])
+        #expect(post.allSatisfy { $0["matcher"] == nil })
+        #expect(same(HookInstaller.install(root, binary: binary), root))
+        #expect(same(HookInstaller.strip(root, binary: binary), original))
+    }
+
     /// O bug do Peep: remover o grupo inteiro apagaria o `say` que divide o grupo.
     @Test func grupoMistoPerdeSoONosso() throws {
         let original = try json(#"""
@@ -130,7 +148,7 @@ struct HookMergeTests {
 
     @Test func idempotenteEReversivel() throws {
         let original = try json(#"""
-        {"hooks":{"Stop":[{"hooks":[{"type":"command","command":"say pronto"}]}],"PreToolUse":[]}}
+        {"hooks":{"Stop":[{"hooks":[{"type":"command","command":"say pronto"}]}],"PreCompact":[]}}
         """#)
         let once = HookInstaller.install(original, binary: binary)
         #expect(same(HookInstaller.install(once, binary: binary), once))

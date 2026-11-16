@@ -20,6 +20,8 @@ struct SessionRow: Identifiable, Equatable {
     let pid: Int32?
     /// Id curto do agente background, aceito por `claude stop`.
     let backgroundId: String?
+    /// Por que está esperando, quando o hook disse. `nil` = espera genérica.
+    let kind: WaitKind?
 
     var id: String { sessionId }
 
@@ -32,7 +34,8 @@ struct SessionRow: Identifiable, Equatable {
         message: String?,
         isSubagent: Bool,
         pid: Int32? = nil,
-        backgroundId: String? = nil
+        backgroundId: String? = nil,
+        kind: WaitKind? = nil
     ) {
         self.sessionId = sessionId
         self.cwd = cwd
@@ -42,6 +45,7 @@ struct SessionRow: Identifiable, Equatable {
         self.isSubagent = isSubagent
         self.pid = pid
         self.backgroundId = backgroundId
+        self.kind = kind
 
         let folder = URL(fileURLWithPath: cwd).lastPathComponent
         self.name = name ?? (folder.isEmpty ? cwd : folder)

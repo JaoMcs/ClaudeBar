@@ -16,10 +16,14 @@ lado diz o que está acontecendo nelas:
 | `ellipsis.circle` | Claude processando |
 | `checkmark.circle.fill` | resposta pronta (você ainda não viu) |
 | `exclamationmark.triangle.fill` | a resposta falhou (erro de API) e você ainda não viu |
-| `exclamationmark.bubble.fill` | Claude esperando você (permissão, escolha) |
+| `hand.raised.fill` | Claude pede permissão para usar uma ferramenta |
+| `questionmark.bubble.fill` | Claude fez uma pergunta |
+| `exclamationmark.bubble.fill` | Claude esperando você (sem motivo conhecido, ou motivos misturados) |
 
 Quando várias coisas acontecem ao mesmo tempo, vale a mais urgente:
-**esperando > falhou (não visto) > pronto (não visto) > processando > ocioso**.
+**permissão > esperando > pergunta > falhou (não visto) > pronto (não visto) > processando > ocioso**.
+"Pergunta" só aparece quando todas as esperas são pergunta; a permissão vence
+porque trava uma ferramenta que já está em andamento.
 
 > English version: [README.md](README.md).
 
@@ -43,6 +47,8 @@ antigas, com os subagentes em background agrupados no fim:
 ✅  my-app — pronto (há 2 min)
 ⏳  ClaudeBar — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
+✋  infra — pede permissão (há 20 s)
+❓  docs — fez uma pergunta (há 5 s)
 🔸  [subagente] review-pr — aguardando você (há 1 min)
 ──────────────
 Marcar tudo como visto
@@ -114,13 +120,15 @@ oferece instalar.
 
 ### Avisos
 
-São três avisos, cada um com som próprio: um é informativo, outro te bloqueia
-e o terceiro conta que a resposta não veio:
+Cada aviso tem som próprio: um é informativo, os de espera te bloqueiam e um
+conta que a resposta não veio:
 
 | Transição | Aviso | Som | Volume |
 |---|---|---|---|
 | processando → pronto | "Claude terminou" + nome do projeto | `Glass` (sino claro) | 100% |
-| → aguardando você | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
+| → permissão | "Claude pede permissão" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
+| → pergunta | "Claude fez uma pergunta" + nome do projeto | `Purr` (ronronar suave) | 75% |
+| → aguardando você (sem motivo conhecido) | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
 | processando → falhou | "A resposta do Claude falhou" + projeto e código do erro | `Basso` (som de erro) | 100% |
 
 - O som sai pelo `NSSound`, não pela notificação: é o único jeito de escolher
@@ -130,6 +138,10 @@ e o terceiro conta que a resposta não veio:
   `Notification` (ex.: *"Claude needs your permission to use Bash"*), limitada
   a 200 caracteres. O Claude Code manda o pedido de permissão depois de alguns
   segundos sem digitar, então o "esperando" pode demorar um pouco a aparecer.
+- A pergunta aparece na hora (`PreToolUse` no `AskUserQuestion`). Segundos
+  depois o Claude Code manda um pedido de permissão para a mesma tela; ele é
+  ignorado enquanto a pergunta está aberta, então a sessão continua em
+  "pergunta". Se o motivo mudar durante a espera, o aviso toca de novo.
 - O aviso de "falhou" só sai se a sessão estava processando logo antes do
   erro, e não repete enquanto ela continuar em erro.
 - Subagente nunca avisa.
@@ -257,7 +269,8 @@ reserva.
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
 | `StopFailure` | `error` (o turno acabou por erro de API) |
-| `Notification` (`permission_prompt`) | `waiting --kind permission` |
+| `PreToolUse` (`AskUserQuestion`) | `waiting --kind question` |
+| `Notification` (`permission_prompt`) | `waiting --kind permission` (ignorado enquanto há pergunta aberta) |
 | `Notification` (`elicitation_dialog`) | `waiting --kind question` |
 | `PostToolUse`, `PostToolUseFailure` | `working`, só se a sessão estava `waiting` (uma permissão acabou de ser aprovada) |
 | `SessionEnd` | apaga o arquivo |
@@ -439,7 +452,9 @@ encerrar uma sessão não derruba a irmã.
   quando o binário não está nos caminhos conhecidos.
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
-  Claude (`last_assistant_message` não é lido em estado nenhum).
+  Claude (`last_assistant_message` não é lido em estado nenhum). Para
+  perguntas só fica gravado o fato de o Claude ter perguntado, nunca o texto
+  da pergunta (`tool_input` não é lido).
 - **Caminhos nunca vão em claro para o log.** Linha de log com caminho, `cwd`,
   `sessionId` ou mensagem do hook usa `privacy: .private(mask: .hash)`; nunca
   `.public`.

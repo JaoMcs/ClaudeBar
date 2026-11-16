@@ -21,7 +21,8 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
 public enum WaitKind: String, Sendable {
     /// Aprovar uma ferramenta (`Notification` `permission_prompt`).
     case permission
-    /// Responder um formulário (`Notification` `elicitation_dialog`).
+    /// Responder uma pergunta (`PreToolUse` `AskUserQuestion`) ou um
+    /// formulário (`Notification` `elicitation_dialog`).
     case question
 }
 
@@ -40,6 +41,13 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     public var waitKind: WaitKind? { kind.flatMap(WaitKind.init(rawValue:)) }
 
     public var id: String { sessionId }
+
+    /// O `AskUserQuestion` grava a pergunta na hora (`PreToolUse`) e, ~6 s
+    /// depois, o Claude Code dispara um `permission_prompt` para a mesma tela.
+    /// Essa "permissão" não pode apagar a pergunta aberta.
+    public func absorbs(_ state: SessionState, kind: WaitKind?) -> Bool {
+        self.state == .waiting && waitKind == .question && state == .waiting && kind == .permission
+    }
 
     /// Nome curto do projeto, usado como rótulo no menu.
     public var projectName: String {

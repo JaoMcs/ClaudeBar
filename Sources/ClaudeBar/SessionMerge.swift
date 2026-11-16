@@ -33,7 +33,8 @@ enum SessionMerge {
                 // O hook grava o PID do Claude que o disparou; serve de reserva
                 // quando a listagem do CLI não traz um.
                 pid: agent.pid ?? hook?.pid,
-                backgroundId: agent.isSubagent ? agent.id : nil
+                backgroundId: agent.isSubagent ? agent.id : nil,
+                kind: hook?.waitKind
             )
         }
 
@@ -53,7 +54,8 @@ enum SessionMerge {
                     updatedAt: status.updatedAt,
                     message: status.message,
                     isSubagent: false,
-                    pid: status.pid
+                    pid: status.pid,
+                    kind: status.waitKind
                 )
             }
 
@@ -83,7 +85,13 @@ enum SessionMerge {
     static func barState(rows: [SessionRow], acknowledged: Set<String>) -> BarState {
         let own = rows.filter { !$0.isSubagent }
         let unseen = own.filter { !acknowledged.contains($0.sessionId) }
-        if own.contains(where: { $0.state == .waiting }) { return .waiting }
+        let waiting = own.filter { $0.state == .waiting }
+        // Permissão vence: trava uma ferramenta já em andamento. Só mostra
+        // "pergunta" quando todas as esperas são pergunta.
+        if waiting.contains(where: { $0.kind == .permission }) { return .permission }
+        if !waiting.isEmpty {
+            return waiting.allSatisfy { $0.kind == .question } ? .question : .waiting
+        }
         // Falha vence "pronto": uma resposta que não veio não pode se esconder
         // atrás de outra que veio.
         if unseen.contains(where: { $0.state == .error }) { return .error }

@@ -37,3 +37,30 @@ struct SessionStatusTests {
         #expect(!String(decoding: data, as: UTF8.self).contains("kind"))
     }
 }
+
+@Suite("Tipo da espera")
+struct WaitKindTests {
+    private func status(_ state: SessionState, _ kind: WaitKind? = nil) -> SessionStatus {
+        SessionStatus(sessionId: "s", state: state, cwd: "/tmp", pid: 1, kind: kind)
+    }
+
+    /// O `permission_prompt` que o `AskUserQuestion` dispara depois não pode
+    /// trocar ❓ por ✋.
+    @Test func permissaoNaoApagaPerguntaAberta() {
+        #expect(status(.waiting, .question).absorbs(.waiting, kind: .permission))
+    }
+
+    @Test func soAPermissaoSobreAPerguntaEhAbsorvida() {
+        let pergunta = status(.waiting, .question)
+        // Resposta, fim do turno, falha e outra pergunta gravam normalmente.
+        #expect(!pergunta.absorbs(.working, kind: nil))
+        #expect(!pergunta.absorbs(.idle, kind: nil))
+        #expect(!pergunta.absorbs(.error, kind: nil))
+        #expect(!pergunta.absorbs(.waiting, kind: .question))
+        #expect(!pergunta.absorbs(.waiting, kind: nil))
+        // Sem pergunta aberta, a permissão entra.
+        #expect(!status(.waiting, .permission).absorbs(.waiting, kind: .permission))
+        #expect(!status(.waiting).absorbs(.waiting, kind: .permission))
+        #expect(!status(.working).absorbs(.waiting, kind: .permission))
+    }
+}
