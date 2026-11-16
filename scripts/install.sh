@@ -1,6 +1,7 @@
 #!/bin/bash
 # Instala o ClaudeBar em ~/Applications e registra os hooks no
-# ~/.claude/settings.json (fazendo backup antes e preservando o resto do arquivo).
+# ~/.claude/settings.json pelo próprio claudebar-hook: mostra a prévia, mexe só
+# nas entradas do ClaudeBar e guarda backup em ~/.claude/claudebar/backups.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -8,7 +9,6 @@ cd "$(dirname "$0")/.."
 APP_DIR="$HOME/Applications"
 APP="$APP_DIR/ClaudeBar.app"
 HOOK="$APP/Contents/MacOS/claudebar-hook"
-SETTINGS="$HOME/.claude/settings.json"
 
 ./scripts/build-app.sh
 
@@ -17,24 +17,18 @@ mkdir -p "$APP_DIR"
 rm -rf "$APP"
 cp -R build/ClaudeBar.app "$APP"
 
-echo "==> Registrando hooks em $SETTINGS"
-cp "$SETTINGS" "$SETTINGS.bak.$(date +%Y%m%d%H%M%S)"
-
-# $PPID é o PID do processo do Claude Code que disparou o hook: o app usa isso
-# para descartar sessões que morreram sem avisar.
-jq --arg hook "$HOOK" '
-  def entry($state): [{ hooks: [{ type: "command", command: ($hook + " " + $state + " --pid $PPID") }] }];
-  .hooks = ((.hooks // {}) + {
-    UserPromptSubmit: entry("working"),
-    Stop: entry("idle"),
-    Notification: entry("waiting"),
-    SessionEnd: entry("end")
-  })
-' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
+echo "==> Prévia das mudanças no ~/.claude/settings.json"
+"$HOOK" install --dry-run
+read -r -p "Aplicar? [s/N] " resposta || true  # sem TTY (EOF): segue como "não"
+if [[ "$resposta" =~ ^[sS]$ ]]; then
+  "$HOOK" install
+else
+  echo "Hooks não registrados. Rode \"$HOOK\" install quando quiser."
+fi
 
 echo "==> Abrindo o app"
 open "$APP"
 
 echo
 echo "Pronto. O ícone está na barra de menu."
-echo "Os hooks passam a valer nas *novas* sessões do Claude Code."
+echo "O Claude Code recarrega o settings.json sozinho: sessões abertas já usam os hooks."

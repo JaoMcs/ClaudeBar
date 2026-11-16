@@ -23,5 +23,5 @@ Stays Claude-only for now: `AgentsProbe` (`claude agents --json`) and
 
 ## Housekeeping
 
-- [ ] `install.sh` replaces existing hooks for UserPromptSubmit/Stop/Notification/SessionEnd instead of appending. Merge instead
+- [x] `install.sh` replaces existing hooks for UserPromptSubmit/Stop/Notification/SessionEnd instead of appending. Merge instead
 - [ ] Maybe rename app / move status dir out of `~/.claude` once multi-agent lands

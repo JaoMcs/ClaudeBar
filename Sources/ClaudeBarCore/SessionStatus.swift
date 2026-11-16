@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// Estado em que uma sessão do Claude Code se encontra.
@@ -48,4 +49,13 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         self.updatedAt = updatedAt
         self.message = message
     }
+}
+
+/// Caminho do executável de um processo (`proc_pidpath`), ou `nil` se ele não
+/// existe mais. Usado para conferir que um PID ainda é o Claude.
+public func processExecutablePath(_ pid: Int32) -> String? {
+    var buffer = [UInt8](repeating: 0, count: Int(MAXPATHLEN))
+    let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
+    guard length > 0 else { return nil }
+    return String(decoding: buffer[..<Int(length)], as: UTF8.self)
 }
