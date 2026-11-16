@@ -75,6 +75,18 @@ deles sem o terminal. O título é o estado: `ok`, `hooks não instalados` ou
   `settings.json` é somente leitura (gerado por dotfiles, Nix…): copia o
   executável e põe o JSON do bloco `hooks` na área de transferência, para
   você colar na ferramenta que gera o arquivo.
+- **Testar integração** — um teste ponta a ponta e, no fim, o popup de
+  exemplo. Responde "por que o ícone não muda?" com ✓/✗ para cada item: hooks
+  registrados no `settings.json`; executável do hook presente; executável
+  igual ao deste app; e o hook **rodou de verdade e gravou** o arquivo de
+  estado (o app roda o hook como o Claude Code rodaria, com uma sessão de
+  teste apagada logo em seguida; hook travado é encerrado em 3 s, então o app
+  nunca congela). Mostra também quando chegou o último evento real e avisa do
+  `disableAllHooks`. O que não dá para ver daqui: `disableAllHooks` em
+  settings de projeto e `allowManagedHooksOnly` em settings gerenciado —
+  confira o `/hooks` dentro do Claude Code. E o Claude Code retém os hooks até
+  você aceitar o diálogo de confiança da pasta: com sessões abertas e nenhum
+  evento recebido, o teste avisa.
 - **Atualizar** também confere a integração de novo.
 
 Nada é gravado sem um alerta antes. Ele mostra o arquivo de verdade (symlink

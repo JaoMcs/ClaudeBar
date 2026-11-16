@@ -150,6 +150,63 @@ final class HookSetup {
         refresh()
     }
 
+    /// Prova ponta a ponta: roda o hook instalado como o Claude Code rodaria
+    /// (sem shell, payload no stdin) e confere o arquivo que ele grava.
+    func selfTest(openSessions: Int) {
+        refresh()
+        let manager = FileManager.default
+        let hook = HookInstaller.stableBinary
+        let id = "claudebar-selftest"
+        let file = StatusDirectory.fileURL(sessionId: id)
+        let payload = Data(#"{"session_id":"\#(id)","cwd":"/"}"#.utf8)
+
+        // `--pid 0`: sem pid, o arquivo de teste não depende de processo vivo.
+        let ran = Shell.output(of: hook, arguments: ["waiting", "--pid", "0"], input: payload, timeout: 3) != nil
+        let wrote = manager.fileExists(atPath: file.path)
+        _ = Shell.output(of: hook, arguments: ["end"], input: payload, timeout: 3)
+        // O `end` também pode travar ou falhar: o arquivo de teste nunca sobra.
+        try? manager.removeItem(at: file)
+
+        // Só afirma o que foi de fato conferido: com JSON inválido ou
+        // `disableAllHooks` o estado sai antes de olhar os hooks.
+        let registered: Bool? = switch state {
+        case .ok, .binaryMissing, .binaryOutdated: true
+        case .invalidSettings, .hooksDisabled: nil
+        default: false
+        }
+        // Compara os bytes aqui: `.binaryOutdated` só existe com o settings em dia.
+        let sameBinary = bundledBinary.map { manager.contentsEqual(atPath: $0.path, andPath: hook.path) }
+        var lines = [
+            check(registered, "Hooks registrados no settings.json"),
+            check(manager.isExecutableFile(atPath: hook.path), "Executável em \(hook.path)"),
+            check(sameBinary, "Executável igual ao deste app"),
+            check(ran && wrote, "O hook rodou e gravou o estado"),
+        ]
+        if state == .hooksDisabled {
+            lines.append("⚠︎ disableAllHooks está ligado: o Claude Code não roda nenhum hook.")
+        }
+
+        let lastEvent = StatusDirectory.readAll(isAlive: ProcessProbe.live.isAlive)
+            .filter { $0.sessionId != id }.map(\.updatedAt).max()
+        if let lastEvent {
+            lines.append("Último evento recebido: \(lastEvent.formatted(.relative(presentation: .named)))")
+        } else if openSessions > 0 {
+            lines.append("""
+            ⚠︎ Há sessões abertas e nenhum evento chegou. A pasta já foi aceita no \
+            diálogo de confiança do Claude Code? Antes disso ele retém os hooks. \
+            Confira também `disableAllHooks` e o `/hooks` dentro do Claude Code.
+            """)
+        }
+
+        report(title: "Teste da integração", message: lines.joined(separator: "\n"))
+    }
+
+    /// `nil`: não deu para conferir. Nunca vira ✓.
+    private func check(_ passed: Bool?, _ text: String) -> String {
+        guard let passed else { return "? \(text) (não verificado)" }
+        return "\(passed ? "✓" : "✗") \(text)"
+    }
+
     /// Texto monoespaçado, só leitura e selecionável, dentro do alerta.
     private func codeView(_ text: String) -> NSView {
         let scroll = NSTextView.scrollableTextView()
