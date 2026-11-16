@@ -1,0 +1,175 @@
+import AppKit
+import ClaudeBarCore
+import Observation
+
+/// A integração com o Claude Code vista pelo app: detecta o estado, mostra o
+/// diff exato e só grava com o seu clique. Nunca repara em silêncio.
+@MainActor
+@Observable
+final class HookSetup {
+    private(set) var state: IntegrationState = .notInstalled
+    private let defaults = UserDefaults.standard
+
+    /// Último estado já oferecido no launch: oferecer de novo só se mudar.
+    private static let offeredKey = "hookSetupOfferedState"
+
+    /// O hook que veio neste `.app`. No `swift run`, o executável ao lado.
+    private let bundledBinary = Bundle.main.url(forAuxiliaryExecutable: "claudebar-hook")
+
+    init() {
+        refresh()
+        // Fora do init: o `SessionStore` nasce antes do app terminar de
+        // abrir, e um alerta modal ali apareceria cedo demais.
+        Task { @MainActor in self.offerIfNeeded() }
+    }
+
+    var menuTitle: String {
+        switch state {
+        case .ok: "Integração com o Claude Code: ok"
+        case .notInstalled: "Integração: hooks não instalados"
+        default: "⚠︎ Integração precisa de atenção"
+        }
+    }
+
+    var summary: String {
+        switch state {
+        case .ok: "Hooks registrados e executável em dia"
+        case .notInstalled: "Sem hooks, o app só vê as sessões de 5 em 5 s"
+        case .binaryMissing: "O executável do hook sumiu de ~/.claude/claudebar/bin"
+        case .binaryOutdated: "O executável do hook é de outra versão do app"
+        case .hooksOutdated: "Faltam hooks do ClaudeBar no settings.json"
+        case .legacyHooks: "Hooks no formato antigo (caminho dentro do .app)"
+        case .invalidSettings: "O settings.json não é um JSON válido — nada será alterado"
+        case .readOnlySettings: "O settings.json é somente leitura: cole o JSON na ferramenta que o gera"
+        case .hooksDisabled: "disableAllHooks está ligado no seu settings.json"
+        }
+    }
+
+    var canRemove: Bool {
+        ![.notInstalled, .invalidSettings, .readOnlySettings].contains(state)
+    }
+
+    func refresh() {
+        state = HookInstaller.state(bundledBinary: bundledBinary)
+        // Voltou ao normal: a próxima quebra (ex.: atualização do app) pode ser oferecida.
+        if state == .ok {
+            defaults.removeObject(forKey: Self.offeredKey)
+        }
+    }
+
+    /// Oferece instalar ou reparar uma vez por estado novo. "Pular" não grava nada.
+    private func offerIfNeeded() {
+        let offerable: [IntegrationState] = [.notInstalled, .binaryMissing, .binaryOutdated, .hooksOutdated, .legacyHooks]
+        let key = "\(state)"
+        guard offerable.contains(state), defaults.string(forKey: Self.offeredKey) != key else { return }
+        defaults.set(key, forKey: Self.offeredKey)
+        review(.install, cancelTitle: "Pular")
+    }
+
+    /// Mostra exatamente o que muda e grava só se você clicar na ação.
+    func review(_ action: HookAction, cancelTitle: String = "Cancelar") {
+        let plan: HookPlan
+        do {
+            plan = try HookInstaller.plan(action)
+        } catch {
+            return report(title: "Não foi possível ler o settings.json", message: error.localizedDescription)
+        }
+
+        let stable = HookInstaller.stableBinary
+        if action == .install, bundledBinary == nil, !FileManager.default.isExecutableFile(atPath: stable.path) {
+            return report(title: "Executável do hook não encontrado", message: "Abra o ClaudeBar a partir do .app.")
+        }
+        let copiesBinary = action == .install && bundledBinary.map {
+            !FileManager.default.contentsEqual(atPath: $0.path, andPath: stable.path)
+        } == true
+
+        guard plan.hasChanges || copiesBinary else {
+            return report(title: "Nada a mudar", message: plan.settingsURL.path)
+        }
+
+        let alert = NSAlert()
+        alert.messageText = action == .install
+            ? "Registrar os hooks do ClaudeBar no Claude Code?"
+            : "Remover os hooks do ClaudeBar?"
+        var info: [String] = []
+        if plan.hasChanges {
+            info.append("Arquivo: \(plan.settingsURL.path)")
+            info.append("Backup antes de gravar, em \(HookInstaller.backupsURL.path)")
+            if plan.reformats {
+                info.append("O arquivo será reformatado (ordem das chaves); fora de \"hooks\" o conteúdo não muda.")
+            }
+            // Só o bloco `hooks`: o resto do settings pode ter token em `env`.
+            alert.accessoryView = codeView(plan.diff)
+        }
+        if copiesBinary {
+            info.append("Copia o executável do hook para \(stable.path).")
+        }
+        info.append(
+            "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão. "
+                + "\"Remover hooks…\" no menu desfaz. O Claude Code aplica sem reiniciar."
+        )
+        alert.informativeText = info.joined(separator: "\n\n")
+        alert.addButton(withTitle: action == .install ? "Instalar" : "Remover")
+        alert.addButton(withTitle: cancelTitle)
+
+        guard runInFront(alert) == .alertFirstButtonReturn else { return }
+
+        do {
+            // Executável antes do settings: hook registrado nunca aponta para o nada.
+            if action == .install, let bundledBinary {
+                try HookInstaller.installBinary(from: bundledBinary)
+            }
+            if plan.hasChanges {
+                try HookInstaller.apply(plan)
+            }
+            if action == .uninstall {
+                try? FileManager.default.removeItem(at: stable)
+            }
+        } catch HookInstallError.changedSinceReview {
+            // Mudou enquanto você lia: mostra a prévia nova, nunca grava às cegas.
+            return review(action, cancelTitle: cancelTitle)
+        } catch {
+            report(title: "Não foi possível gravar", message: error.localizedDescription)
+        }
+        refresh()
+    }
+
+    /// Settings somente leitura: copia o executável e entrega o JSON para colar.
+    func copySnippet() {
+        if let bundledBinary {
+            try? HookInstaller.installBinary(from: bundledBinary)
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(HookInstaller.snippet(), forType: .string)
+        refresh()
+    }
+
+    /// Texto monoespaçado, só leitura e selecionável, dentro do alerta.
+    private func codeView(_ text: String) -> NSView {
+        let scroll = NSTextView.scrollableTextView()
+        scroll.frame = NSRect(x: 0, y: 0, width: 560, height: 260)
+        if let textView = scroll.documentView as? NSTextView {
+            textView.isEditable = false
+            textView.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+            textView.string = text
+            textView.setAccessibilityLabel("Alterações no settings.json")
+        }
+        return scroll
+    }
+
+    private func report(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        _ = runInFront(alert)
+    }
+
+    /// O app é accessory: sem isto o alerta nasce atrás das outras janelas.
+    /// `activate()` é só um pedido (ativação cooperativa, o sistema pode
+    /// negar), então a janela também sobe de nível.
+    private func runInFront(_ alert: NSAlert) -> NSApplication.ModalResponse {
+        alert.window.level = .floating
+        NSApplication.shared.activate()
+        return alert.runModal()
+    }
+}

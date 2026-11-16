@@ -62,14 +62,42 @@ struct MenuContent: View {
 
         Divider()
 
+        integrationMenu
+
         Button("Atualizar") {
             store.refreshAgents()
+            store.hookSetup.refresh()
         }
 
         Button("Sair do ClaudeBar") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+
+    /// Estado da integração e as ações sobre os hooks. Nada grava sem o alerta.
+    @ViewBuilder private var integrationMenu: some View {
+        let setup = store.hookSetup
+        Menu(setup.menuTitle) {
+            Text(setup.summary)
+
+            Divider()
+
+            switch setup.state {
+            case .readOnlySettings:
+                Button("Copiar JSON dos hooks") { setup.copySnippet() }
+            case .invalidSettings, .hooksDisabled:
+                EmptyView()
+            default:
+                Button(setup.state == .ok ? "Reinstalar hooks…" : "Instalar hooks…") {
+                    setup.review(.install)
+                }
+            }
+
+            if setup.canRemove {
+                Button("Remover hooks…") { setup.review(.uninstall) }
+            }
+        }
     }
 
     private func label(for row: SessionRow) -> String {

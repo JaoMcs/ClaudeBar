@@ -45,6 +45,8 @@ final class SessionStore {
     private var pollTimer: Timer?
     /// Exposto porque o menu liga e desliga as notificações por ele.
     let notifier = Notifier()
+    /// Integração com o Claude Code (hooks + executável estável).
+    let hookSetup = HookSetup()
 
     var barState: BarState {
         SessionMerge.barState(rows: rows, acknowledged: acknowledged)
