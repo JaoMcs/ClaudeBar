@@ -75,7 +75,8 @@ the other blocks you:
   alert fired without looking at the screen.
 - The message shown for "waiting" is what Claude Code sends to the
   `Notification` hook (e.g. *"Claude needs your permission to use Bash"*),
-  capped at 200 characters.
+  capped at 200 characters. Claude Code sends the permission prompt after a
+  few seconds without typing, so "waiting" can take a moment to show up.
 - Subagents never trigger alerts.
 - The **Notificações** toggle in the menu turns alerts on and off — popup and
   sound together. The choice is saved in `UserDefaults` and is on by default.
@@ -189,14 +190,20 @@ used instead.
 |---|---|
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
-| `Notification` | `waiting` |
+| `Notification` (`permission_prompt`) | `waiting --kind permission` |
+| `Notification` (`elicitation_dialog`) | `waiting --kind question` |
 | `SessionEnd` | deletes the file |
+
+Other notification types (idle reminder, auth, quota…) are not registered: the
+idle reminder used to turn "ready" into "waiting" about a minute after every
+reply.
 
 A state file looks like this:
 
 ```json
 {
   "cwd" : "/Users/me/code/my-project",
+  "kind" : "permission",
   "message" : "Claude needs your permission to use Bash",
   "pid" : 23667,
   "sessionId" : "1f6c…",
@@ -300,6 +307,8 @@ swift test                   # merge rules, count, icon, alerts, termination
 # simulate a session without Claude
 echo '{"session_id":"test","cwd":"/tmp"}' | \
   build/ClaudeBar.app/Contents/MacOS/claudebar-hook working --pid 1
+echo '{"session_id":"test","cwd":"/tmp"}' | \
+  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid 1
 ```
 
 The version lives in `VERSION` (X.Y.Z). The build number is the commit count
@@ -308,7 +317,7 @@ The version lives in `VERSION` (X.Y.Z). The build number is the commit count
 Hook CLI usage:
 
 ```
-claudebar-hook <working|idle|waiting|end> [--pid <claude pid>]
+claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <claude pid>]
 claudebar-hook install|uninstall [--dry-run]
 ```
 
@@ -316,7 +325,8 @@ It reads the hook payload (`session_id`, `cwd`, `message`) from stdin. If it
 fails to write, it only logs to stderr and exits cleanly — a hook must never
 break the Claude session. Without `--pid` (exec form has no `$PPID`) it uses
 its parent process, but only if that is a `claude` executable; otherwise it
-writes `pid: 0`. A missing or invalid state exits with **1**, never 2: in
+writes `pid: 0`. `--kind` is kept only with `waiting`; an unknown value is
+dropped (generic wait). A missing or invalid state exits with **1**, never 2: in
 Claude Code, exit 2 blocks the prompt.
 
 `install`/`uninstall` print the diff of the `hooks` block and apply it with a

@@ -74,7 +74,8 @@ bloqueia:
   olhar a tela.
 - A mensagem do aviso de "esperando" é o que o Claude Code manda para o hook
   `Notification` (ex.: *"Claude needs your permission to use Bash"*), limitada
-  a 200 caracteres.
+  a 200 caracteres. O Claude Code manda o pedido de permissão depois de alguns
+  segundos sem digitar, então o "esperando" pode demorar um pouco a aparecer.
 - Subagente nunca avisa.
 - O item **Notificações** no menu liga e desliga os avisos — popup e som
   juntos. A escolha fica salva no `UserDefaults` e vem ligada por padrão.
@@ -188,14 +189,20 @@ reserva.
 |---|---|
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
-| `Notification` | `waiting` |
+| `Notification` (`permission_prompt`) | `waiting --kind permission` |
+| `Notification` (`elicitation_dialog`) | `waiting --kind question` |
 | `SessionEnd` | apaga o arquivo |
+
+Os outros tipos de notificação (lembrete de ociosidade, autenticação, cota…)
+não são registrados: o lembrete de ociosidade trocava "pronto" por "esperando"
+cerca de um minuto depois de cada resposta.
 
 Um arquivo de estado tem esta cara:
 
 ```json
 {
   "cwd" : "/Users/me/code/my-project",
+  "kind" : "permission",
   "message" : "Claude needs your permission to use Bash",
   "pid" : 23667,
   "sessionId" : "1f6c…",
@@ -299,6 +306,8 @@ swift test                   # regras de merge, contagem, ícone, avisos, finali
 # simula uma sessão sem precisar do Claude
 echo '{"session_id":"teste","cwd":"/tmp"}' | \
   build/ClaudeBar.app/Contents/MacOS/claudebar-hook working --pid 1
+echo '{"session_id":"teste","cwd":"/tmp"}' | \
+  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid 1
 ```
 
 A versão fica em `VERSION` (X.Y.Z). O número de build é a contagem de commits
@@ -307,7 +316,7 @@ A versão fica em `VERSION` (X.Y.Z). O número de build é a contagem de commits
 Uso do CLI do hook:
 
 ```
-claudebar-hook <working|idle|waiting|end> [--pid <pid do claude>]
+claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <pid do claude>]
 claudebar-hook install|uninstall [--dry-run]
 ```
 
@@ -315,6 +324,7 @@ Ele lê o payload do hook (`session_id`, `cwd`, `message`) no stdin. Se falhar
 ao gravar, só registra no stderr e sai normalmente — um hook nunca deve
 derrubar a sessão do Claude. Sem `--pid` (exec form não tem `$PPID`) ele usa o
 processo pai, mas só se for um executável `claude`; senão grava `pid: 0`.
+`--kind` só vale com `waiting`; valor desconhecido é descartado (espera genérica).
 Estado ausente ou inválido sai com **1**, nunca 2: no Claude Code, exit 2
 bloqueia o prompt.
 

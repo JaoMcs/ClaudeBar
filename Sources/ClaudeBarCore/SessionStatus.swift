@@ -11,6 +11,18 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
     case waiting
 }
 
+/// Por que a sessão está esperando você.
+///
+/// No arquivo o campo é texto (`kind: String?`), não este enum: um valor que o
+/// app não conhece (hook mais novo, downgrade) faria o decode falhar, e
+/// `StatusDirectory.readAll` apaga arquivo que não decodifica.
+public enum WaitKind: String, Sendable {
+    /// Aprovar uma ferramenta (`Notification` `permission_prompt`).
+    case permission
+    /// Responder um formulário (`Notification` `elicitation_dialog`).
+    case question
+}
+
 /// Uma linha do estado compartilhado: um arquivo por sessão do Claude Code.
 public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     public let sessionId: String
@@ -19,6 +31,11 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     public let pid: Int32
     public let updatedAt: Date
     public let message: String?
+    /// `WaitKind` em texto. `nil` em arquivo antigo e fora de `waiting`.
+    public let kind: String?
+
+    /// `nil` também para valor desconhecido: espera genérica.
+    public var waitKind: WaitKind? { kind.flatMap(WaitKind.init(rawValue:)) }
 
     public var id: String { sessionId }
 
@@ -40,7 +57,8 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         cwd: String,
         pid: Int32,
         updatedAt: Date = Date(),
-        message: String? = nil
+        message: String? = nil,
+        kind: WaitKind? = nil
     ) {
         self.sessionId = sessionId
         self.state = state
@@ -48,6 +66,7 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         self.pid = pid
         self.updatedAt = updatedAt
         self.message = message
+        self.kind = kind?.rawValue
     }
 }
 
