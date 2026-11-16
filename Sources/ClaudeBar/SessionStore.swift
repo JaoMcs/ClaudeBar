@@ -184,7 +184,12 @@ final class SessionStore {
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
                 notifier.post(.waiting, body: row.message ?? row.name)
-            case .error, .working:
+            case .error:
+                if previous == .working {
+                    // O código do erro diz se vale reenviar ou esperar o limite.
+                    notifier.post(.failed, body: row.message.map { "\(row.name): \($0)" } ?? row.name)
+                }
+            case .working:
                 break
             }
         }
