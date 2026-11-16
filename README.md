@@ -241,7 +241,7 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
   Notifier.swift              sound per alert, toggle, native vs. own popup
   StatusHUD.swift             the app's own popup (floating NSPanel)
   Shell.swift                 runs processes without a shell (no injection)
-Tests/ClaudeBarTests/         subagents, count, icon, precedence and real kills
+Tests/ClaudeBarTests/         subagents, count, icon, precedence, real kills, no network
 scripts/build-app.sh          builds build/ClaudeBar.app (LSUIElement, ad-hoc signed)
 scripts/install.sh            installs to ~/Applications and registers the hooks
 VERSION                       app version (X.Y.Z), read by build-app.sh
@@ -307,9 +307,10 @@ does not take down a sibling.
 
 ## Security
 
-- **No secrets in the project.** The app makes no network calls, does not
-  authenticate anywhere, and does not read conversation history — only project
-  paths, `sessionId`, session state and the hook's notification message.
+- **No secrets in the project.** The app makes no network calls (see
+  [Verify it yourself](#verify-it-yourself)), does not authenticate anywhere,
+  and does not read conversation history — only project paths, `sessionId`,
+  session state and the hook's notification message.
 - **`~/.claude/claudebar` is `0700`, files are `0600`.** The contents show which
   projects you work on, so other users on the machine can't read them.
 - **`sessionId` is sanitized** before it becomes a file name: only
@@ -320,6 +321,26 @@ does not take down a sibling.
   `zsh -lc "command -v claude"`, used only as a last resort when the binary
   isn't in a known location.
 - **`message` is capped at 200 characters** before it is shown.
+- **Paths are never logged in the clear.** Any log line with a path, `cwd`,
+  `sessionId` or hook message uses `privacy: .private(mask: .hash)`; never
+  `.public`.
+
+### Verify it yourself
+
+ClaudeBar opens no network connections. A test (`NoNetworkTests`) fails
+`swift test` if networking code is ever added to `Sources/`. To check the
+running app:
+
+    lsof -i -a -c ClaudeBar                     # prints nothing
+    nettop -p ClaudeBar -L 0 -t external -n     # only the CSV header line; Ctrl-C to stop
+
+With Little Snitch: open Network Monitor and search for "ClaudeBar". It should
+never show a connection.
+
+Note: ClaudeBar runs `claude agents --json` (and `claude stop` when you
+terminate a subagent). Any traffic from those commands shows up under
+`claude`, not ClaudeBar: it belongs to Claude Code and follows its settings
+(https://code.claude.com/docs/en/data-usage#telemetry-services).
 
 ## Uninstall
 
