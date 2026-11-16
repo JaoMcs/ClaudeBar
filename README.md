@@ -15,10 +15,11 @@ shows what is happening in them:
 | `circle.dotted` | nothing going on |
 | `ellipsis.circle` | Claude is working |
 | `checkmark.circle.fill` | a reply is ready and you haven't seen it yet |
+| `exclamationmark.triangle.fill` | a reply failed (API error) and you haven't seen it yet |
 | `exclamationmark.bubble.fill` | Claude is waiting for you (permission, a choice) |
 
 When several things happen at once, the most urgent one wins:
-**waiting > ready (unseen) > working > idle**.
+**waiting > failed (unseen) > ready (unseen) > working > idle**.
 
 > Portuguese version: [README.pt-BR.md](README.pt-BR.md). The app's menu and
 > popups are in Portuguese.
@@ -28,7 +29,9 @@ When several things happen at once, the most urgent one wins:
 - macOS 14 (Sonoma) or later
 - Swift 6 toolchain (Xcode 16+) to build
 - [Claude Code](https://docs.claude.com/claude-code) 2.1.139 or later installed
-  (`claude` CLI; hooks use exec form, `args`)
+  (`claude` CLI; hooks use exec form, `args`). The failed state needs a Claude
+  Code version with the `StopFailure` hook; versions without it keep the
+  failed session as *working*
 
 ## Features
 
@@ -40,6 +43,7 @@ subagents grouped at the end:
 ```
 ✅  my-app — pronto (há 2 min)
 ⏳  ClaudeBar — processando (há 10 s)
+⚠️  api — falhou (há 1 min)
 🔸  [subagente] review-pr — aguardando você (há 1 min)
 ──────────────
 Marcar tudo como visto        (mark all as seen)
@@ -55,7 +59,10 @@ Sair do ClaudeBar        ⌘Q   (quit)
 Each session row opens a submenu with:
 
 - the full project path,
-- **Mark as seen** — clears the green "ready" state for that session,
+- for a failed reply, the API error code and details
+  (e.g. `rate_limit — 429 Too Many Requests`),
+- **Mark as seen** — clears the "ready" or "failed" highlight in the bar for
+  that session (a failed row stays ⚠️ until the next prompt),
 - **Terminate** — when possible (see [Terminating a session](#terminating-a-session)).
 
 The app has no Dock icon and no window; it lives only in the menu bar
@@ -237,6 +244,7 @@ used instead.
 |---|---|
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
+| `StopFailure` | `error` (the turn ended on an API error) |
 | `Notification` (`permission_prompt`) | `waiting --kind permission` |
 | `Notification` (`elicitation_dialog`) | `waiting --kind question` |
 | `PostToolUse`, `PostToolUseFailure` | `working`, only if the session was `waiting` (a permission was just approved) |
@@ -287,7 +295,7 @@ The `claude` binary is looked up in known locations (`~/.local/bin`,
 Package.swift                 SwiftPM, macOS 14, 3 targets + tests
 Sources/ClaudeBarCore/        shared model + reading/writing the state directory
   HookInstaller.swift         adds/removes only ClaudeBar's hooks in settings.json (diff, backup)
-  SessionStatus.swift         session state (working/idle/waiting), PID
+  SessionStatus.swift         session state (working/idle/waiting/error), PID
   StatusDirectory.swift       ~/.claude/claudebar: permissions, atomic writes, cleanup
 Sources/claudebar-hook/       CLI called by the hooks (no jq/python needed)
   main.swift                  reads the hook JSON from stdin, writes/deletes the state file
@@ -374,11 +382,12 @@ The version lives in `VERSION` (X.Y.Z). The build number is the commit count
 Hook CLI usage:
 
 ```
-claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>]
+claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>]
 claudebar-hook install|uninstall [--dry-run]
 ```
 
-It reads the hook payload (`session_id`, `cwd`, `message`) from stdin. Without
+It reads the hook payload (`session_id`, `cwd`, `message`; with `error`,
+`error` and `error_details` instead of `message`) from stdin. Without
 a `session_id` it writes nothing and exits 0. If it
 fails to write, it only logs to stderr and exits cleanly — a hook must never
 break the Claude session. Without `--pid` (exec form has no `$PPID`) it uses
@@ -415,7 +424,9 @@ does not take down a sibling.
   separate arguments — no interpolation, so no injection. The only exception is
   `zsh -lc "command -v claude"`, used only as a last resort when the binary
   isn't in a known location.
-- **`message` is capped at 200 characters** before it is shown.
+- **`message` is capped at 200 characters** before it is shown. For failures
+  only the API error code/details are stored, never Claude's reply
+  (`last_assistant_message` is not read in any state).
 - **Paths are never logged in the clear.** Any log line with a path, `cwd`,
   `sessionId` or hook message uses `privacy: .private(mask: .hash)`; never
   `.public`.

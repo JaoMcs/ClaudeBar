@@ -89,6 +89,8 @@ public enum HookInstaller {
     static let entries = [
         Entry(event: "UserPromptSubmit", args: ["working"]),
         Entry(event: "Stop", args: ["idle"]),
+        // Turno que acabou por erro de API: o `Stop` não roda nesse caso.
+        Entry(event: "StopFailure", args: ["error"]),
         // Só o que de fato espera você. `idle_prompt`, `auth_success`, `quota_*`
         // nem chamam o binário.
         Entry(event: "Notification", matcher: "permission_prompt", args: ["waiting", "--kind", "permission"]),

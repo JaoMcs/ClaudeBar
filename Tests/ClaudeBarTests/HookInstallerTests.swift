@@ -39,13 +39,15 @@ struct HookMergeTests {
     /// Exec form, SessionEnd sem timeout, nunca `onFailure`.
     @Test func formatoDoHandler() throws {
         let root = HookInstaller.install([:], binary: binary)
-        for event in ["UserPromptSubmit", "Stop", "Notification", "SessionEnd"] {
+        for event in ["UserPromptSubmit", "Stop", "StopFailure", "Notification", "SessionEnd"] {
             let handler = try #require(handlers(root, event).first)
             #expect(handler["args"] != nil, "\(event) sem args = shell form")
             #expect(handler["onFailure"] == nil)
         }
         #expect(handlers(root, "SessionEnd").first?["timeout"] == nil)
         #expect(handlers(root, "Stop").first?["timeout"] as? Int == 5)
+        #expect(handlers(root, "StopFailure").first?["timeout"] as? Int == 5)
+        #expect(handlers(root, "StopFailure").first?["args"] as? [String] == ["error"])
         #expect(handlers(root, "Notification").allSatisfy { $0["timeout"] as? Int == 5 })
     }
 

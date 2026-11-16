@@ -22,6 +22,12 @@ struct MenuContent: View {
                 Menu(label(for: row)) {
                     Text(row.cwd)
 
+                    // O código do erro ("rate_limit — 429 Too Many Requests")
+                    // diz se vale reenviar agora ou esperar.
+                    if row.state == .error, let message = row.message {
+                        Text(message)
+                    }
+
                     Divider()
 
                     Button("Marcar como visto") {
@@ -124,6 +130,7 @@ struct MenuContent: View {
         case .working: "⏳"
         case .idle: "✅"
         case .waiting: "🔸"
+        case .error: "⚠️"
         }
     }
 
@@ -132,6 +139,7 @@ struct MenuContent: View {
         case .working: "processando"
         case .idle: "pronto"
         case .waiting: "aguardando você"
+        case .error: "falhou"
         }
     }
 }
