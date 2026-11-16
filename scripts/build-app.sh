@@ -28,6 +28,9 @@ mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 
 cp "$BIN_DIR/ClaudeBar" "$BUNDLE/Contents/MacOS/ClaudeBar"
 cp "$BIN_DIR/claudebar-hook" "$BUNDLE/Contents/MacOS/claudebar-hook"
+# O sistema lê o ícone daqui (CFBundleIconFile). Copiar antes de assinar:
+# arquivo que entra depois do codesign invalida o selo.
+cp Resources/AppIcon.icns "$BUNDLE/Contents/Resources/AppIcon.icns"
 
 cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -38,6 +41,8 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
     <string>pt_BR</string>
     <key>CFBundleExecutable</key>
     <string>ClaudeBar</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>$BUNDLE_ID</string>
     <key>CFBundleName</key>

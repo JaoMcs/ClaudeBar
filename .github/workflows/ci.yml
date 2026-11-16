@@ -26,3 +26,8 @@ jobs:
         run: swift test
       - name: Empacotar o .app (build release)
         run: ./scripts/build-app.sh
+      - name: Conferir o bundle (ícone e assinatura)
+        run: |
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' build/ClaudeBar.app/Contents/Info.plist)" = AppIcon
+          test -s build/ClaudeBar.app/Contents/Resources/AppIcon.icns
+          codesign --verify --deep --strict build/ClaudeBar.app
