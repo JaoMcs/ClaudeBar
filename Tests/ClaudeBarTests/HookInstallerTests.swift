@@ -266,7 +266,8 @@ struct HookStateTests {
         hooks["Notification"] = [["hooks": [["type": "command", "command": f.stable.path, "args": ["waiting"]]]]]
         let semMatcher = String(decoding: try HookInstaller.serialize(["hooks": hooks]), as: UTF8.self)
         #expect(try state(semMatcher) == .hooksOutdated)
-        #expect(try state(installed) == .binaryOutdated)
+        let reinstalado = try HookInstaller.install(HookInstaller.parse(Data(semMatcher.utf8)), binary: f.stable.path)
+        #expect(try state(String(decoding: HookInstaller.serialize(reinstalado), as: UTF8.self)) == .binaryOutdated)
 
         #expect(try state(#"{"disableAllHooks": true}"#) == .hooksDisabled)
         #expect(try state("{") == .invalidSettings)
