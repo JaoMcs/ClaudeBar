@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # CFBundleVersion = git rev-list --count HEAD
       - name: Versão do Swift
         run: swift --version
       - name: Testes (compila tudo)

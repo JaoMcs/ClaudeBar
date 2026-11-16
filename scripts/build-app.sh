@@ -7,9 +7,18 @@ cd "$(dirname "$0")/.."
 
 BUNDLE="build/ClaudeBar.app"
 BUNDLE_ID="com.joaomarcos.claudebar"
-VERSION="1.0"
 
-echo "==> Compilando em release"
+# Versão visível vem do arquivo VERSION (X.Y.Z, regra da Apple para
+# CFBundleShortVersionString). O build é a contagem de commits: sobe a cada
+# commit em main; fora de um repositório git cai para 0.
+VERSION="$(tr -d '[:space:]' < VERSION)"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "VERSION inválida: '$VERSION' (use X.Y.Z, só dígitos e pontos)" >&2
+    exit 1
+fi
+BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
+
+echo "==> Compilando em release ($VERSION, build $BUILD)"
 swift build -c release
 BIN_DIR="$(swift build -c release --show-bin-path)"
 
@@ -38,7 +47,7 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
     <key>CFBundleShortVersionString</key>
     <string>$VERSION</string>
     <key>CFBundleVersion</key>
-    <string>$VERSION</string>
+    <string>$BUILD</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>

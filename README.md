@@ -244,6 +244,7 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
 Tests/ClaudeBarTests/         subagents, count, icon, precedence and real kills
 scripts/build-app.sh          builds build/ClaudeBar.app (LSUIElement, ad-hoc signed)
 scripts/install.sh            installs to ~/Applications and registers the hooks
+VERSION                       app version (X.Y.Z), read by build-app.sh
 ```
 
 ## Installation
@@ -283,6 +284,9 @@ swift test                   # merge rules, count, icon, alerts, termination
 echo '{"session_id":"test","cwd":"/tmp"}' | \
   build/ClaudeBar.app/Contents/MacOS/claudebar-hook working --pid 1
 ```
+
+The version lives in `VERSION` (X.Y.Z). The build number is the commit count
+(`git rev-list --count HEAD`); shallow clones restart the count.
 
 Hook CLI usage:
 
