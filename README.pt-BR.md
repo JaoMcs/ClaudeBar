@@ -240,7 +240,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   Notifier.swift              som por tipo de aviso, toggle, nativa vs. popup próprio
   StatusHUD.swift             o popup próprio (NSPanel flutuante)
   Shell.swift                 execução de processo sem shell (sem injeção)
-Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência e o kill real
+Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
 scripts/install.sh            instala em ~/Applications e registra os hooks
 VERSION                       versão do app (X.Y.Z), lida pelo build-app.sh
@@ -306,9 +306,10 @@ encerrar uma sessão não derruba a irmã.
 
 ## Segurança
 
-- **Sem segredo nenhum no projeto.** O app não fala com rede, não autentica em
-  nada e não lê o histórico das conversas — só caminhos de projeto,
-  `sessionId`, o estado da sessão e a mensagem de notificação do hook.
+- **Sem segredo nenhum no projeto.** O app não fala com rede (veja
+  [Confira você mesmo](#confira-você-mesmo)), não autentica em nada e não lê o
+  histórico das conversas — só caminhos de projeto, `sessionId`, o estado da
+  sessão e a mensagem de notificação do hook.
 - **`~/.claude/claudebar` é `0700`, os arquivos `0600`.** O conteúdo revela em
   que projetos você trabalha, então fica fora do alcance de outros usuários da
   máquina.
@@ -320,6 +321,26 @@ encerrar uma sessão não derruba a irmã.
   exceção é o `zsh -lc "command -v claude"`, usado apenas como último recurso
   quando o binário não está nos caminhos conhecidos.
 - **`message` é truncada em 200 caracteres** antes de ser exibida.
+- **Caminhos nunca vão em claro para o log.** Linha de log com caminho, `cwd`,
+  `sessionId` ou mensagem do hook usa `privacy: .private(mask: .hash)`; nunca
+  `.public`.
+
+### Confira você mesmo
+
+O ClaudeBar não abre conexão de rede. Um teste (`NoNetworkTests`) faz o
+`swift test` falhar se entrar código de rede em `Sources/`. Para conferir o
+app rodando:
+
+    lsof -i -a -c ClaudeBar                     # não imprime nada
+    nettop -p ClaudeBar -L 0 -t external -n     # só a linha de cabeçalho CSV; Ctrl-C para parar
+
+Com o Little Snitch: abra o Network Monitor e busque "ClaudeBar". Não deve
+aparecer conexão nenhuma.
+
+Atenção: o ClaudeBar roda `claude agents --json` (e `claude stop` quando você
+encerra um subagente). Qualquer tráfego desses comandos aparece como `claude`,
+não como ClaudeBar: é do Claude Code e segue as configurações dele
+(https://code.claude.com/docs/en/data-usage#telemetry-services).
 
 ## Desinstalar
 
