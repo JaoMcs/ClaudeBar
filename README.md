@@ -77,10 +77,8 @@ the other blocks you:
   `Notification` hook (e.g. *"Claude needs your permission to use Bash"*),
   capped at 200 characters.
 - Subagents never trigger alerts.
-- The **Notificações** toggle in the menu turns the popup on and off. The choice
-  is saved in `UserDefaults` and is on by default. Note: in the current code the
-  sound still plays when the toggle is off (`Notifier.post` plays the sound
-  before checking the toggle).
+- The **Notificações** toggle in the menu turns alerts on and off — popup and
+  sound together. The choice is saved in `UserDefaults` and is on by default.
 
 #### Why the app draws its own popup
 

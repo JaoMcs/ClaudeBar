@@ -17,6 +17,10 @@ Any agent that can run a command on lifecycle events can feed it.
 Stays Claude-only for now: `AgentsProbe` (`claude agents --json`) and
 `SessionTerminator` (refuses non-`claude` processes, safe default).
 
+## Deprecated APIs
+
+- [ ] `NSApplication.shared.activate(ignoringOtherApps:)` (`SessionStore.swift`, 2 calls) is marked by Apple as "will be deprecated in a future release" (`API_TO_BE_DEPRECATED`, no compiler warning yet). Research the replacement (`NSApp.activate()` on macOS 14+, cooperative activation) and stop using it. New code must not use it either
+
 ## Housekeeping
 
 - [ ] `install.sh` replaces existing hooks for UserPromptSubmit/Stop/Notification/SessionEnd instead of appending. Merge instead

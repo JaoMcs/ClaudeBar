@@ -62,7 +62,9 @@ final class Notifier {
     private var sounds: [String: NSSound] = [:]
     private let hud = StatusHUD()
     private let isBundled = Bundle.main.bundleIdentifier != nil
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    /// Só para teste: observa o som em vez de tocar. `nil` toca de verdade.
+    private let soundOverride: (@MainActor (Alert) -> Void)?
     private let log = Logger(subsystem: "com.joaomarcos.claudebar", category: "notifications")
 
     private static let enabledKey = "notificationsEnabled"
@@ -78,7 +80,9 @@ final class Notifier {
         return canUseSystemNotifications ? .systemNotifications : .ownPopup
     }
 
-    init() {
+    init(defaults: UserDefaults = .standard, playSound: (@MainActor (Alert) -> Void)? = nil) {
+        self.defaults = defaults
+        soundOverride = playSound
         // Padrão ligado: quem instalou um app de aviso quer ser avisado.
         defaults.register(defaults: [Self.enabledKey: true])
         isEnabled = defaults.bool(forKey: Self.enabledKey)
@@ -108,9 +112,15 @@ final class Notifier {
     }
 
     func post(_ alert: Alert, body: String) {
-        play(alert)
-
+        // Desligado no menu = silêncio total: nem popup nem som.
         guard isEnabled else { return }
+
+        if let soundOverride {
+            soundOverride(alert)
+        } else {
+            play(alert)
+        }
+
         guard canUseSystemNotifications else {
             // Caminho normal com assinatura ad-hoc: popup desenhado pelo app.
             hud.show(alert, body: body)
