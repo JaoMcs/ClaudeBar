@@ -117,6 +117,7 @@ struct HookMergeTests {
 struct HookWriteTests {
     @Test func gravaPeloSymlinkComBackup() throws {
         let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let real = folder.appendingPathComponent("dotfiles-settings.json")
         let link = folder.appendingPathComponent("settings.json")
         let backups = folder.appendingPathComponent("backups")
@@ -141,6 +142,7 @@ struct HookWriteTests {
 
     @Test func recusaSeMudouDepoisDaPrevia() throws {
         let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let settings = folder.appendingPathComponent("settings.json")
         try Data("{}".utf8).write(to: settings)
         let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
@@ -154,10 +156,41 @@ struct HookWriteTests {
 
     @Test func removerSemNadaNossoNaoMuda() throws {
         let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let settings = folder.appendingPathComponent("settings.json")
         try Data(#"{ "model" : "opus" }"#.utf8).write(to: settings)
         let plan = try HookInstaller.plan(.uninstall, settings: settings, binary: binary)
         #expect(!plan.hasChanges)
+    }
+
+    /// Arquivo `0444` numa pasta gravável: recusa e não deixa backup.
+    @Test func arquivoSomenteLeituraRecusa() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("settings.json")
+        let backups = folder.appendingPathComponent("backups")
+        try Data("{}".utf8).write(to: settings)
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: settings.path)
+        let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
+
+        #expect(throws: HookInstallError.readOnly) {
+            try HookInstaller.apply(plan, backups: backups)
+        }
+        #expect(!FileManager.default.fileExists(atPath: backups.path))
+        #expect(try Data(contentsOf: settings) == Data("{}".utf8))
+    }
+
+    /// Sem `~/.claude` ainda: a pasta nasce `0700` em vez de cair em "somente leitura".
+    @Test func criaPastaQueNaoExiste() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("novo/settings.json")
+        let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
+        #expect(try HookInstaller.apply(plan, backups: folder) == nil)
+
+        let manager = FileManager.default
+        #expect(try manager.attributesOfItem(atPath: settings.deletingLastPathComponent().path)[.posixPermissions] as? Int == 0o700)
+        #expect(try manager.attributesOfItem(atPath: settings.path)[.posixPermissions] as? Int == 0o600)
     }
 }
 
@@ -177,6 +210,7 @@ struct HookStateTests {
 
     @Test func copiaComPermissao0700ESubstituiInteiro() throws {
         let f = try fixture(settings: "{}")
+        defer { try? FileManager.default.removeItem(at: f.settings.deletingLastPathComponent()) }
         let quarentena = Array("0081;00000000;Safari;".utf8)
         #expect(setxattr(f.bundled.path, "com.apple.quarantine", quarentena, quarentena.count, 0, 0) == 0)
         try HookInstaller.installBinary(from: f.bundled, to: f.stable)

@@ -106,6 +106,14 @@ public enum HookInstaller {
         // O Claude Code também grava esse arquivo (`/config`, `/model`): se ele
         // mudou desde a prévia, gravar agora apagaria a mudança dele.
         guard now == plan.original else { throw HookInstallError.changedSinceReview }
+        // Sem `~/.claude` ainda, a pasta ausente cairia em "somente leitura".
+        if !exists {
+            try manager.createDirectory(
+                at: plan.settingsURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+        }
         guard isWritable(plan.settingsURL) else { throw HookInstallError.readOnly }
 
         var backup: URL?
