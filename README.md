@@ -281,6 +281,15 @@ Things to know:
 To start at login: System Settings → General → Login Items → add
 `~/Applications/ClaudeBar.app`.
 
+### Moving or updating the app
+
+The hooks don't point into the `.app`: they run a copy at
+`~/.claude/claudebar/bin/claudebar-hook`. Moving, renaming or deleting
+`ClaudeBar.app` doesn't break them. After you update the app, the copy is
+older than the one in the bundle; the app detects that (and missing, legacy
+or outdated entries, a read-only `settings.json`, `disableAllHooks`) without
+writing anything, and the menu offers to update the copy.
+
 ## Development
 
 ```bash

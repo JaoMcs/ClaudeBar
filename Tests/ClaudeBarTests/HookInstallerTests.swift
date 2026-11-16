@@ -228,4 +228,38 @@ struct HookStateTests {
         #expect(before != after)
         #expect(try Data(contentsOf: f.stable) == Data("v2".utf8))
     }
+
+    @Test func estados() throws {
+        let f = try fixture(settings: "{}")
+        defer { try? FileManager.default.removeItem(at: f.settings.deletingLastPathComponent()) }
+        func state(_ settings: String) throws -> IntegrationState {
+            try Data(settings.utf8).write(to: f.settings)
+            return HookInstaller.state(bundledBinary: f.bundled, settings: f.settings, binary: f.stable)
+        }
+        let installed = String(decoding: try HookInstaller.serialize(HookInstaller.install([:], binary: f.stable.path)), as: UTF8.self)
+
+        #expect(try state("{}") == .notInstalled)
+        #expect(try state(installed) == .binaryMissing)
+        try HookInstaller.installBinary(from: f.bundled, to: f.stable)
+        #expect(try state(installed) == .ok)
+        try Data("v2".utf8).write(to: f.bundled)
+        #expect(try state(installed) == .binaryOutdated)
+
+        #expect(try state(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"\#(legacy) idle"}]}]}}"#) == .legacyHooks)
+        #expect(try state(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"\#(f.stable.path)","args":["idle"]}]}]}}"#) == .hooksOutdated)
+        #expect(try state(#"{"disableAllHooks": true}"#) == .hooksDisabled)
+        #expect(try state("{") == .invalidSettings)
+    }
+
+    /// Settings gerado (dotfiles/Nix): só leitura vira estado próprio, e a
+    /// escrita é recusada mesmo com a pasta gravável.
+    @Test func somenteLeitura() throws {
+        let f = try fixture(settings: "{}")
+        defer { try? FileManager.default.removeItem(at: f.settings.deletingLastPathComponent()) }
+        try FileManager.default.setAttributes([.posixPermissions: 0o400], ofItemAtPath: f.settings.path)
+        #expect(HookInstaller.state(bundledBinary: f.bundled, settings: f.settings, binary: f.stable) == .readOnlySettings)
+
+        let plan = try HookInstaller.plan(.install, settings: f.settings, binary: f.stable.path)
+        #expect(throws: HookInstallError.readOnly) { try HookInstaller.apply(plan, backups: f.stable) }
+    }
 }
