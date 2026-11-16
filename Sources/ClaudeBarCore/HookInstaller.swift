@@ -169,11 +169,11 @@ public enum HookInstaller {
         return lines.joined(separator: "\n")
     }
 
-    static func hooksOnly(_ root: [String: Any]) -> [String: Any] {
+    private static func hooksOnly(_ root: [String: Any]) -> [String: Any] {
         root["hooks"].map { ["hooks": $0] } ?? [:]
     }
 
-    static func handlers(in root: [String: Any]) -> [(event: String, handler: [String: Any])] {
+    private static func handlers(in root: [String: Any]) -> [(event: String, handler: [String: Any])] {
         let hooks = root["hooks"] as? [String: Any] ?? [:]
         return hooks.flatMap { event, value in
             (value as? [[String: Any]] ?? [])

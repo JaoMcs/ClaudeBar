@@ -97,4 +97,10 @@ struct HookMergeTests {
             #expect(throws: HookInstallError.invalidSettings) { try json(text) }
         }
     }
+
+    /// Uma linha trocada vira remoção seguida de inserção, com contexto em volta.
+    @Test func diffPorLinha() {
+        let diff = HookInstaller.lineDiff(from: Data("a\nb\nc".utf8), to: Data("a\nx\nc".utf8))
+        #expect(diff == "  a\n- b\n+ x\n  c")
+    }
 }
