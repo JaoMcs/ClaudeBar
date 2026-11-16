@@ -252,6 +252,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   StatusHUD.swift             o popup próprio (NSPanel flutuante)
   Shell.swift                 execução de processo sem shell (sem injeção)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
+Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
 scripts/install.sh            instala em ~/Applications e registra os hooks
 scripts/uninstall.sh          remove os hooks (só os nossos) e o app
