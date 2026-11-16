@@ -26,8 +26,8 @@ Quando várias coisas acontecem ao mesmo tempo, vale a mais urgente:
 
 - macOS 14 (Sonoma) ou mais novo
 - Toolchain Swift 6 (Xcode 16+) para compilar
-- [Claude Code](https://docs.claude.com/claude-code) instalado (CLI `claude`)
-- `jq`, só para o script de instalação (`brew install jq`)
+- [Claude Code](https://docs.claude.com/claude-code) 2.1.139 ou mais novo instalado
+  (CLI `claude`; os hooks usam exec form, `args`)
 
 ## Funcionalidades
 
@@ -206,6 +206,9 @@ Um arquivo de estado tem esta cara:
 
 Duas decisões que evitam problemas clássicos:
 
+- **O hook mora em `~/.claude/claudebar/bin/claudebar-hook`**, cópia do que
+  vem no bundle. O `settings.json` aponta para lá, então mover ou apagar o
+  `.app` não quebra os hooks.
 - **Um arquivo por sessão.** Várias sessões escrevendo no mesmo arquivo daria
   disputa de escrita; separando por `session_id`, o problema deixa de existir.
   A escrita ainda é atômica, para o app nunca ler um JSON pela metade.
@@ -223,6 +226,7 @@ seu shell.
 ```
 Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
+  HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
   SessionStatus.swift         estado da sessão (working/idle/waiting), PID vivo
   StatusDirectory.swift       ~/.claude/claudebar: permissões, escrita atômica, limpeza
 Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/python)
@@ -243,6 +247,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
 scripts/install.sh            instala em ~/Applications e registra os hooks
+scripts/uninstall.sh          remove os hooks (só os nossos) e o app
 VERSION                       versão do app (X.Y.Z), lida pelo build-app.sh
 ```
 
@@ -256,18 +261,21 @@ O script:
 
 1. compila o app em release (`scripts/build-app.sh`),
 2. copia para `~/Applications/ClaudeBar.app`,
-3. faz backup do `~/.claude/settings.json` em `settings.json.bak.<timestamp>`,
-4. registra os quatro hooks, passando `--pid $PPID` para o app saber qual
-   processo do Claude disparou cada um,
-5. abre o app.
+3. mostra o diff do bloco `hooks` do `~/.claude/settings.json` e pergunta
+   antes de aplicar (`claudebar-hook install`),
+4. abre o app.
 
 Bom saber:
 
-- O `~/.claude/settings.json` precisa já existir.
-- O resto do `settings.json` é preservado, mas hooks que você já tinha em
-  `UserPromptSubmit`, `Stop`, `Notification` ou `SessionEnd` são
-  **substituídos**. Recupere do backup se precisar.
-- Os hooks valem a partir das **novas** sessões do Claude Code.
+- Só as entradas do ClaudeBar mudam. Hooks seus nos mesmos eventos ficam,
+  inclusive no mesmo grupo. Rodar de novo diz que não há nada a mudar.
+- Antes de toda escrita, o arquivo antigo vai para um backup (`0600`) em
+  `~/.claude/claudebar/backups/`. Se o `settings.json` não existe, ele é
+  criado.
+- O arquivo é reformatado (ordem das chaves, espaços); fora de `"hooks"` o
+  conteúdo não muda.
+- O Claude Code recarrega o `settings.json`, então sessões abertas já pegam os
+  hooks (as pastas precisam ser confiáveis).
 
 Para rodar no login: Ajustes do Sistema → Geral → Itens de Início → adicionar
 `~/Applications/ClaudeBar.app`.
@@ -291,11 +299,19 @@ Uso do CLI do hook:
 
 ```
 claudebar-hook <working|idle|waiting|end> [--pid <pid do claude>]
+claudebar-hook install|uninstall [--dry-run]
 ```
 
 Ele lê o payload do hook (`session_id`, `cwd`, `message`) no stdin. Se falhar
 ao gravar, só registra no stderr e sai normalmente — um hook nunca deve
-derrubar a sessão do Claude.
+derrubar a sessão do Claude. Sem `--pid` (exec form não tem `$PPID`) ele usa o
+processo pai, mas só se for um executável `claude`; senão grava `pid: 0`.
+Estado ausente ou inválido sai com **1**, nunca 2: no Claude Code, exit 2
+bloqueia o prompt.
+
+`install`/`uninstall` mostram o diff do bloco `hooks` e aplicam com backup;
+`--dry-run` só mostra. O `install` também se copia para
+`~/.claude/claudebar/bin/claudebar-hook`; o `uninstall` apaga essa cópia.
 
 `swift run ClaudeBar` também funciona. Sem bundle não há notificação nativa,
 então o app usa o popup próprio e o som.
@@ -324,6 +340,9 @@ encerrar uma sessão não derruba a irmã.
 - **Caminhos nunca vão em claro para o log.** Linha de log com caminho, `cwd`,
   `sessionId` ou mensagem do hook usa `privacy: .private(mask: .hash)`; nunca
   `.public`.
+- **Hooks rodam sem shell.** São registrados em exec form (`command` +
+  `args`), e o instalador não precisa de `jq`: é o próprio binário do hook, em
+  Swift. Os backups do `settings.json` são `0600`.
 
 ### Confira você mesmo
 
@@ -345,7 +364,10 @@ não como ClaudeBar: é do Claude Code e segue as configurações dele
 ## Desinstalar
 
 ```bash
-pkill -f ClaudeBar.app
-rm -rf ~/Applications/ClaudeBar.app ~/.claude/claudebar
-# e remover as quatro entradas do claudebar-hook em "hooks" no ~/.claude/settings.json
+./scripts/uninstall.sh
 ```
+
+Tira só os hooks do ClaudeBar do `settings.json` (com backup), fecha o app e
+apaga `~/Applications/ClaudeBar.app`. Sem o repositório:
+`~/.claude/claudebar/bin/claudebar-hook uninstall`. Estado e backups ficam em
+`~/.claude/claudebar`; apague a pasta à mão se quiser.

@@ -1,3 +1,4 @@
+import ClaudeBarCore
 import Darwin
 import Foundation
 
@@ -19,11 +20,6 @@ struct ProcessProbe: Sendable {
             let pgid = getpgid(pid)
             return pgid > 0 && pgid == pid
         },
-        executablePath: { pid in
-            var buffer = [UInt8](repeating: 0, count: Int(MAXPATHLEN))
-            let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
-            guard length > 0 else { return nil }
-            return String(decoding: buffer[..<Int(length)], as: UTF8.self)
-        }
+        executablePath: { processExecutablePath($0) }
     )
 }
