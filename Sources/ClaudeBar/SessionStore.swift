@@ -45,7 +45,13 @@ final class SessionStore {
     /// Último estado conhecido de cada sessão, para detectar transições.
     private var previousStates: [String: SessionState] = [:]
     private var watcher: DirectoryWatcher?
+    private var exitWatcher: ProcessExitWatcher?
     private var pollTimer: Timer?
+    /// Uma consulta ao CLI por vez, e no máximo uma a cada `minProbeInterval`.
+    private var probing = false
+    private var trailingRefresh = false
+    private var lastProbe = Date.distantPast
+    private static let minProbeInterval: TimeInterval = 2
     /// Exposto porque o menu liga e desliga as notificações por ele.
     let notifier = Notifier()
     /// Integração com o Claude Code (hooks + executável estável).
@@ -69,9 +75,13 @@ final class SessionStore {
 
     /// Recalcula as linhas a partir das duas origens já em memória/disco.
     func merge() {
+        let probe = ProcessProbe.live
+        // A lista do CLI pode ter até um minuto: sessão cujo processo já não
+        // existe sai agora, sem esperar a próxima consulta.
+        let current = agents?.filter { agent in agent.pid.map(probe.exists) ?? true }
         let merged = SessionMerge.rows(
-            agents: agents,
-            statuses: StatusDirectory.readAll(isAlive: ProcessProbe.live.isAlive)
+            agents: current,
+            statuses: StatusDirectory.readAll(isAlive: probe.isAlive)
         )
 
         notifyTransitions(in: merged)
@@ -79,16 +89,35 @@ final class SessionStore {
         acknowledged.formIntersection(Set(merged.map(\.sessionId)))
         previousStates = Dictionary(uniqueKeysWithValues: merged.map { ($0.sessionId, $0.state) })
         rows = merged
+        exitWatcher?.watch(Set(merged.compactMap(\.pid)))
     }
 
     /// Pergunta ao CLI quais sessões existem e recalcula as linhas.
+    ///
+    /// Cada consulta custa ~0,15 s de CPU e ~160 MB de pico. Pedido feito com
+    /// uma consulta em andamento ou dentro da janela mínima não se perde: vira
+    /// uma única consulta no fim da janela.
     func refreshAgents() {
+        guard !probing, Date().timeIntervalSince(lastProbe) >= Self.minProbeInterval else {
+            guard !trailingRefresh else { return }
+            trailingRefresh = true
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(Self.minProbeInterval))
+                self?.trailingRefresh = false
+                self?.refreshAgents()
+            }
+            return
+        }
+
+        probing = true
+        lastProbe = Date()
         Task.detached(priority: .utility) {
             let probed = AgentsProbe.probe()
             await MainActor.run {
                 if let probed {
                     self.agents = probed.filter { $0.sessionId != nil }
                 }
+                self.probing = false
                 self.merge()
             }
         }
@@ -158,16 +187,33 @@ final class SessionStore {
     }
 
     private func startWatching() {
-        // Mudança de estado: chega em milissegundos, direto do hook.
+        // Mudança de estado: chega em milissegundos, direto do hook. Arquivo
+        // novo ou apagado (`SessionStart`, `SessionEnd`) também muda a lista,
+        // então o CLI é consultado — com o limite de `refreshAgents`.
         watcher = DirectoryWatcher(url: StatusDirectory.url) { [weak self] in
-            Task { @MainActor in self?.merge() }
+            Task { @MainActor in
+                self?.merge()
+                self?.refreshAgents()
+            }
         }
 
-        // Sessão aberta ou fechada: só o CLI sabe, então consultamos de tempo em
-        // tempo. A chamada custa ~150 ms e roda fora da main thread.
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+        // Sessão que morreu sem hook (kill -9, crash, terminal fechado): o
+        // sistema avisa na hora, sem esperar o polling.
+        exitWatcher = ProcessExitWatcher { [weak self] in
+            Task { @MainActor in
+                self?.merge()
+                self?.refreshAgents()
+            }
+        }
+
+        // Rede de segurança para o que nenhum evento vê: sessão aberta antes de
+        // os hooks existirem e agente background sem `pid`. Tolerância de 10%
+        // deixa o sistema agrupar o disparo com outros (guia de energia da Apple).
+        let timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshAgents() }
         }
+        timer.tolerance = 6
+        pollTimer = timer
     }
 
     private func notifyTransitions(in merged: [SessionRow]) {

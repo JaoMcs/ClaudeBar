@@ -1,5 +1,6 @@
 import ClaudeBarCore
 import Foundation
+import OSLog
 
 /// Uma sessão como o próprio Claude Code a reporta em `claude agents --json`.
 ///
@@ -58,6 +59,10 @@ struct AgentSession: Decodable, Sendable {
 /// já dispararam algum evento, enquanto o CLI enxerga todas — inclusive as que
 /// você abriu e não usou ainda.
 enum AgentsProbe {
+    /// Uma linha por consulta, para medir quantas vezes o CLI é chamado:
+    /// `log stream --level info --predicate 'subsystem == "com.joaomarcos.claudebar" AND category == "agents"'`
+    private static let log = Logger(subsystem: "com.joaomarcos.claudebar", category: "agents")
+
     /// Caminhos onde o `claude` costuma estar. Um app de barra de menu não herda
     /// o `PATH` do seu shell, então não dá para confiar em `command -v`.
     private static let candidatePaths = [
@@ -85,6 +90,7 @@ enum AgentsProbe {
     ///
     /// Sem `--all` de propósito: só interessa o que está ativo agora.
     static func probe() -> [AgentSession]? {
+        log.info("claude agents --json")
         guard let executableURL,
               let output = Shell.output(of: executableURL, arguments: ["agents", "--json"]),
               let data = output.data(using: .utf8)

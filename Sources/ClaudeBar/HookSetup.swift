@@ -34,7 +34,7 @@ final class HookSetup {
     var summary: String {
         switch state {
         case .ok: "Hooks registrados e executável em dia"
-        case .notInstalled: "Sem hooks, o app só vê as sessões de 5 em 5 s"
+        case .notInstalled: "Sem hooks, o app só vê as sessões a cada minuto"
         case .binaryMissing: "O executável do hook sumiu de ~/.claude/claudebar/bin"
         case .binaryOutdated: "O executável do hook é de outra versão do app"
         case .hooksOutdated: "Faltam hooks do ClaudeBar no settings.json"

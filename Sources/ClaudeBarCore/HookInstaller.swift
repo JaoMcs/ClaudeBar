@@ -87,6 +87,9 @@ public enum HookInstaller {
 
     /// Tudo o que o ClaudeBar registra. F05, H0, F07, F08, F24 acrescentam linhas aqui.
     static let entries = [
+        // Sessão aberta e ainda sem prompt aparece na hora. Sem `compact`: ele
+        // acontece no meio do turno, e `idle` ali seria um "terminou" falso.
+        Entry(event: "SessionStart", matcher: "startup|resume|clear", args: ["idle"]),
         Entry(event: "UserPromptSubmit", args: ["working"]),
         Entry(event: "Stop", args: ["idle"]),
         // Turno que acabou por erro de API: o `Stop` não roda nesse caso.
