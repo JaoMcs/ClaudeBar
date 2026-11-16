@@ -287,7 +287,7 @@ Os hooks não apontam para dentro do `.app`: rodam uma cópia em
 `ClaudeBar.app` não os quebra. Depois de atualizar o app, a cópia fica mais
 velha que a do bundle; o app detecta isso (e entradas ausentes, legadas ou
 desatualizadas, `settings.json` somente leitura, `disableAllHooks`) sem
-gravar nada, e o menu oferece atualizar a cópia.
+gravar nada.
 
 ## Desenvolvimento
 

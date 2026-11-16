@@ -288,7 +288,7 @@ The hooks don't point into the `.app`: they run a copy at
 `ClaudeBar.app` doesn't break them. After you update the app, the copy is
 older than the one in the bundle; the app detects that (and missing, legacy
 or outdated entries, a read-only `settings.json`, `disableAllHooks`) without
-writing anything, and the menu offers to update the copy.
+writing anything.
 
 ## Development
 

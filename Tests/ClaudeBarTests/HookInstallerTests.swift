@@ -249,6 +249,10 @@ struct HookStateTests {
         #expect(try state(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"\#(f.stable.path)","args":["idle"]}]}]}}"#) == .hooksOutdated)
         #expect(try state(#"{"disableAllHooks": true}"#) == .hooksDisabled)
         #expect(try state("{") == .invalidSettings)
+
+        // Sem `~/.claude` ainda: não instalado, não somente leitura.
+        let missing = f.settings.deletingLastPathComponent().appendingPathComponent("nao-existe/settings.json")
+        #expect(HookInstaller.state(bundledBinary: f.bundled, settings: missing, binary: f.stable) == .notInstalled)
     }
 
     /// Settings gerado (dotfiles/Nix): só leitura vira estado próprio, e a

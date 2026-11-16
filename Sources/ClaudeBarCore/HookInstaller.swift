@@ -189,9 +189,11 @@ public enum HookInstaller {
             else if current.count != ours.count { .legacyHooks }
             else if !complete { .hooksOutdated }
             else { nil }
-        // `readOnlySettings` só quando há algo a gravar.
+        // `readOnlySettings` só quando há algo a gravar. Sem `~/.claude` ainda,
+        // `apply` cria a pasta: não é somente leitura.
         if let settingsState {
-            return isWritable(real) ? settingsState : .readOnlySettings
+            let folderMissing = !manager.fileExists(atPath: real.deletingLastPathComponent().path)
+            return folderMissing || isWritable(real) ? settingsState : .readOnlySettings
         }
         guard manager.isExecutableFile(atPath: binary.path) else { return .binaryMissing }
         if let bundledBinary, !manager.contentsEqual(atPath: bundledBinary.path, andPath: binary.path) {
