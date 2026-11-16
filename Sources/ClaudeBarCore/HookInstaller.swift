@@ -80,6 +80,8 @@ public enum HookInstaller {
 
     struct Entry {
         let event: String
+        /// `matcher` do grupo. `var` para entrar no init memberwise com padrão.
+        var matcher: String? = nil
         let args: [String]
     }
 
@@ -87,7 +89,10 @@ public enum HookInstaller {
     static let entries = [
         Entry(event: "UserPromptSubmit", args: ["working"]),
         Entry(event: "Stop", args: ["idle"]),
-        Entry(event: "Notification", args: ["waiting"]),
+        // Só o que de fato espera você. `idle_prompt`, `auth_success`, `quota_*`
+        // nem chamam o binário.
+        Entry(event: "Notification", matcher: "permission_prompt", args: ["waiting", "--kind", "permission"]),
+        Entry(event: "Notification", matcher: "elicitation_dialog", args: ["waiting", "--kind", "question"]),
         Entry(event: "SessionEnd", args: ["end"]),
     ]
 
@@ -182,7 +187,9 @@ public enum HookInstaller {
         let ours = handlers(in: root).filter { isOurs($0.handler, binary: binary.path) }
         let current = ours.filter { $0.handler["args"] != nil && $0.handler["command"] as? String == binary.path }
         let complete = current.count == entries.count && entries.allSatisfy { entry in
-            current.contains { $0.event == entry.event && $0.handler["args"] as? [String] == entry.args }
+            current.contains {
+                $0.event == entry.event && $0.matcher == entry.matcher && $0.handler["args"] as? [String] == entry.args
+            }
         }
         let settingsState: IntegrationState? =
             if ours.isEmpty { .notInstalled }
@@ -277,8 +284,10 @@ public enum HookInstaller {
             // sessão sobe até o maior timeout configurado nele.
             // E nunca `onFailure`: o indicador não pode bloquear o prompt.
             if entry.event != "SessionEnd" { handler["timeout"] = 5 }
+            var group: [String: Any] = ["hooks": [handler]]
+            if let matcher = entry.matcher { group["matcher"] = matcher }
             let groups = hooks[entry.event] as? [[String: Any]] ?? []
-            hooks[entry.event] = groups + [["hooks": [handler]]]
+            hooks[entry.event] = groups + [group]
         }
         root["hooks"] = hooks
         return root
@@ -362,12 +371,13 @@ public enum HookInstaller {
         root["hooks"].map { ["hooks": $0] } ?? [:]
     }
 
-    private static func handlers(in root: [String: Any]) -> [(event: String, handler: [String: Any])] {
+    private static func handlers(in root: [String: Any]) -> [(event: String, matcher: String?, handler: [String: Any])] {
         let hooks = root["hooks"] as? [String: Any] ?? [:]
         return hooks.flatMap { event, value in
-            (value as? [[String: Any]] ?? [])
-                .flatMap { $0["hooks"] as? [[String: Any]] ?? [] }
-                .map { (event: event, handler: $0) }
+            (value as? [[String: Any]] ?? []).flatMap { group in
+                (group["hooks"] as? [[String: Any]] ?? [])
+                    .map { (event: event, matcher: group["matcher"] as? String, handler: $0) }
+            }
         }
     }
 }

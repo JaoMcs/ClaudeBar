@@ -4,7 +4,7 @@ import Foundation
 // CLI chamado pelos hooks do Claude Code. Lê o payload JSON no stdin e grava
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
-// Uso: claudebar-hook <working|idle|waiting|end> [--pid <pid do claude>]
+// Uso: claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <pid do claude>]
 //      claudebar-hook install|uninstall [--dry-run]
 
 /// Campos do payload que os hooks do Claude Code entregam no stdin.
@@ -27,12 +27,13 @@ private func fail(_ message: String) -> Never {
     exit(1)
 }
 
+private func value(after flag: String, in arguments: [String]) -> String? {
+    guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
+    return arguments[index + 1]
+}
+
 private func parsePID(_ arguments: [String]) -> Int32 {
-    if let index = arguments.firstIndex(of: "--pid"),
-       arguments.indices.contains(index + 1),
-       let pid = Int32(arguments[index + 1]) {
-        return pid
-    }
+    if let pid = value(after: "--pid", in: arguments).flatMap({ Int32($0) }) { return pid }
     // Exec form (sem shell) não tem `$PPID`: o pai direto deve ser o Claude
     // Code. Só aceita se for mesmo um `claude`; senão 0 = "sem pid", como antes.
     let parent = getppid()
@@ -94,13 +95,20 @@ private func run() {
         fail("estado inválido \"\(command)\"")
     }
 
+    // O tipo vem do argumento que o instalador escreveu (um matcher por tipo),
+    // não do payload: `notification_type` já faltou em versão antiga.
+    let kind = state == .waiting
+        ? value(after: "--kind", in: arguments).flatMap(WaitKind.init(rawValue:))
+        : nil
+
     let status = SessionStatus(
         sessionId: sessionId,
         state: state,
         cwd: payload?.cwd ?? FileManager.default.currentDirectoryPath,
         pid: parsePID(arguments),
         // A mensagem vem de fora e vai para uma notificação: limitamos o tamanho.
-        message: payload?.message.map { String($0.prefix(200)) }
+        message: payload?.message.map { String($0.prefix(200)) },
+        kind: kind
     )
 
     do {

@@ -46,6 +46,20 @@ struct HookMergeTests {
         }
         #expect(handlers(root, "SessionEnd").first?["timeout"] == nil)
         #expect(handlers(root, "Stop").first?["timeout"] as? Int == 5)
+        #expect(handlers(root, "Notification").allSatisfy { $0["timeout"] as? Int == 5 })
+    }
+
+    /// `idle_prompt`, `auth_success`… não viram "esperando": só os dois matchers.
+    @Test func notificationTemDoisMatchers() throws {
+        let hooks = try #require(HookInstaller.install([:], binary: binary)["hooks"] as? [String: Any])
+        let groups = try #require(hooks["Notification"] as? [[String: Any]])
+        let pairs = groups.map { group in
+            (group["matcher"] as? String, (group["hooks"] as? [[String: Any]])?.first?["args"] as? [String])
+        }
+        #expect(groups.count == 2)
+        #expect(pairs.allSatisfy { $0.0 != nil })
+        #expect(pairs.contains { $0 == ("permission_prompt", ["waiting", "--kind", "permission"]) })
+        #expect(pairs.contains { $0 == ("elicitation_dialog", ["waiting", "--kind", "question"]) })
     }
 
     @Test func preservaHookDoUsuarioNoMesmoEvento() throws {
@@ -247,6 +261,13 @@ struct HookStateTests {
 
         #expect(try state(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"\#(legacy) idle"}]}]}}"#) == .legacyHooks)
         #expect(try state(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"\#(f.stable.path)","args":["idle"]}]}]}}"#) == .hooksOutdated)
+        // Instalação de T05: um `Notification` sem matcher. Reinstalar conserta.
+        var hooks = try #require(HookInstaller.install([:], binary: f.stable.path)["hooks"] as? [String: Any])
+        hooks["Notification"] = [["hooks": [["type": "command", "command": f.stable.path, "args": ["waiting"]]]]]
+        let semMatcher = String(decoding: try HookInstaller.serialize(["hooks": hooks]), as: UTF8.self)
+        #expect(try state(semMatcher) == .hooksOutdated)
+        #expect(try state(installed) == .binaryOutdated)
+
         #expect(try state(#"{"disableAllHooks": true}"#) == .hooksDisabled)
         #expect(try state("{") == .invalidSettings)
 
