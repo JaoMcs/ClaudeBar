@@ -68,8 +68,12 @@ enum SessionMerge {
     /// sessão sua esperando resposta.
     static func barState(rows: [SessionRow], acknowledged: Set<String>) -> BarState {
         let own = rows.filter { !$0.isSubagent }
+        let unseen = own.filter { !acknowledged.contains($0.sessionId) }
         if own.contains(where: { $0.state == .waiting }) { return .waiting }
-        if own.contains(where: { $0.state == .idle && !acknowledged.contains($0.sessionId) }) { return .done }
+        // Falha vence "pronto": uma resposta que não veio não pode se esconder
+        // atrás de outra que veio.
+        if unseen.contains(where: { $0.state == .error }) { return .error }
+        if unseen.contains(where: { $0.state == .idle }) { return .done }
         if own.contains(where: { $0.state == .working }) { return .working }
         return .idle
     }

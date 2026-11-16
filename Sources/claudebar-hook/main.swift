@@ -4,7 +4,7 @@ import Foundation
 // CLI chamado pelos hooks do Claude Code. Lê o payload JSON no stdin e grava
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
-// Uso: claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
+// Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
 //      claudebar-hook install|uninstall [--dry-run]
 
 /// Campos do payload que os hooks do Claude Code entregam no stdin.
@@ -12,12 +12,27 @@ private struct HookPayload: Decodable {
     let sessionId: String?
     let cwd: String?
     let message: String?
+    /// Só no `StopFailure`: código do erro da API (`rate_limit`, `overloaded`…).
+    /// `String`, não enum: código novo não pode derrubar o decode.
+    let error: String?
+    /// Só no `StopFailure`, opcional: detalhe técnico (`429 Too Many Requests`).
+    let errorDetails: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case cwd
         case message
+        case error
+        case errorDetails = "error_details"
     }
+}
+
+/// O que mostrar quando a resposta falhou. `last_assistant_message` fica de
+/// fora de propósito: no `Stop` ele é a resposta do Claude, e o app não lê
+/// conversa.
+private func errorSummary(_ payload: HookPayload?) -> String? {
+    let parts = [payload?.error, payload?.errorDetails].compactMap { $0 }
+    return parts.isEmpty ? nil : parts.joined(separator: " — ")
 }
 
 private func fail(_ message: String) -> Never {
@@ -70,7 +85,7 @@ private func manage(_ action: HookAction, dryRun: Bool) {
 private func run() {
     let arguments = Array(CommandLine.arguments.dropFirst())
     guard let command = arguments.first else {
-        fail("informe o estado (working|idle|waiting|end) ou install|uninstall")
+        fail("informe o estado (working|idle|waiting|error|end) ou install|uninstall")
     }
 
     // Antes de ler o stdin: num terminal, ler o stdin travaria esperando EOF.
@@ -111,13 +126,15 @@ private func run() {
         ? value(after: "--kind", in: arguments).flatMap(WaitKind.init(rawValue:))
         : nil
 
+    let text = state == .error ? errorSummary(payload) : payload?.message
+
     let status = SessionStatus(
         sessionId: sessionId,
         state: state,
         cwd: payload?.cwd ?? FileManager.default.currentDirectoryPath,
         pid: parsePID(arguments),
         // A mensagem vem de fora e vai para uma notificação: limitamos o tamanho.
-        message: payload?.message.map { String($0.prefix(200)) },
+        message: text.map { String($0.prefix(200)) },
         kind: kind
     )
 

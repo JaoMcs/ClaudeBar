@@ -7,6 +7,8 @@ import Observation
 enum BarState {
     /// Alguma sessão está esperando você (permissão, escolha).
     case waiting
+    /// Alguma resposta falhou e você ainda não viu.
+    case error
     /// Alguma sessão terminou e você ainda não viu.
     case done
     /// Tem sessão processando, nada pendente.
@@ -17,6 +19,7 @@ enum BarState {
     var symbolName: String {
         switch self {
         case .waiting: "exclamationmark.bubble.fill"
+        case .error: "exclamationmark.triangle.fill"
         case .done: "checkmark.circle.fill"
         case .working: "ellipsis.circle"
         case .idle: "circle.dotted"
@@ -37,7 +40,7 @@ final class SessionStore {
     private(set) var rows: [SessionRow] = []
     /// Última lista devolvida pelo CLI. `nil` até a primeira consulta responder.
     private var agents: [AgentSession]?
-    /// Sessões concluídas que já foram vistas — não acendem mais o ícone verde.
+    /// Sessões concluídas ou com falha que já foram vistas — não acendem mais o ícone.
     private var acknowledged: Set<String> = []
     /// Último estado conhecido de cada sessão, para detectar transições.
     private var previousStates: [String: SessionState] = [:]
@@ -182,6 +185,10 @@ final class SessionStore {
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
                 notifier.post(.waiting, body: row.message ?? row.name)
+            case .error:
+                // Falha nova acende o ícone mesmo que a sessão já tenha sido
+                // marcada como vista antes do prompt que falhou.
+                acknowledged.remove(row.sessionId)
             default:
                 break
             }

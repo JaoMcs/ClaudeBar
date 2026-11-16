@@ -43,7 +43,9 @@ struct AgentSession: Decodable, Sendable {
     /// ausência de estado significa "processando", não "sem informação".
     var sessionState: SessionState {
         switch status ?? state {
-        case "idle", "completed", "failed": .idle
+        case "idle", "completed": .idle
+        // Falhou não é pronto: sem isso, um agente que quebrou aparecia com ✅.
+        case "failed": .error
         case "waiting", "blocked": .waiting
         default: .working
         }

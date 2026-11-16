@@ -8,6 +8,9 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
     case idle
     /// O Claude está esperando algo de você (permissão, escolha).
     case waiting
+    /// A resposta falhou por erro de API (limite, sobrecarga, autenticação…).
+    /// Não é "pronto": o turno acabou sem resposta.
+    case error
 }
 
 /// Por que a sessão está esperando você.
