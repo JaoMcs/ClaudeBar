@@ -97,6 +97,13 @@ struct MenuContent: View {
             if setup.canRemove {
                 Button("Remover hooks…") { setup.review(.uninstall) }
             }
+
+            Divider()
+
+            Button("Testar integração") {
+                setup.selfTest(openSessions: store.openSessionCount)
+                store.notifier.showSample()
+            }
         }
     }
 

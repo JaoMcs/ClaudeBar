@@ -287,3 +287,18 @@ struct TerminationMergeTests {
         #expect(SessionTerminator.target(for: rows[0], probe: terminalProbe) == .backgroundStop("cccccccc"))
     }
 }
+
+@Suite("Shell com prazo")
+struct ShellTimeoutTests {
+    /// Filho travado não pode travar o app: o teste da integração roda na main.
+    @Test func filhoTravadoEhEncerrado() {
+        let inicio = Date()
+        #expect(Shell.output(of: URL(fileURLWithPath: "/bin/sleep"), arguments: ["30"], timeout: 0.5) == nil)
+        #expect(Date().timeIntervalSince(inicio) < 5)
+    }
+
+    @Test func stdinChegaAoFilho() {
+        let saida = Shell.output(of: URL(fileURLWithPath: "/bin/cat"), arguments: [], input: Data("oi".utf8), timeout: 5)
+        #expect(saida == "oi")
+    }
+}
