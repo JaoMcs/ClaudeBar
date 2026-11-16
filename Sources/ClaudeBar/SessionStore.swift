@@ -35,8 +35,8 @@ enum BarState {
 @Observable
 final class SessionStore {
     private(set) var rows: [SessionRow] = []
-    /// Última lista devolvida pelo CLI. Vazia até a primeira consulta responder.
-    private var agents: [AgentSession] = []
+    /// Última lista devolvida pelo CLI. `nil` até a primeira consulta responder.
+    private var agents: [AgentSession]?
     /// Sessões concluídas que já foram vistas — não acendem mais o ícone verde.
     private var acknowledged: Set<String> = []
     /// Último estado conhecido de cada sessão, para detectar transições.
@@ -64,7 +64,10 @@ final class SessionStore {
 
     /// Recalcula as linhas a partir das duas origens já em memória/disco.
     func merge() {
-        let merged = SessionMerge.rows(agents: agents, statuses: StatusDirectory.readAll())
+        let merged = SessionMerge.rows(
+            agents: agents,
+            statuses: StatusDirectory.readAll(isAlive: ProcessProbe.live.isAlive)
+        )
 
         notifyTransitions(in: merged)
 

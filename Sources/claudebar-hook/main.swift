@@ -82,9 +82,9 @@ private func run() {
 
     let stdinData = FileHandle.standardInput.readDataToEndOfFile()
     let payload = try? StatusDirectory.decoder.decode(HookPayload.self, from: stdinData)
-    let sessionId = payload?.sessionId
-        ?? ProcessInfo.processInfo.environment["CLAUDE_SESSION_ID"]
-        ?? "unknown"
+    // Sem `session_id` não há de quem gravar o estado. Sai bem, sem arquivo: um
+    // `unknown.json` juntaria sessões diferentes num só fantasma.
+    guard let sessionId = payload?.sessionId, !sessionId.isEmpty else { return }
 
     if command == "end" {
         StatusDirectory.remove(sessionId: sessionId)

@@ -1,4 +1,3 @@
-import Darwin
 import Foundation
 
 /// Estado em que uma sessão do Claude Code se encontra.
@@ -43,12 +42,6 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     public var projectName: String {
         let name = URL(fileURLWithPath: cwd).lastPathComponent
         return name.isEmpty ? cwd : name
-    }
-
-    /// `false` quando o processo do Claude morreu sem disparar o hook de saída.
-    public var isAlive: Bool {
-        guard pid > 0 else { return true }
-        return kill(pid, 0) == 0 || errno == EPERM
     }
 
     public init(
