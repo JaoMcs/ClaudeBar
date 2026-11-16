@@ -22,6 +22,10 @@ enum Shell {
             return nil
         }
 
+        // ponytail: só SIGTERM, sem escalar para SIGKILL. Um filho que ignore
+        // SIGTERM, ou um neto segurando o pipe de stdout, ainda trava quem
+        // chama. O hook não faz nenhuma das duas; se um dia fizer, SIGKILL
+        // depois de um prazo e leitura do pipe fora da main.
         let pid = process.processIdentifier
         let deadline = DispatchWorkItem { _ = kill(pid, SIGTERM) }
         if let timeout {

@@ -167,10 +167,19 @@ final class HookSetup {
         // O `end` também pode travar ou falhar: o arquivo de teste nunca sobra.
         try? manager.removeItem(at: file)
 
+        // Só afirma o que foi de fato conferido: com JSON inválido ou
+        // `disableAllHooks` o estado sai antes de olhar os hooks.
+        let registered: Bool? = switch state {
+        case .ok, .binaryMissing, .binaryOutdated: true
+        case .invalidSettings, .hooksDisabled: nil
+        default: false
+        }
+        // Compara os bytes aqui: `.binaryOutdated` só existe com o settings em dia.
+        let sameBinary = bundledBinary.map { manager.contentsEqual(atPath: $0.path, andPath: hook.path) }
         var lines = [
-            check(state != .notInstalled && state != .legacyHooks && state != .hooksOutdated, "Hooks registrados no settings.json"),
+            check(registered, "Hooks registrados no settings.json"),
             check(manager.isExecutableFile(atPath: hook.path), "Executável em \(hook.path)"),
-            check(state != .binaryOutdated, "Executável igual ao deste app"),
+            check(sameBinary, "Executável igual ao deste app"),
             check(ran && wrote, "O hook rodou e gravou o estado"),
         ]
         if state == .hooksDisabled {
@@ -192,8 +201,10 @@ final class HookSetup {
         report(title: "Teste da integração", message: lines.joined(separator: "\n"))
     }
 
-    private func check(_ passed: Bool, _ text: String) -> String {
-        "\(passed ? "✓" : "✗") \(text)"
+    /// `nil`: não deu para conferir. Nunca vira ✓.
+    private func check(_ passed: Bool?, _ text: String) -> String {
+        guard let passed else { return "? \(text) (não verificado)" }
+        return "\(passed ? "✓" : "✗") \(text)"
     }
 
     /// Texto monoespaçado, só leitura e selecionável, dentro do alerta.
