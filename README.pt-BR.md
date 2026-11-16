@@ -162,6 +162,12 @@ Para diagnosticar (`log` é builtin do zsh, use o caminho absoluto):
 /usr/bin/log show --last 5m --info --debug --predicate 'subsystem == "com.joaomarcos.claudebar"'
 ```
 
+Para contar quantas vezes o CLI é consultado (uma linha por `claude agents --json`):
+
+```bash
+/usr/bin/log stream --level info --predicate 'subsystem == "com.joaomarcos.claudebar" AND category == "agents"'
+```
+
 ### Finalizar uma sessão
 
 O jeito certo de encerrar depende do tipo de sessão, então o alvo é escolhido
@@ -220,7 +226,8 @@ Duas origens, cada uma boa no que a outra é ruim:
 ```
                         quais sessões existem
 claude agents --json ─────────────────────────┐
-  (poll de 5s, ~150ms por chamada)            │
+  (em evento de hook, na saída de processo    │
+   e a cada 60 s; ≤ 1 chamada / 2 s)          │
                                               ├──> ClaudeBar.app ──> 🔸 3
 Claude Code ──(hooks)──> claudebar-hook ──────┘
                             │       em que estado cada uma está
@@ -229,9 +236,12 @@ Claude Code ──(hooks)──> claudebar-hook ──────┘
 ```
 
 - **`claude agents --json`** lista todas as sessões abertas, inclusive as que
-  nunca dispararam um hook — é o que define o **número** na barra. Só é
-  consultado a cada 5 segundos (fora da main thread), então não serve para
-  reagir a mudanças.
+  nunca dispararam um hook — é o que define o **número** na barra. É consultado
+  (fora da main thread, ~150 ms por chamada) quando um hook grava, quando o
+  processo de uma sessão termina e a cada 60 segundos — no máximo uma vez a
+  cada 2 segundos. A saída de processo é observada pelo sistema
+  (`DispatchSource`), então sessão morta some na hora, sem esperar a próxima
+  consulta.
 - **Os hooks** chegam no instante em que o estado muda — é o que define o
   **símbolo**. Mas só conhecem sessões que já dispararam algum evento.
 
@@ -243,6 +253,7 @@ reserva.
 
 | Hook | Estado gravado |
 |---|---|
+| `SessionStart` (`startup`, `resume`, `clear`) | `idle` (sessão nova aparece antes do primeiro prompt) |
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
 | `StopFailure` | `error` (o turno acabou por erro de API) |
@@ -308,6 +319,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   SessionRow.swift            linha do menu: cruzamento das duas origens
   AgentsProbe.swift           chama `claude agents --json` e traduz o status
   DirectoryWatcher.swift      DispatchSource observando o diretório de estado
+  ProcessExitWatcher.swift    DispatchSource observando a saída dos processos de sessão
   SessionTerminator.swift     escolha do alvo (SIGTERM ou `claude stop`) e execução
   ProcessProbe.swift          topologia do processo: lidera o grupo? ainda é claude?
   Notifier.swift              som por tipo de aviso, toggle, nativa vs. popup próprio

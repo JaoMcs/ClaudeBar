@@ -164,6 +164,12 @@ To debug (in zsh `log` is a builtin, so use the full path):
 /usr/bin/log show --last 5m --info --debug --predicate 'subsystem == "com.joaomarcos.claudebar"'
 ```
 
+To count how often the CLI is queried (one line per `claude agents --json`):
+
+```bash
+/usr/bin/log stream --level info --predicate 'subsystem == "com.joaomarcos.claudebar" AND category == "agents"'
+```
+
 ### Terminating a session
 
 The right way to stop a session depends on what kind of session it is, so the
@@ -223,7 +229,8 @@ Two sources, each good at what the other is bad at:
 ```
                         which sessions exist
 claude agents --json ─────────────────────────┐
-  (polled every 5 s, ~150 ms per call)        │
+  (on hook events, on process exit and        │
+   every 60 s; ≤ 1 call / 2 s)                │
                                               ├──> ClaudeBar.app ──> 🔸 3
 Claude Code ──(hooks)──> claudebar-hook ──────┘
                             │       what state each one is in
@@ -232,8 +239,11 @@ Claude Code ──(hooks)──> claudebar-hook ──────┘
 ```
 
 - **`claude agents --json`** lists every open session, including ones that never
-  fired a hook. It sets the **number** in the bar. It is only polled every 5
-  seconds (off the main thread), so it is too slow to react to state changes.
+  fired a hook. It sets the **number** in the bar. It is queried (off the main
+  thread, ~150 ms per call) when a hook writes, when a session process exits
+  and every 60 seconds — at most once every 2 seconds. Process exit is observed
+  by the system (`DispatchSource`), so a dead session disappears right away,
+  without waiting for the next query.
 - **Hooks** fire the moment the state changes. They set the **symbol**. But they
   only know about sessions that have already fired an event.
 
@@ -245,6 +255,7 @@ used instead.
 
 | Hook | State written |
 |---|---|
+| `SessionStart` (`startup`, `resume`, `clear`) | `idle` (a new session shows up before its first prompt) |
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
 | `StopFailure` | `error` (the turn ended on an API error) |
@@ -311,6 +322,7 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
   SessionRow.swift            one menu row: the merged view of both sources
   AgentsProbe.swift           runs `claude agents --json` and maps its status
   DirectoryWatcher.swift      DispatchSource watcher on the state directory
+  ProcessExitWatcher.swift    DispatchSource watcher on session process exit
   SessionTerminator.swift     picks the target (SIGTERM or `claude stop`) and runs it
   ProcessProbe.swift          process topology: group leader? still claude?
   Notifier.swift              sound per alert, toggle, native vs. own popup

@@ -49,6 +49,11 @@ struct HookMergeTests {
         #expect(handlers(root, "StopFailure").first?["timeout"] as? Int == 5)
         #expect(handlers(root, "StopFailure").first?["args"] as? [String] == ["error"])
         #expect(handlers(root, "Notification").allSatisfy { $0["timeout"] as? Int == 5 })
+        // Sem `compact` no matcher: ele roda no meio do turno.
+        let start = try #require(((root["hooks"] as? [String: Any])?["SessionStart"] as? [[String: Any]])?.first)
+        #expect(start["matcher"] as? String == "startup|resume|clear")
+        #expect(handlers(root, "SessionStart").first?["args"] as? [String] == ["idle"])
+        #expect(handlers(root, "SessionStart").first?["timeout"] as? Int == 5)
     }
 
     /// `idle_prompt`, `auth_success`… não viram "esperando": só os dois matchers.
