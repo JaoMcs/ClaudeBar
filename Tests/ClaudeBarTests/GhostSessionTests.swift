@@ -43,12 +43,14 @@ private func probe(
 struct GhostFileTests {
     @Test func processoMortoApagaOArquivo() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe(exists: false).isAlive).isEmpty)
         #expect(files(in: dir).isEmpty)
     }
 
     @Test func pidRecicladoPorOutroProgramaApaga() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe(path: "/usr/sbin/cron").isAlive).isEmpty)
         #expect(files(in: dir).isEmpty)
     }
@@ -56,12 +58,14 @@ struct GhostFileTests {
     /// Outro `claude` herdou o PID: ele nasceu depois de o arquivo ser gravado.
     @Test func pidRecicladoPorOutroClaudeApaga() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         let depois = probe(start: Date())
         #expect(StatusDirectory.readAll(in: dir, isAlive: depois.isAlive).isEmpty)
     }
 
     @Test func claudeQueNasceuAntesDaGravacaoFica() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe().isAlive).map(\.sessionId) == ["s1"])
         #expect(files(in: dir) == ["s1.json"])
     }
@@ -70,11 +74,13 @@ struct GhostFileTests {
     /// de morte, o arquivo fica.
     @Test func semInformacaoMantem() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe(path: nil, start: nil).isAlive).count == 1)
     }
 
     @Test func sessaoDoAppDesktopFica() throws {
         let dir = try directory(with: [gravada])
+        defer { try? FileManager.default.removeItem(at: dir) }
         let desktop = probe(path: "/Users/dev/Library/Application Support/Claude/claude-code/2.1.325/claude.app/Contents/MacOS/claude")
         #expect(StatusDirectory.readAll(in: dir, isAlive: desktop.isAlive).count == 1)
     }
@@ -84,6 +90,7 @@ struct GhostFileTests {
     @Test func pidZeroNaoEhApagado() throws {
         let semPid = SessionStatus(sessionId: "s0", state: .working, cwd: "/x", pid: 0)
         let dir = try directory(with: [semPid])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe(exists: false).isAlive).count == 1)
     }
 
@@ -95,6 +102,7 @@ struct GhostFileTests {
     func arquivoQueNaoEhDeSessaoNenhumaApaga(sessionId: String, arquivo: String) throws {
         let status = SessionStatus(sessionId: sessionId, state: .idle, cwd: "/x", pid: 4321)
         let dir = try directory(with: [status]) { _ in arquivo }
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: probe().isAlive).isEmpty)
         #expect(files(in: dir).isEmpty)
     }
@@ -145,6 +153,7 @@ struct GhostLiveTests {
 
         let status = SessionStatus(sessionId: "vivo", state: .working, cwd: "/tmp", pid: pid)
         let dir = try directory(with: [status])
+        defer { try? FileManager.default.removeItem(at: dir) }
         #expect(StatusDirectory.readAll(in: dir, isAlive: real.isAlive).count == 1)
 
         kill(pid, SIGKILL)

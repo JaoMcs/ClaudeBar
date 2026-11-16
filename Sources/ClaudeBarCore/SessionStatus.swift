@@ -1,4 +1,3 @@
-import Darwin
 import Foundation
 
 /// Estado em que uma sessão do Claude Code se encontra.

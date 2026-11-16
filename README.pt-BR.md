@@ -220,7 +220,7 @@ Duas decisões que evitam problemas clássicos:
   disputa de escrita; separando por `session_id`, o problema deixa de existir.
   A escrita ainda é atômica, para o app nunca ler um JSON pela metade.
 - **PID gravado junto.** Sessão que morre por `kill` ou crash nunca dispara o
-  `SessionEnd` e deixaria um arquivo eterno dizendo "processando". O app checa
+  `SessionEnd` e deixaria um arquivo eterno dizendo "processando". O app
   apaga o arquivo quando o processo morreu, quando o PID virou outro programa ou
   quando virou outro `claude` que nasceu depois da gravação. Sem essa prova (sem
   informação), o arquivo fica. Sessão com `pid 0` só some da lista quando o CLI
