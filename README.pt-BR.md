@@ -114,21 +114,24 @@ oferece instalar.
 
 ### Avisos
 
-São dois avisos, cada um com som próprio, porque um é informativo e o outro te
-bloqueia:
+São três avisos, cada um com som próprio: um é informativo, outro te bloqueia
+e o terceiro conta que a resposta não veio:
 
 | Transição | Aviso | Som | Volume |
 |---|---|---|---|
 | processando → pronto | "Claude terminou" + nome do projeto | `Glass` (sino claro) | 100% |
 | → aguardando você | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
+| processando → falhou | "A resposta do Claude falhou" + projeto e código do erro | `Basso` (som de erro) | 100% |
 
 - O som sai pelo `NSSound`, não pela notificação: é o único jeito de escolher
-  som e volume por tipo de aviso. Dá para saber qual dos dois aconteceu sem
+  som e volume por tipo de aviso. Dá para saber qual deles aconteceu sem
   olhar a tela.
 - A mensagem do aviso de "esperando" é o que o Claude Code manda para o hook
   `Notification` (ex.: *"Claude needs your permission to use Bash"*), limitada
   a 200 caracteres. O Claude Code manda o pedido de permissão depois de alguns
   segundos sem digitar, então o "esperando" pode demorar um pouco a aparecer.
+- O aviso de "falhou" só sai se a sessão estava processando logo antes do
+  erro, e não repete enquanto ela continuar em erro.
 - Subagente nunca avisa.
 - O item **Notificações** no menu liga e desliga os avisos — popup e som
   juntos. A escolha fica salva no `UserDefaults` e vem ligada por padrão.

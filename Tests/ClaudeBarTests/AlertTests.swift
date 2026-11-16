@@ -10,6 +10,11 @@ struct AlertTests {
         #expect(Alert.finished.soundName != Alert.waiting.soundName)
     }
 
+    @Test func osTresAvisosTocamSonsDiferentes() {
+        let sons = [Alert.finished, .waiting, .failed].map(\.soundName)
+        #expect(Set(sons).count == 3)
+    }
+
     /// "Esperando você" toca a 75% do volume principal, como pedido.
     @Test func esperandoTocaMaisBaixo() {
         #expect(Alert.waiting.volume == 0.75)
@@ -18,9 +23,9 @@ struct AlertTests {
     }
 
     /// Nome errado dá `NSSound` nulo e o aviso sai calado — vale checar que os
-    /// dois sons existem mesmo neste macOS.
+    /// sons existem mesmo neste macOS.
     @Test func osDoisSonsExistemNoSistema() throws {
-        for alert in [Alert.finished, Alert.waiting] {
+        for alert in [Alert.finished, .waiting, .failed] {
             #expect(NSSound(named: alert.soundName) != nil, "som ausente: \(alert.soundName)")
             let arquivo = "/System/Library/Sounds/\(alert.soundName).aiff"
             #expect(FileManager.default.fileExists(atPath: arquivo))
@@ -30,6 +35,7 @@ struct AlertTests {
     @Test func cadaAvisoTemSeuTitulo() {
         #expect(Alert.finished.title == "Claude terminou")
         #expect(Alert.waiting.title.contains("esperando"))
+        #expect(Alert.failed.title.contains("falhou"))
     }
 
     /// Toggle "Notificações" desligado não pode tocar som (F01).

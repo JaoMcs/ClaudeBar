@@ -116,13 +116,14 @@ reports it and offers no install.
 
 ### Alerts
 
-There are two alerts, each with its own sound, because one is informative and
-the other blocks you:
+There are three alerts, each with its own sound: one is informative, one
+blocks you, and one tells you the reply never came:
 
 | Transition | Alert | Sound | Volume |
 |---|---|---|---|
 | working → ready | "Claude terminou" (*Claude is done*) + project name | `Glass` (bright bell) | 100% |
 | → waiting for you | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse) | 75% |
+| working → failed | "A resposta do Claude falhou" (*Claude's reply failed*) + project and error code | `Basso` (error thud) | 100% |
 
 - Sounds are played with `NSSound`, not by the notification itself — it is the
   only way to pick a different sound and volume per alert. You can tell which
@@ -131,6 +132,8 @@ the other blocks you:
   `Notification` hook (e.g. *"Claude needs your permission to use Bash"*),
   capped at 200 characters. Claude Code sends the permission prompt after a
   few seconds without typing, so "waiting" can take a moment to show up.
+- The "failed" alert only fires when the session was working right before the
+  error, and does not repeat while it stays in error.
 - Subagents never trigger alerts.
 - The **Notificações** toggle in the menu turns alerts on and off — popup and
   sound together. The choice is saved in `UserDefaults` and is on by default.

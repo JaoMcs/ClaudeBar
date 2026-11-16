@@ -3,7 +3,7 @@ import Observation
 import OSLog
 import UserNotifications
 
-/// Os dois avisos que o app dá, cada um com som próprio.
+/// Os avisos que o app dá, cada um com som próprio.
 ///
 /// A distinção importa: "terminou" é informativo, "esperando você" é
 /// bloqueante — a sessão só anda depois que você responde.
@@ -12,22 +12,28 @@ enum Alert {
     case finished
     /// A sessão está travada esperando permissão ou escolha sua.
     case waiting
+    /// A resposta falhou por erro de API (limite, sobrecarga…): o turno acabou
+    /// sem o "terminou" que você esperava.
+    case failed
 
     var title: String {
         switch self {
         case .finished: "Claude terminou"
         case .waiting: "Claude está esperando você"
+        case .failed: "A resposta do Claude falhou"
         }
     }
 
     /// Som do sistema, em `/System/Library/Sounds`.
     ///
     /// `Submarine` é um pulso grave, bem distinto do sino claro do `Glass`:
-    /// dá para saber qual dos dois aconteceu sem olhar a tela.
+    /// dá para saber qual dos dois aconteceu sem olhar a tela. `Basso` é o
+    /// som de erro do macOS.
     var soundName: String {
         switch self {
         case .finished: "Glass"
         case .waiting: "Submarine"
+        case .failed: "Basso"
         }
     }
 
@@ -35,7 +41,7 @@ enum Alert {
     /// ser o que repete enquanto você não responde.
     var volume: Float {
         switch self {
-        case .finished: 1
+        case .finished, .failed: 1
         case .waiting: 0.75
         }
     }
