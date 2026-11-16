@@ -82,8 +82,10 @@ final class HookSetup {
         let copiesBinary = action == .install && bundledBinary.map {
             !FileManager.default.contentsEqual(atPath: $0.path, andPath: stable.path)
         } == true
+        // Remover também apaga a cópia do executável: conta como mudança e aparece no alerta.
+        let removesBinary = action == .uninstall && FileManager.default.fileExists(atPath: stable.path)
 
-        guard plan.hasChanges || copiesBinary else {
+        guard plan.hasChanges || copiesBinary || removesBinary else {
             return report(title: "Nada a mudar", message: plan.settingsURL.path)
         }
 
@@ -104,9 +106,13 @@ final class HookSetup {
         if copiesBinary {
             info.append("Copia o executável do hook para \(stable.path).")
         }
+        if removesBinary {
+            info.append("Apaga o executável do hook em \(stable.path).")
+        }
         info.append(
             "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão. "
-                + "\"Remover hooks…\" no menu desfaz. O Claude Code aplica sem reiniciar."
+                + (action == .install ? "\"Remover hooks…\" no menu desfaz. " : "")
+                + "O Claude Code aplica sem reiniciar."
         )
         alert.informativeText = info.joined(separator: "\n\n")
         alert.addButton(withTitle: action == .install ? "Instalar" : "Remover")
