@@ -22,6 +22,21 @@ public enum HookInstallError: Error, Equatable, LocalizedError {
     }
 }
 
+/// O que vai ser gravado, montado antes de qualquer escrita para você ver.
+public struct HookPlan: Sendable {
+    /// Arquivo de verdade, com symlink resolvido: é ele que será reescrito.
+    public let settingsURL: URL
+    /// Bytes lidos ao montar a prévia. `apply` recusa se o arquivo mudou.
+    let original: Data
+    let updated: Data
+    /// Só o bloco `hooks`, linha a linha com `+`/`-`. O resto do arquivo
+    /// (que pode ter `env` com token) não aparece.
+    public let diff: String
+    public let hasChanges: Bool
+    /// O arquivo vai ser reformatado (ordem das chaves, espaços).
+    public let reformats: Bool
+}
+
 /// Registro dos hooks do ClaudeBar no `~/.claude/settings.json`.
 ///
 /// Só mexe nos handlers cujo executável é o do ClaudeBar — nunca no grupo
@@ -55,6 +70,98 @@ public enum HookInstaller {
         Entry(event: "Notification", args: ["waiting"]),
         Entry(event: "SessionEnd", args: ["end"]),
     ]
+
+    // MARK: - Prévia e escrita
+
+    public static func plan(
+        _ action: HookAction,
+        settings: URL = settingsURL,
+        binary: String = stableBinary.path
+    ) throws -> HookPlan {
+        // Settings em dotfiles costuma ser symlink: gravar `.atomic` no link
+        // trocaria o link por um arquivo comum e o repositório pararia de mudar.
+        let real = settings.resolvingSymlinksInPath()
+        let original = FileManager.default.fileExists(atPath: real.path) ? try Data(contentsOf: real) : Data()
+        let root = try parse(original)
+        let next = action == .install ? install(root, binary: binary) : strip(root, binary: binary)
+
+        let current = try serialize(root)
+        let updated = try serialize(next)
+        return HookPlan(
+            settingsURL: real,
+            original: original,
+            updated: updated,
+            diff: lineDiff(from: try serialize(hooksOnly(root)), to: try serialize(hooksOnly(next))),
+            hasChanges: current != updated,
+            reformats: !original.isEmpty && current != original
+        )
+    }
+
+    /// Grava exatamente o que a prévia mostrou. Devolve o backup, se havia arquivo.
+    @discardableResult
+    public static func apply(_ plan: HookPlan, backups: URL = backupsURL) throws -> URL? {
+        let manager = FileManager.default
+        let exists = manager.fileExists(atPath: plan.settingsURL.path)
+        let now = exists ? try Data(contentsOf: plan.settingsURL) : Data()
+        // O Claude Code também grava esse arquivo (`/config`, `/model`): se ele
+        // mudou desde a prévia, gravar agora apagaria a mudança dele.
+        guard now == plan.original else { throw HookInstallError.changedSinceReview }
+        guard isWritable(plan.settingsURL) else { throw HookInstallError.readOnly }
+
+        var backup: URL?
+        if exists {
+            try manager.createDirectory(
+                at: backups,
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+            let url = backups.appendingPathComponent("settings.json.\(timestamp())")
+            // O settings pode ter `env` com token: o backup já nasce `0600`.
+            guard manager.createFile(atPath: url.path, contents: now, attributes: [.posixPermissions: 0o600]) else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+            backup = url
+        }
+
+        try plan.updated.write(to: plan.settingsURL, options: .atomic)
+        if !exists {
+            try? manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: plan.settingsURL.path)
+        }
+        return backup
+    }
+
+    /// JSON para colar à mão quando o settings é gerado por outra ferramenta.
+    public static func snippet(binary: String = stableBinary.path) -> String {
+        let data = (try? serialize(install([:], binary: binary))) ?? Data()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    // MARK: - Executável estável
+
+    /// Copia o hook para o caminho estável trocando o arquivo inteiro. Copiar
+    /// por cima de um executável assinado pode derrubá-lo por assinatura (o
+    /// kernel guarda cache da assinatura): temporário + `rename`.
+    ///
+    /// Copia só os bytes (a assinatura vai junto, embutida), não os atributos
+    /// estendidos: uma cópia com `com.apple.quarantine` do DMG fica parada na
+    /// avaliação do Gatekeeper a cada execução, e o hook estoura o timeout.
+    public static func installBinary(from source: URL, to destination: URL = stableBinary) throws {
+        let manager = FileManager.default
+        guard !manager.contentsEqual(atPath: source.path, andPath: destination.path) else { return }
+
+        let folder = destination.deletingLastPathComponent()
+        try manager.createDirectory(at: folder, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        let temp = folder.appendingPathComponent(".claudebar-hook.\(UUID().uuidString)")
+        guard manager.createFile(atPath: temp.path, contents: try Data(contentsOf: source), attributes: [.posixPermissions: 0o700]) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+
+        guard rename(temp.path, destination.path) == 0 else {
+            let code = errno
+            try? manager.removeItem(at: temp)
+            throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
+        }
+    }
 
     // MARK: - Funções puras sobre o JSON
 
@@ -167,6 +274,22 @@ public enum HookInstaller {
             }
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// Gravar `.atomic` troca o arquivo pela pasta, então a pasta também precisa
+    /// ser gravável; um arquivo `0444` (gerado por outra ferramenta) é recusado.
+    static func isWritable(_ file: URL) -> Bool {
+        let manager = FileManager.default
+        guard manager.isWritableFile(atPath: file.deletingLastPathComponent().path) else { return false }
+        return !manager.fileExists(atPath: file.path) || manager.isWritableFile(atPath: file.path)
+    }
+
+    /// Com milissegundos: duas gravações no mesmo segundo não sobrescrevem o backup.
+    private static func timestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
+        return formatter.string(from: Date())
     }
 
     private static func hooksOnly(_ root: [String: Any]) -> [String: Any] {
