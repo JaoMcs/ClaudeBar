@@ -37,6 +37,26 @@ public struct HookPlan: Sendable {
     public let reformats: Bool
 }
 
+/// Em que pé está a integração. Tudo que não é `ok`/`notInstalled` vira oferta
+/// de reparo no app; a detecção em si nunca grava nada.
+public enum IntegrationState: Equatable, Sendable {
+    case notInstalled
+    case ok
+    /// Hooks registrados, mas a cópia estável do executável sumiu.
+    case binaryMissing
+    /// A cópia estável difere do executável deste `.app` (o app foi atualizado).
+    case binaryOutdated
+    /// Faltam entradas, ou sobram entradas de outra versão.
+    case hooksOutdated
+    /// Entradas do `install.sh` antigo: shell form, caminho dentro do bundle.
+    case legacyHooks
+    case invalidSettings
+    /// Precisa gravar, mas o arquivo (já sem symlink) não é gravável.
+    case readOnlySettings
+    /// `disableAllHooks: true` no settings do usuário. Não mexemos nisso.
+    case hooksDisabled
+}
+
 /// Registro dos hooks do ClaudeBar no `~/.claude/settings.json`.
 ///
 /// Só mexe nos handlers cujo executável é o do ClaudeBar — nunca no grupo
@@ -142,6 +162,44 @@ public enum HookInstaller {
     public static func snippet(binary: String = stableBinary.path) -> String {
         let data = (try? serialize(install([:], binary: binary))) ?? Data()
         return String(decoding: data, as: UTF8.self)
+    }
+
+    // MARK: - Detecção
+
+    /// Só leitura. `contentsEqual` lê os dois executáveis: chamar no launch,
+    /// depois de uma ação e no "Atualizar", não a cada render.
+    public static func state(
+        bundledBinary: URL?,
+        settings: URL = settingsURL,
+        binary: URL = stableBinary
+    ) -> IntegrationState {
+        let manager = FileManager.default
+        let real = settings.resolvingSymlinksInPath()
+        let data = manager.fileExists(atPath: real.path) ? try? Data(contentsOf: real) : Data()
+        guard let data, let root = try? parse(data) else { return .invalidSettings }
+        if root["disableAllHooks"] as? Bool == true { return .hooksDisabled }
+
+        let ours = handlers(in: root).filter { isOurs($0.handler, binary: binary.path) }
+        let current = ours.filter { $0.handler["args"] != nil && $0.handler["command"] as? String == binary.path }
+        let complete = current.count == entries.count && entries.allSatisfy { entry in
+            current.contains { $0.event == entry.event && $0.handler["args"] as? [String] == entry.args }
+        }
+        let settingsState: IntegrationState? =
+            if ours.isEmpty { .notInstalled }
+            else if current.count != ours.count { .legacyHooks }
+            else if !complete { .hooksOutdated }
+            else { nil }
+        // `readOnlySettings` só quando há algo a gravar. Sem `~/.claude` ainda,
+        // `apply` cria a pasta: não é somente leitura.
+        if let settingsState {
+            let folderMissing = !manager.fileExists(atPath: real.deletingLastPathComponent().path)
+            return folderMissing || isWritable(real) ? settingsState : .readOnlySettings
+        }
+        guard manager.isExecutableFile(atPath: binary.path) else { return .binaryMissing }
+        if let bundledBinary, !manager.contentsEqual(atPath: bundledBinary.path, andPath: binary.path) {
+            return .binaryOutdated
+        }
+        return .ok
     }
 
     // MARK: - Executável estável
