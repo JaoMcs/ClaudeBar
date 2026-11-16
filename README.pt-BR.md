@@ -46,6 +46,7 @@ Marcar tudo como visto
 Notificações  ✓
 Ver exemplo de popup
 ──────────────
+Integração com o Claude Code: ok  ▸
 Atualizar
 Sair do ClaudeBar        ⌘Q
 ```
@@ -58,6 +59,39 @@ Cada linha de sessão abre um submenu com:
 
 O app não tem ícone no Dock nem janela; vive só na barra de menu
 (`LSUIElement`).
+
+### Integração com o Claude Code
+
+O submenu **Integração** mostra se os hooks estão no lugar e deixa você cuidar
+deles sem o terminal. O título é o estado: `ok`, `hooks não instalados` ou
+`⚠︎ precisa de atenção`; a primeira linha lá dentro diz o que está errado.
+
+- **Instalar hooks… / Reinstalar hooks…** — registra os hooks do ClaudeBar e
+  copia o executável do hook para `~/.claude/claudebar/bin/`. Também é assim
+  que se repara entrada faltando, desatualizada ou no formato antigo.
+- **Remover hooks…** — tira só as entradas do ClaudeBar e a cópia do
+  executável.
+- **Copiar JSON dos hooks** — aparece no lugar de instalar quando o
+  `settings.json` é somente leitura (gerado por dotfiles, Nix…): copia o
+  executável e põe o JSON do bloco `hooks` na área de transferência, para
+  você colar na ferramenta que gera o arquivo.
+- **Atualizar** também confere a integração de novo.
+
+Nada é gravado sem um alerta antes. Ele mostra o arquivo de verdade (symlink
+resolvido), o diff exato do bloco `hooks` — nunca o resto do arquivo, que pode
+ter token em `env` —, onde fica o backup e se o arquivo vai ser reformatado.
+Só o botão **Instalar** / **Remover** grava. Se o `settings.json` mudar com o
+alerta aberto (o Claude Code também grava nele), você vê uma prévia nova em
+vez de uma escrita às cegas.
+
+Na primeira abertura, e sempre que a integração precisar de reparo, o mesmo
+alerta aparece sozinho **uma vez**, com **Pular** no lugar de cancelar. Pular
+não grava nada e o app não pergunta de novo enquanto o estado não mudar; o
+submenu continua lá. Depois de atualizar o `.app`, a cópia do executável fica
+mais velha que a do bundle, e o app oferece atualizá-la do mesmo jeito.
+
+Com `settings.json` inválido ou `disableAllHooks: true`, o app só avisa e não
+oferece instalar.
 
 ### Avisos
 
@@ -245,6 +279,7 @@ Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/py
 Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   ClaudeBarApp.swift          ponto de entrada, rótulo da barra (símbolo + número)
   MenuContent.swift           o menu
+  HookSetup.swift             estado da integração, alerta com o diff, instala/remove no clique
   SessionStore.swift          liga as origens às regras e detecta transições
   SessionMerge.swift          as regras, em funções puras (é o que os testes cobrem)
   SessionRow.swift            linha do menu: cruzamento das duas origens
@@ -299,7 +334,8 @@ Os hooks não apontam para dentro do `.app`: rodam uma cópia em
 `ClaudeBar.app` não os quebra. Depois de atualizar o app, a cópia fica mais
 velha que a do bundle; o app detecta isso (e entradas ausentes, legadas ou
 desatualizadas, `settings.json` somente leitura, `disableAllHooks`) sem
-gravar nada.
+gravar nada, e oferece o reparo uma vez (veja
+[Integração com o Claude Code](#integração-com-o-claude-code)).
 
 ## Desenvolvimento
 
