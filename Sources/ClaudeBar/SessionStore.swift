@@ -174,22 +174,17 @@ final class SessionStore {
         // Subagente é trabalho delegado: aparece no menu, mas não avisa nada.
         for row in merged where !row.isSubagent {
             let previous = previousStates[row.sessionId]
-            guard previous != nil, previous != row.state else { continue }
+            guard SessionMerge.relights(from: previous, to: row.state) else { continue }
+            acknowledged.remove(row.sessionId)
 
             switch row.state {
-            case .idle where previous == .working:
-                acknowledged.remove(row.sessionId)
+            case .idle:
                 notifier.post(.finished, body: row.name)
             case .waiting:
-                acknowledged.remove(row.sessionId)
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
                 notifier.post(.waiting, body: row.message ?? row.name)
-            case .error:
-                // Falha nova acende o ícone mesmo que a sessão já tenha sido
-                // marcada como vista antes do prompt que falhou.
-                acknowledged.remove(row.sessionId)
-            default:
+            case .error, .working:
                 break
             }
         }

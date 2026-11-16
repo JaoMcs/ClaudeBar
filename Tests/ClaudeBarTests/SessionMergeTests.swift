@@ -137,6 +137,19 @@ struct ErrorStateTests {
         SessionStatus(sessionId: sessionId, state: state, cwd: "/Users/dev/code", pid: 1, updatedAt: Date())
     }
 
+    /// "Marcar como visto" vale para a falha que você viu, não para a próxima.
+    @Test func falhaNovaReacendeSessaoJaVista() {
+        #expect(SessionMerge.relights(from: .working, to: .error))
+        #expect(SessionMerge.relights(from: .idle, to: .error))
+        #expect(SessionMerge.relights(from: .working, to: .idle))
+        #expect(SessionMerge.relights(from: .working, to: .waiting))
+        // Sem transição, primeira leitura ou volta ao trabalho: fica como está.
+        #expect(!SessionMerge.relights(from: .error, to: .error))
+        #expect(!SessionMerge.relights(from: nil, to: .error))
+        #expect(!SessionMerge.relights(from: .error, to: .working))
+        #expect(!SessionMerge.relights(from: .error, to: .idle))
+    }
+
     @Test func erroNaoVistoVenceProntoMasPerdeParaEsperando() {
         let comPronto = SessionMerge.rows(agents: [], statuses: [hook("e", .error), hook("p", .idle)])
         #expect(SessionMerge.barState(rows: comPronto, acknowledged: []) == .error)

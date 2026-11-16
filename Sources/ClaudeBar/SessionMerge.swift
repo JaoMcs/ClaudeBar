@@ -64,6 +64,20 @@ enum SessionMerge {
         }
     }
 
+    /// A transição reacende o destaque de uma sessão já marcada como vista?
+    ///
+    /// Sem `default`: estado novo não compila até alguém decidir aqui.
+    static func relights(from previous: SessionState?, to state: SessionState) -> Bool {
+        guard let previous, previous != state else { return false }
+        switch state {
+        case .idle: return previous == .working
+        // Falha nova acende o ícone mesmo que a sessão já tenha sido marcada
+        // como vista antes do prompt que falhou.
+        case .waiting, .error: return true
+        case .working: return false
+        }
+    }
+
     /// O estado do ícone. Subagente é ignorado: é trabalho delegado, não uma
     /// sessão sua esperando resposta.
     static func barState(rows: [SessionRow], acknowledged: Set<String>) -> BarState {
