@@ -4,7 +4,7 @@ import Foundation
 // CLI chamado pelos hooks do Claude Code. Lê o payload JSON no stdin e grava
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
-// Uso: claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid <pid do claude>]
+// Uso: claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
 //      claudebar-hook install|uninstall [--dry-run]
 
 /// Campos do payload que os hooks do Claude Code entregam no stdin.
@@ -93,6 +93,16 @@ private func run() {
 
     guard let state = SessionState(rawValue: command) else {
         fail("estado inválido \"\(command)\"")
+    }
+
+    // `PostToolUse` roda a cada ferramenta. Só interessa quando ela tira a sessão
+    // de "esperando" (permissão aprovada); no resto do turno o arquivo já diz
+    // `working`, e regravar só mexeria no `updatedAt` e acordaria o app à toa.
+    // Arquivo ausente ou ilegível: não grava (o `Stop` acerta o estado depois).
+    if arguments.contains("--if-waiting") {
+        let current = (try? Data(contentsOf: StatusDirectory.fileURL(sessionId: sessionId)))
+            .flatMap { try? StatusDirectory.decoder.decode(SessionStatus.self, from: $0) }
+        guard current?.state == .waiting else { return }
     }
 
     // O tipo vem do argumento que o instalador escreveu (um matcher por tipo),
