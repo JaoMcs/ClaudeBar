@@ -76,10 +76,8 @@ bloqueia:
   `Notification` (ex.: *"Claude needs your permission to use Bash"*), limitada
   a 200 caracteres.
 - Subagente nunca avisa.
-- O item **Notificações** no menu liga e desliga o popup. A escolha fica salva
-  no `UserDefaults` e vem ligada por padrão. Atenção: no código atual o som
-  continua tocando com o item desligado (`Notifier.post` toca o som antes de
-  checar o toggle).
+- O item **Notificações** no menu liga e desliga os avisos — popup e som
+  juntos. A escolha fica salva no `UserDefaults` e vem ligada por padrão.
 
 #### Por que o popup é desenhado pelo app
 

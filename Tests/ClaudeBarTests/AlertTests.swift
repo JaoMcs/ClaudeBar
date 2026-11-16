@@ -31,4 +31,20 @@ struct AlertTests {
         #expect(Alert.finished.title == "Claude terminou")
         #expect(Alert.waiting.title.contains("esperando"))
     }
+
+    /// Toggle "Notificações" desligado não pode tocar som (F01).
+    @MainActor @Test func desligadoNaoTocaSom() throws {
+        let suite = "claudebar.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        var tocados: [Alert] = []
+        let notifier = Notifier(defaults: defaults, playSound: { tocados.append($0) })
+        notifier.setEnabled(false)
+
+        notifier.post(.finished, body: "projeto")
+        notifier.post(.waiting, body: "Claude needs your permission to use Bash")
+
+        #expect(tocados.isEmpty)
+    }
 }
