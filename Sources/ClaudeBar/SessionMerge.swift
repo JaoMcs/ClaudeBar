@@ -8,11 +8,18 @@ enum SessionMerge {
     ///
     /// O CLI manda em *quais* sessões existem; o hook, quando presente, manda no
     /// *estado* daquela sessão. Sessão que só os hooks conhecem entra do mesmo
-    /// jeito — se o CLI estiver indisponível, nada se perde.
-    static func rows(agents: [AgentSession], statuses: [SessionStatus]) -> [SessionRow] {
+    /// jeito, com duas exceções quando o CLI já respondeu (`agents != nil`):
+    /// - `pid 0`: sem processo para conferir, o CLI é a única prova de vida;
+    /// - PID que o CLI lista com outro `sessionId`: sobra de `/clear` ou
+    ///   `/resume` cujo `SessionEnd` não rodou.
+    ///
+    /// `agents == nil` é "CLI ainda não respondeu": aí nada se esconde.
+    static func rows(agents: [AgentSession]?, statuses: [SessionStatus]) -> [SessionRow] {
         let byId = Dictionary(statuses.map { ($0.sessionId, $0) }, uniquingKeysWith: { first, _ in first })
+        let listed = agents ?? []
+        let listedPids = Set(listed.compactMap(\.pid))
 
-        var merged: [SessionRow] = agents.compactMap { agent in
+        var merged: [SessionRow] = listed.compactMap { agent in
             guard let sessionId = agent.identifier else { return nil }
             let hook = byId[sessionId]
             return SessionRow(
@@ -33,6 +40,10 @@ enum SessionMerge {
         let known = Set(merged.map(\.sessionId))
         merged += statuses
             .filter { !known.contains($0.sessionId) }
+            .filter { status in
+                guard agents != nil else { return true }
+                return status.pid > 0 && !listedPids.contains(status.pid)
+            }
             .map { status in
                 SessionRow(
                     sessionId: status.sessionId,

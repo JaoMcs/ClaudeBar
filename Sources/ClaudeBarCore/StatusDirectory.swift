@@ -55,23 +55,36 @@ public enum StatusDirectory {
         try? FileManager.default.removeItem(at: fileURL(sessionId: sessionId))
     }
 
-    /// Lê todas as sessões, descartando arquivos inválidos ou de processos mortos.
-    public static func readAll() -> [SessionStatus] {
+    /// Lê todas as sessões, apagando arquivos inválidos e os que `isAlive` dá
+    /// como mortos.
+    ///
+    /// A regra de vida vem de fora porque depende de inspecionar processos, e o
+    /// hook (que também usa este target) não precisa disso. `directory` existe
+    /// para os testes usarem uma pasta temporária.
+    public static func readAll(
+        in directory: URL = url,
+        isAlive: (SessionStatus) -> Bool
+    ) -> [SessionStatus] {
         let files = (try? FileManager.default.contentsOfDirectory(
-            at: url,
+            at: directory,
             includingPropertiesForKeys: nil
         )) ?? []
 
         return files
             .filter { $0.pathExtension == "json" }
             .compactMap { file in
+                // Nome que não bate com o `sessionId` (ou `unknown.json`, gravado
+                // por hook antigo quando o payload falhava) não é de sessão nenhuma.
                 guard let data = try? Data(contentsOf: file),
-                      let status = try? decoder.decode(SessionStatus.self, from: data)
+                      let status = try? decoder.decode(SessionStatus.self, from: data),
+                      case let name = sanitize(status.sessionId),
+                      name != "unknown",
+                      file.lastPathComponent == "\(name).json"
                 else {
                     try? FileManager.default.removeItem(at: file)
                     return nil
                 }
-                guard status.isAlive else {
+                guard isAlive(status) else {
                     try? FileManager.default.removeItem(at: file)
                     return nil
                 }

@@ -45,12 +45,6 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         return name.isEmpty ? cwd : name
     }
 
-    /// `false` quando o processo do Claude morreu sem disparar o hook de saída.
-    public var isAlive: Bool {
-        guard pid > 0 else { return true }
-        return kill(pid, 0) == 0 || errno == EPERM
-    }
-
     public init(
         sessionId: String,
         state: SessionState,

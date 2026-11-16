@@ -222,7 +222,11 @@ Two design choices that avoid classic problems:
   app never reads half a JSON file.
 - **The PID is stored with the state.** A session that dies from `kill` or a
   crash never fires `SessionEnd` and would leave a file saying "working"
-  forever. The app checks `kill(pid, 0)` and deletes orphaned files.
+  forever. The app deletes the file when the process is gone, when the PID now
+  belongs to another program, or when it belongs to another `claude` that
+  started after the file was written. Without that proof (no information), the
+  file stays. A session with `pid 0` is only hidden from the list once the CLI
+  answers without it.
 
 The `claude` binary is looked up in known locations (`~/.local/bin`,
 `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`) and, as a last resort, with
@@ -235,7 +239,7 @@ The `claude` binary is looked up in known locations (`~/.local/bin`,
 Package.swift                 SwiftPM, macOS 14, 3 targets + tests
 Sources/ClaudeBarCore/        shared model + reading/writing the state directory
   HookInstaller.swift         adds/removes only ClaudeBar's hooks in settings.json (diff, backup)
-  SessionStatus.swift         session state (working/idle/waiting), PID liveness
+  SessionStatus.swift         session state (working/idle/waiting), PID
   StatusDirectory.swift       ~/.claude/claudebar: permissions, atomic writes, cleanup
 Sources/claudebar-hook/       CLI called by the hooks (no jq/python needed)
   main.swift                  reads the hook JSON from stdin, writes/deletes the state file
@@ -304,12 +308,14 @@ swift build                  # build
 swift test                   # merge rules, count, icon, alerts, termination
 ./scripts/build-app.sh       # build the .app bundle
 
-# simulate a session without Claude
-echo '{"session_id":"test","cwd":"/tmp"}' | \
-  build/ClaudeBar.app/Contents/MacOS/claudebar-hook working --pid 1
-echo '{"session_id":"test","cwd":"/tmp"}' | \
-  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid 1
+# change the state of a real session (the first one the CLI lists with a pid)
+s=$(claude agents --json | jq -c '[.[] | select(.pid)][0]')
+echo "$s" | jq -c '{session_id: .sessionId, cwd}' | \
+  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid "$(echo "$s" | jq .pid)"
 ```
+
+A fake PID does not work: the app deletes a file whose PID is not a running
+`claude` (PID 1 is `launchd`).
 
 The version lives in `VERSION` (X.Y.Z). The build number is the commit count
 (`git rev-list --count HEAD`); shallow clones restart the count.
@@ -321,7 +327,8 @@ claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid 
 claudebar-hook install|uninstall [--dry-run]
 ```
 
-It reads the hook payload (`session_id`, `cwd`, `message`) from stdin. If it
+It reads the hook payload (`session_id`, `cwd`, `message`) from stdin. Without
+a `session_id` it writes nothing and exits 0. If it
 fails to write, it only logs to stderr and exits cleanly — a hook must never
 break the Claude session. Without `--pid` (exec form has no `$PPID`) it uses
 its parent process, but only if that is a `claude` executable; otherwise it

@@ -221,7 +221,10 @@ Duas decisões que evitam problemas clássicos:
   A escrita ainda é atômica, para o app nunca ler um JSON pela metade.
 - **PID gravado junto.** Sessão que morre por `kill` ou crash nunca dispara o
   `SessionEnd` e deixaria um arquivo eterno dizendo "processando". O app checa
-  `kill(pid, 0)` e apaga o que ficou órfão.
+  apaga o arquivo quando o processo morreu, quando o PID virou outro programa ou
+  quando virou outro `claude` que nasceu depois da gravação. Sem essa prova (sem
+  informação), o arquivo fica. Sessão com `pid 0` só some da lista quando o CLI
+  responde sem ela.
 
 O caminho do `claude` é resolvido em caminhos conhecidos (`~/.local/bin`,
 `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`) e, como último recurso, via
@@ -234,7 +237,7 @@ seu shell.
 Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
   HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
-  SessionStatus.swift         estado da sessão (working/idle/waiting), PID vivo
+  SessionStatus.swift         estado da sessão (working/idle/waiting), PID
   StatusDirectory.swift       ~/.claude/claudebar: permissões, escrita atômica, limpeza
 Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/python)
   main.swift                  lê o JSON do hook no stdin, grava/apaga o arquivo de estado
@@ -303,12 +306,14 @@ swift build                  # compila
 swift test                   # regras de merge, contagem, ícone, avisos, finalização
 ./scripts/build-app.sh       # monta o .app
 
-# simula uma sessão sem precisar do Claude
-echo '{"session_id":"teste","cwd":"/tmp"}' | \
-  build/ClaudeBar.app/Contents/MacOS/claudebar-hook working --pid 1
-echo '{"session_id":"teste","cwd":"/tmp"}' | \
-  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid 1
+# muda o estado de uma sessão real (a primeira do CLI com pid)
+s=$(claude agents --json | jq -c '[.[] | select(.pid)][0]')
+echo "$s" | jq -c '{session_id: .sessionId, cwd}' | \
+  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid "$(echo "$s" | jq .pid)"
 ```
+
+PID inventado não funciona: o app apaga o arquivo cujo PID não é um `claude`
+rodando (o PID 1 é o `launchd`).
 
 A versão fica em `VERSION` (X.Y.Z). O número de build é a contagem de commits
 (`git rev-list --count HEAD`); clones rasos reiniciam a contagem.
@@ -320,7 +325,8 @@ claudebar-hook <working|idle|waiting|end> [--kind <permission|question>] [--pid 
 claudebar-hook install|uninstall [--dry-run]
 ```
 
-Ele lê o payload do hook (`session_id`, `cwd`, `message`) no stdin. Se falhar
+Ele lê o payload do hook (`session_id`, `cwd`, `message`) no stdin. Sem
+`session_id`, não grava nada e sai 0. Se falhar
 ao gravar, só registra no stderr e sai normalmente — um hook nunca deve
 derrubar a sessão do Claude. Sem `--pid` (exec form não tem `$PPID`) ele usa o
 processo pai, mas só se for um executável `claude`; senão grava `pid: 0`.
