@@ -19,6 +19,14 @@ private func handlers(_ root: [String: Any], _ event: String) -> [[String: Any]]
     return groups.flatMap { $0["hooks"] as? [[String: Any]] ?? [] }
 }
 
+/// Pasta temporária própria: `NSHomeDirectory()` ignora `$HOME`, então nada
+/// aqui pode usar os caminhos padrão.
+private func tempFolder() throws -> URL {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("claudebar-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    return url
+}
+
 @Suite("Merge aditivo dos hooks")
 struct HookMergeTests {
     @Test func arquivoAusenteGanhaSoOsNossos() throws {
@@ -102,5 +110,122 @@ struct HookMergeTests {
     @Test func diffPorLinha() {
         let diff = HookInstaller.lineDiff(from: Data("a\nb\nc".utf8), to: Data("a\nx\nc".utf8))
         #expect(diff == "  a\n- b\n+ x\n  c")
+    }
+}
+
+@Suite("Prévia e escrita do settings.json")
+struct HookWriteTests {
+    @Test func gravaPeloSymlinkComBackup() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let real = folder.appendingPathComponent("dotfiles-settings.json")
+        let link = folder.appendingPathComponent("settings.json")
+        let backups = folder.appendingPathComponent("backups")
+        try Data(#"{"model":"opus"}"#.utf8).write(to: real)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: real)
+
+        let plan = try HookInstaller.plan(.install, settings: link, binary: binary)
+        #expect(plan.hasChanges)
+        #expect(plan.diff.contains("+ "))
+        #expect(!plan.diff.contains("opus"), "o diff mostra só o bloco hooks")
+        let backup = try #require(try HookInstaller.apply(plan, backups: backups))
+
+        // O link continua link, e quem mudou foi o arquivo de verdade.
+        let attributes = try FileManager.default.attributesOfItem(atPath: link.path)
+        #expect(attributes[.type] as? FileAttributeType == .typeSymbolicLink)
+        #expect(handlers(try json(String(decoding: Data(contentsOf: real), as: UTF8.self)), "Stop").count == 1)
+
+        let mode = try FileManager.default.attributesOfItem(atPath: backup.path)[.posixPermissions] as? Int
+        #expect(mode == 0o600)
+        #expect(try Data(contentsOf: backup) == Data(#"{"model":"opus"}"#.utf8))
+    }
+
+    @Test func recusaSeMudouDepoisDaPrevia() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("settings.json")
+        try Data("{}".utf8).write(to: settings)
+        let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
+        try Data(#"{"model":"sonnet"}"#.utf8).write(to: settings)
+
+        #expect(throws: HookInstallError.changedSinceReview) {
+            try HookInstaller.apply(plan, backups: folder)
+        }
+        #expect(try Data(contentsOf: settings) == Data(#"{"model":"sonnet"}"#.utf8))
+    }
+
+    @Test func removerSemNadaNossoNaoMuda() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("settings.json")
+        try Data(#"{ "model" : "opus" }"#.utf8).write(to: settings)
+        let plan = try HookInstaller.plan(.uninstall, settings: settings, binary: binary)
+        #expect(!plan.hasChanges)
+    }
+
+    /// Arquivo `0444` numa pasta gravável: recusa e não deixa backup.
+    @Test func arquivoSomenteLeituraRecusa() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("settings.json")
+        let backups = folder.appendingPathComponent("backups")
+        try Data("{}".utf8).write(to: settings)
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: settings.path)
+        let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
+
+        #expect(throws: HookInstallError.readOnly) {
+            try HookInstaller.apply(plan, backups: backups)
+        }
+        #expect(!FileManager.default.fileExists(atPath: backups.path))
+        #expect(try Data(contentsOf: settings) == Data("{}".utf8))
+    }
+
+    /// Sem `~/.claude` ainda: a pasta nasce `0700` em vez de cair em "somente leitura".
+    @Test func criaPastaQueNaoExiste() throws {
+        let folder = try tempFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("novo/settings.json")
+        let plan = try HookInstaller.plan(.install, settings: settings, binary: binary)
+        #expect(try HookInstaller.apply(plan, backups: folder) == nil)
+
+        let manager = FileManager.default
+        #expect(try manager.attributesOfItem(atPath: settings.deletingLastPathComponent().path)[.posixPermissions] as? Int == 0o700)
+        #expect(try manager.attributesOfItem(atPath: settings.path)[.posixPermissions] as? Int == 0o600)
+    }
+}
+
+@Suite("Executável estável e detecção")
+struct HookStateTests {
+    /// Monta settings + executáveis numa pasta temporária.
+    private func fixture(settings: String) throws -> (settings: URL, bundled: URL, stable: URL) {
+        let folder = try tempFolder()
+        let bundled = folder.appendingPathComponent("bundle-hook")
+        try Data("v1".utf8).write(to: bundled)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: bundled.path)
+        let stable = folder.appendingPathComponent("bin/claudebar-hook")
+        let file = folder.appendingPathComponent("settings.json")
+        try Data(settings.utf8).write(to: file)
+        return (file, bundled, stable)
+    }
+
+    @Test func copiaComPermissao0700ESubstituiInteiro() throws {
+        let f = try fixture(settings: "{}")
+        defer { try? FileManager.default.removeItem(at: f.settings.deletingLastPathComponent()) }
+        let quarentena = Array("0081;00000000;Safari;".utf8)
+        #expect(setxattr(f.bundled.path, "com.apple.quarantine", quarentena, quarentena.count, 0, 0) == 0)
+        try HookInstaller.installBinary(from: f.bundled, to: f.stable)
+        #expect(FileManager.default.contentsEqual(atPath: f.bundled.path, andPath: f.stable.path))
+        // A quarentena do DMG não vai junto: com ela o exec trava no Gatekeeper.
+        #expect(getxattr(f.stable.path, "com.apple.quarantine", nil, 0, 0, 0) == -1)
+        let mode = try FileManager.default.attributesOfItem(atPath: f.stable.path)[.posixPermissions] as? Int
+        #expect(mode == 0o700)
+
+        // Versão nova: troca por rename, inode novo.
+        let before = try FileManager.default.attributesOfItem(atPath: f.stable.path)[.systemFileNumber] as? Int
+        try Data("v2".utf8).write(to: f.bundled)
+        try HookInstaller.installBinary(from: f.bundled, to: f.stable)
+        let after = try FileManager.default.attributesOfItem(atPath: f.stable.path)[.systemFileNumber] as? Int
+        #expect(before != after)
+        #expect(try Data(contentsOf: f.stable) == Data("v2".utf8))
     }
 }
