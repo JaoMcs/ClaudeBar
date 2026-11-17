@@ -72,10 +72,10 @@ Quit ClaudeBar           ⌘Q
 
 The limit lines come from `~/.claude/claudebar/limits.json`, written by
 `claudebar-hook statusline` (see [Command line](#command-line)).
-Without data they read *unavailable*, never 0%. A window that
-already reset reads *reset, waiting for new data* until the next Claude Code reply brings a fresh number. The age is not
-a live clock: it is computed when the menu is built and does not tick while
-the menu stays open.
+Without data they read *unavailable*, never 0%. A window that already reset
+reads *reset, waiting for new data* until the next Claude Code reply brings a
+fresh number. The age is not a live clock: it is computed when the menu is
+built and does not tick while the menu stays open.
 
 Each session row opens a submenu with:
 
@@ -495,9 +495,9 @@ Things to know:
 - Claude Code reloads `settings.json`, so open sessions pick the hooks up
   (folders must be trusted).
 
-To start at login: **Settings… → Open at login** (off by
-default). If macOS asks for approval, the window links to System Settings →
-Login Items. After rebuilding the app, turn it on again.
+To start at login: **Settings… → Open at login** (off by default). If macOS
+asks for approval, the window links to System Settings → Login Items. After
+rebuilding the app, turn it on again.
 
 ### Moving or updating the app
 
