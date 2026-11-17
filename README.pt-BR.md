@@ -454,6 +454,8 @@ Uso do CLI do hook:
 ```
 claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
 claudebar-hook install|uninstall [--dry-run]
+claudebar-hook status [--json]
+claudebar-hook next
 ```
 
 Ele lê o payload do hook (`session_id`, `cwd`, `message`; com `error`,
@@ -471,6 +473,33 @@ bloqueia o prompt.
 `install`/`uninstall` mostram o diff do bloco `hooks` e aplicam com backup;
 `--dry-run` só mostra. O `install` também se copia para
 `~/.claude/claudebar/bin/claudebar-hook`; o `uninstall` apaga essa cópia.
+
+### Linha de comando
+
+`status` e `next` são para você digitar (ou usar em script); não leem o stdin
+e não mudam nada nas suas sessões.
+
+```bash
+alias cb=~/.claude/claudebar/bin/claudebar-hook
+
+cb status          # uma sessão por linha: estado<TAB>projeto<TAB>pasta
+cb status --json   # os mesmos dados, no formato dos arquivos de estado
+cb next            # traz para a frente a sessão que espera há mais tempo
+```
+
+O `next` imprime o nome do projeto e sai 0; sem sessão esperando (ou quando
+não acha o app que a hospeda) diz o motivo e sai 1. Dentro do tmux ele troca o
+cliente para o pane da sessão, como o "ir para a sessão" do menu.
+
+Na barra do tmux, o número de sessões esperando você:
+
+```
+set -g status-right '#(~/.claude/claudebar/bin/claudebar-hook status | grep -c ^waiting)'
+```
+
+O `status` só vê sessões que já dispararam algum hook: ele lê os arquivos de
+estado e não chama o `claude agents`. Como o app, apaga arquivo de estado
+inválido ou cujo processo não existe mais.
 
 `swift run ClaudeBar` também funciona. Sem bundle não há notificação nativa,
 então o app usa o popup próprio e o som.
