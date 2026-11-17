@@ -84,8 +84,8 @@ final class HookSetup {
             !FileManager.default.contentsEqual(atPath: $0.path, andPath: stable.path)
         } == true
         // Remover também apaga a cópia do executável: conta como mudança e aparece no alerta.
-        // Com o statusline instalado ela fica: é ela que imprime o rodapé.
-        let removesBinary = action == .uninstall && !plan.statusLineInstalled
+        // Se o statusline ou os hooks ainda a chamam, ela fica.
+        let removesBinary = !installs && !plan.binaryInUse
             && FileManager.default.fileExists(atPath: stable.path)
 
         guard plan.hasChanges || copiesBinary || removesBinary else {

@@ -197,6 +197,7 @@ struct StatusLineInstallTests {
 
         let install = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
         #expect(install.diff.contains("statusline"))
+        #expect(install.binaryInUse)
         try HookInstaller.apply(install, backups: backups, original: original)
         #expect(try statusLine()?["command"] as? String == HookInstaller.shellQuoted(binary) + " statusline")
         #expect(try statusLine()?["padding"] as? Int == 2)
@@ -209,7 +210,17 @@ struct StatusLineInstallTests {
         let again = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
         #expect(!again.hasChanges)
 
+        // Com os hooks ainda instalados o executável fica; sem eles, sai.
+        let hooks = try HookInstaller.plan(.install, settings: settings, binary: binary, original: original)
+        try HookInstaller.apply(hooks, backups: backups, original: original)
+        #expect(try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original).binaryInUse)
+        try HookInstaller.apply(
+            try HookInstaller.plan(.uninstall, settings: settings, binary: binary, original: original),
+            backups: backups, original: original
+        )
+
         let uninstall = try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original)
+        #expect(!uninstall.binaryInUse)
         try HookInstaller.apply(uninstall, backups: backups, original: original)
         #expect(try statusLine() == before)
         #expect(!manager.fileExists(atPath: original.path))

@@ -65,7 +65,7 @@ private func manage(_ action: HookAction, dryRun: Bool) {
         let plan = try HookInstaller.plan(action)
         print(plan.hasChanges ? plan.diff : "Nada a mudar em \(plan.settingsURL.path).")
         if plan.hasChanges, plan.reformats {
-            print("\nO arquivo será reformatado (ordem das chaves); fora de \"hooks\" o conteúdo não muda.")
+            print("\nO arquivo será reformatado (ordem das chaves); fora de \"hooks\" e \"statusLine\" o conteúdo não muda.")
         }
         guard !dryRun else { return }
 
@@ -77,8 +77,8 @@ private func manage(_ action: HookAction, dryRun: Bool) {
         if plan.hasChanges, let backup = try HookInstaller.apply(plan) {
             print("Backup: \(backup.path)")
         }
-        // Com o statusline ainda instalado, o executável fica: é ele que imprime o rodapé.
-        if action == .uninstall, !plan.statusLineInstalled {
+        // Se o statusline ou os hooks ainda o chamam, o executável fica.
+        if action == .uninstall || action == .uninstallStatusLine, !plan.binaryInUse {
             try? FileManager.default.removeItem(at: HookInstaller.stableBinary)
         }
     } catch {

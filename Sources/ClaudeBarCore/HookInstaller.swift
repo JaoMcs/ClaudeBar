@@ -41,9 +41,9 @@ public struct HookPlan: Sendable {
     /// Ações de statusline: o que fazer com `statusline-original.json`.
     /// `.save` grava antes do settings; `.remove` apaga depois.
     public let statusLineOriginal: StatusLineInstall.Original?
-    /// O `statusLine` continua apontando para o hook: remover os hooks não pode
-    /// apagar o executável, senão o rodapé fica em branco.
-    public let statusLineInstalled: Bool
+    /// Depois de gravar, o `statusLine` ou algum hook ainda chama o executável
+    /// estável: remover um dos dois não pode apagá-lo. Sem nenhum, ele sai.
+    public let binaryInUse: Bool
 }
 
 /// Em que pé está a integração. Tudo que não é `ok`/`notInstalled` vira oferta
@@ -157,7 +157,8 @@ public enum HookInstaller {
             hasChanges: current != updated,
             reformats: !bytes.isEmpty && current != bytes,
             statusLineOriginal: statusLineOriginal,
-            statusLineInstalled: StatusLineInstall.isOurs(next["statusLine"])
+            binaryInUse: StatusLineInstall.isOurs(next["statusLine"])
+                || handlers(in: next).contains { isOurs($0.handler, binary: binary) }
         )
     }
 
@@ -207,8 +208,10 @@ public enum HookInstaller {
                 withIntermediateDirectories: true,
                 attributes: [.posixPermissions: 0o700]
             )
-            try serialize(object).write(to: original, options: .atomic)
-            try manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: original.path)
+            // Já nasce `0600`, como o backup: nenhum instante com a permissão do umask.
+            guard manager.createFile(atPath: original.path, contents: try serialize(object), attributes: [.posixPermissions: 0o600]) else {
+                throw CocoaError(.fileWriteUnknown)
+            }
         }
 
         try plan.updated.write(to: plan.settingsURL, options: .atomic)
