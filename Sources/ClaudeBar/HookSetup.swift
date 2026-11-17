@@ -76,31 +76,37 @@ final class HookSetup {
         }
 
         let stable = HookInstaller.stableBinary
-        if action == .install, bundledBinary == nil, !FileManager.default.isExecutableFile(atPath: stable.path) {
+        let installs = action == .install || action == .installStatusLine
+        if installs, bundledBinary == nil, !FileManager.default.isExecutableFile(atPath: stable.path) {
             return report(title: "Executável do hook não encontrado", message: "Abra o ClaudeBar a partir do .app.")
         }
-        let copiesBinary = action == .install && bundledBinary.map {
+        let copiesBinary = installs && bundledBinary.map {
             !FileManager.default.contentsEqual(atPath: $0.path, andPath: stable.path)
         } == true
         // Remover também apaga a cópia do executável: conta como mudança e aparece no alerta.
-        let removesBinary = action == .uninstall && FileManager.default.fileExists(atPath: stable.path)
+        // Se o statusline ou os hooks ainda a chamam, ela fica.
+        let removesBinary = !installs && !plan.binaryInUse
+            && FileManager.default.fileExists(atPath: stable.path)
 
         guard plan.hasChanges || copiesBinary || removesBinary else {
             return report(title: "Nada a mudar", message: plan.settingsURL.path)
         }
 
         let alert = NSAlert()
-        alert.messageText = action == .install
-            ? "Registrar os hooks do ClaudeBar no Claude Code?"
-            : "Remover os hooks do ClaudeBar?"
+        alert.messageText = switch action {
+        case .install: "Registrar os hooks do ClaudeBar no Claude Code?"
+        case .uninstall: "Remover os hooks do ClaudeBar?"
+        case .installStatusLine: "Mostrar os limites de uso no rodapé do Claude Code?"
+        case .uninstallStatusLine: "Parar de mostrar os limites no rodapé do Claude Code?"
+        }
         var info: [String] = []
         if plan.hasChanges {
             info.append("Arquivo: \(plan.settingsURL.path)")
             info.append("Backup antes de gravar, em \(HookInstaller.backupsURL.path)")
             if plan.reformats {
-                info.append("O arquivo será reformatado (ordem das chaves); fora de \"hooks\" o conteúdo não muda.")
+                info.append("O arquivo será reformatado (ordem das chaves); fora de \"hooks\" e \"statusLine\" o conteúdo não muda.")
             }
-            // Só o bloco `hooks`: o resto do settings pode ter token em `env`.
+            // Só `hooks` e `statusLine`: o resto do settings pode ter token em `env`.
             alert.accessoryView = codeView(plan.diff)
         }
         if copiesBinary {
@@ -109,26 +115,42 @@ final class HookSetup {
         if removesBinary {
             info.append("Apaga o executável do hook em \(stable.path).")
         }
-        info.append(
-            "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão. "
-                + (action == .install ? "\"Remover hooks…\" no menu desfaz. " : "")
-                + "O Claude Code aplica sem reiniciar."
-        )
+        switch (action, plan.statusLineOriginal) {
+        case (.installStatusLine, .save?):
+            info.append(
+                "Seu statusline continua aparecendo igual. O ClaudeBar só lê os limites antes de repassar. "
+                    + "O original fica guardado em \(StatusDirectory.originalStatusLineURL.path)."
+            )
+        case (.installStatusLine, _):
+            info.append(
+                "O Claude Code esconde algumas dicas do rodapé (como `esc to interrupt`) quando existe um "
+                    + "statusline. No lugar delas aparece `5h 23% · sem 41%`. Os limites só aparecem para "
+                    + "assinantes Pro, Max e Ultra."
+            )
+        case (.uninstallStatusLine, _):
+            info.append("O statusLine que você tinha antes volta igual; se você o trocou depois, ele fica.")
+        default:
+            info.append(
+                "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão. "
+                    + (action == .install ? "\"Remover hooks…\" no menu desfaz. " : "")
+                    + "O Claude Code aplica sem reiniciar."
+            )
+        }
         alert.informativeText = info.joined(separator: "\n\n")
-        alert.addButton(withTitle: action == .install ? "Instalar" : "Remover")
+        alert.addButton(withTitle: installs ? "Instalar" : "Remover")
         alert.addButton(withTitle: cancelTitle)
 
         guard runInFront(alert) == .alertFirstButtonReturn else { return }
 
         do {
             // Executável antes do settings: hook registrado nunca aponta para o nada.
-            if action == .install, let bundledBinary {
+            if installs, let bundledBinary {
                 try HookInstaller.installBinary(from: bundledBinary)
             }
             if plan.hasChanges {
                 try HookInstaller.apply(plan)
             }
-            if action == .uninstall {
+            if removesBinary {
                 try? FileManager.default.removeItem(at: stable)
             }
         } catch HookInstallError.changedSinceReview {

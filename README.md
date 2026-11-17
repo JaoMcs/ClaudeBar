@@ -412,6 +412,7 @@ Sources/ClaudeBarCore/        shared model + reading/writing the state directory
   Shell.swift                 runs processes without a shell (no injection)
   StatusDirectory.swift       ~/.claude/claudebar: permissions, atomic writes, cleanup
   StatusLineChain.swift       runs your previous status line (stdin/stdout, 5 s timeout)
+  StatusLineInstall.swift     swaps and restores statusLine in settings.json (opt-in)
 Sources/claudebar-hook/       CLI called by the hooks (no jq/python needed)
   main.swift                  reads the hook JSON from stdin, writes/deletes the state file
 Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
@@ -500,7 +501,7 @@ Hook CLI usage:
 
 ```
 claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>]
-claudebar-hook install|uninstall [--dry-run]
+claudebar-hook install|uninstall [--statusline] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
 claudebar-hook statusline
@@ -520,10 +521,27 @@ Code, exit 2 blocks the prompt.
 
 `install`/`uninstall` print the diff of the `hooks` block and apply it with a
 backup; `--dry-run` only prints. `install` also copies itself to
-`~/.claude/claudebar/bin/claudebar-hook`; `uninstall` deletes that copy.
+`~/.claude/claudebar/bin/claudebar-hook`; `uninstall` deletes that copy
+(unless the status line below is still installed).
 
-`statusline` is meant to be Claude Code's `statusLine` command (nothing installs
-it yet; you can set it by hand). From the JSON Claude Code sends on stdin it
+`install --statusline` / `uninstall --statusline` touch only `statusLine`, never
+the hooks, and are off by default (in the app: *Mostrar limites no rodapé do
+Claude Code…* / *Parar de mostrar limites no rodapé…* in the integration
+submenu, with the same diff and backup). Installing saves your current
+`statusLine` object to `~/.claude/claudebar/statusline-original.json`
+(`0600`), besides the timestamped `settings.json` backup, and points
+`statusLine.command` at the stable hook, keeping `padding`, `refreshInterval`
+and the rest. Installing twice never overwrites that file. Uninstalling puts
+the original back as it was (or removes the key if you had none) and deletes
+the file; if you changed `statusLine` yourself after installing, it is left
+alone. With no previous status line, Claude Code hides some footer hints (like
+`esc to interrupt`) and shows `5h 23% · sem 41%` instead. To undo by hand: copy
+the content of `~/.claude/claudebar/statusline-original.json` back into
+`statusLine` in `~/.claude/settings.json`, or delete the key if the file does
+not exist.
+
+`statusline` is meant to be Claude Code's `statusLine` command (installed by
+`install --statusline`, or set by hand). From the JSON Claude Code sends on stdin it
 keeps only `rate_limits` (5-hour and weekly windows) in
 `~/.claude/claudebar/limits.json` (`0600`), and rewrites it only when a number
 changed or the saved data is a minute old. Then it runs your previous status
@@ -630,7 +648,8 @@ inside tmux. Any traffic from the `claude` commands shows up under
 ./scripts/uninstall.sh
 ```
 
-It removes only ClaudeBar's hooks from `settings.json` (with a backup), quits
+It removes only ClaudeBar's hooks and status line from `settings.json` (with a
+backup; your previous status line comes back), quits
 the app and deletes `~/Applications/ClaudeBar.app`. Without the repository:
 `~/.claude/claudebar/bin/claudebar-hook uninstall`. State and backups stay in
 `~/.claude/claudebar`; delete that folder by hand if you want.

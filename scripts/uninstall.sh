@@ -6,6 +6,8 @@ set -euo pipefail
 HOOK="$HOME/.claude/claudebar/bin/claudebar-hook"
 [[ -x "$HOOK" ]] || HOOK="$HOME/Applications/ClaudeBar.app/Contents/MacOS/claudebar-hook"
 
+# Statusline antes: com ele ainda apontando para o hook, o `uninstall` mantém o executável.
+"$HOOK" uninstall --statusline
 "$HOOK" uninstall
 pkill -x ClaudeBar || true
 rm -rf "$HOME/Applications/ClaudeBar.app"

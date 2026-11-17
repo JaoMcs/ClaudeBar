@@ -137,3 +137,96 @@ struct StatusLineChainTests {
         #expect(MenuContent.limitLines(limits, now: now)[0] == "Limite 5 h: renovado, aguardando dado novo")
     }
 }
+
+@Suite("Instalação do statusline")
+struct StatusLineInstallTests {
+    private let hook = "'/Users/dev/.claude/claudebar/bin/claudebar-hook' statusline"
+
+    @Test func semStatuslineAnterior() {
+        let (settings, original) = StatusLineInstall.install(["model": "opus"], hookCommand: hook)
+        #expect((settings["statusLine"] as? [String: Any])?["command"] as? String == hook)
+        #expect(settings["model"] as? String == "opus")
+        guard case .remove = original else { Issue.record("esperava .remove"); return }
+    }
+
+    @Test func guardaOOriginalEMantemPadding() {
+        let old: [String: Any] = ["type": "command", "command": "~/linha.sh", "padding": 2]
+        let (settings, original) = StatusLineInstall.install(["statusLine": old], hookCommand: hook)
+        #expect((settings["statusLine"] as? [String: Any])?["padding"] as? Int == 2)
+        guard case .save(let saved) = original else { Issue.record("esperava .save"); return }
+        #expect(saved["command"] as? String == "~/linha.sh")
+    }
+
+    /// Reinstalar não pode guardar o nosso como original (o hook chamaria a si mesmo).
+    @Test func reinstalarMantemOOriginal() {
+        let (once, _) = StatusLineInstall.install([:], hookCommand: hook)
+        let (_, original) = StatusLineInstall.install(once, hookCommand: hook)
+        guard case .keep = original else { Issue.record("esperava .keep"); return }
+    }
+
+    @Test func removerRestauraOuRespeitaTroca() {
+        let old: [String: Any] = ["type": "command", "command": "~/linha.sh"]
+        let (installed, _) = StatusLineInstall.install(["statusLine": old], hookCommand: hook)
+        let restored = StatusLineInstall.uninstall(installed, original: old)
+        #expect((restored["statusLine"] as? [String: Any])?["command"] as? String == "~/linha.sh")
+
+        let semAnterior = StatusLineInstall.uninstall(StatusLineInstall.install([:], hookCommand: hook).settings, original: nil)
+        #expect(semAnterior["statusLine"] == nil)
+
+        // Usuário trocou o statusline depois de instalar: a escolha dele fica.
+        let trocado: [String: Any] = ["statusLine": ["type": "command", "command": "outro.sh"]]
+        #expect((StatusLineInstall.uninstall(trocado, original: old)["statusLine"] as? [String: Any])?["command"] as? String == "outro.sh")
+    }
+
+    /// Ida e volta pelo instalador, em pasta temporária: nada toca no `~/.claude` real.
+    @Test func idaEVoltaDoStatusline() throws {
+        let manager = FileManager.default
+        let folder = manager.temporaryDirectory.appendingPathComponent("claudebar-\(UUID().uuidString)")
+        try manager.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? manager.removeItem(at: folder) }
+        let settings = folder.appendingPathComponent("settings.json")
+        let backups = folder.appendingPathComponent("backups")
+        let original = folder.appendingPathComponent("state/statusline-original.json")
+        let binary = folder.appendingPathComponent("bin/claudebar-hook").path
+        try Data(#"{"statusLine":{"type":"command","command":"~/x.sh","padding":2}}"#.utf8).write(to: settings)
+        func statusLine() throws -> NSDictionary? {
+            let root = try JSONSerialization.jsonObject(with: Data(contentsOf: settings)) as? [String: Any]
+            return (root?["statusLine"] as? [String: Any]).map { NSDictionary(dictionary: $0) }
+        }
+        let before = try statusLine()
+
+        let install = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
+        #expect(install.diff.contains("statusline"))
+        #expect(install.binaryInUse)
+        try HookInstaller.apply(install, backups: backups, original: original)
+        #expect(try statusLine()?["command"] as? String == HookInstaller.shellQuoted(binary) + " statusline")
+        #expect(try statusLine()?["padding"] as? Int == 2)
+        let mode = try manager.attributesOfItem(atPath: original.path)[.posixPermissions] as? Int
+        #expect(mode == 0o600)
+        let saved = try JSONSerialization.jsonObject(with: Data(contentsOf: original)) as? [String: Any]
+        #expect(saved.map { NSDictionary(dictionary: $0) } == before)
+
+        // Instalar de novo: nada a mudar, e o original fica intacto.
+        let again = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
+        #expect(!again.hasChanges)
+
+        // Com os hooks ainda instalados o executável fica; sem eles, sai.
+        let hooks = try HookInstaller.plan(.install, settings: settings, binary: binary, original: original)
+        try HookInstaller.apply(hooks, backups: backups, original: original)
+        #expect(try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original).binaryInUse)
+        try HookInstaller.apply(
+            try HookInstaller.plan(.uninstall, settings: settings, binary: binary, original: original),
+            backups: backups, original: original
+        )
+
+        let uninstall = try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original)
+        #expect(!uninstall.binaryInUse)
+        try HookInstaller.apply(uninstall, backups: backups, original: original)
+        #expect(try statusLine() == before)
+        #expect(!manager.fileExists(atPath: original.path))
+    }
+
+    @Test func shellQuoted() {
+        #expect(HookInstaller.shellQuoted("/Users/a b/it's") == #"'/Users/a b/it'\''s'"#)
+    }
+}

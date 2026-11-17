@@ -150,6 +150,12 @@ struct MenuContent: View {
 
             Divider()
 
+            // Opt-in próprio, desligado por padrão: muda o rodapé do Claude Code.
+            Button("Mostrar limites no rodapé do Claude Code…") { setup.review(.installStatusLine) }
+            Button("Parar de mostrar limites no rodapé…") { setup.review(.uninstallStatusLine) }
+
+            Divider()
+
             Button("Testar integração") {
                 setup.selfTest(openSessions: store.openSessionCount)
                 store.notifier.showSample()

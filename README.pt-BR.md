@@ -410,6 +410,7 @@ Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretór
   Shell.swift                 execução de processo sem shell (sem injeção)
   StatusDirectory.swift       ~/.claude/claudebar: permissões, escrita atômica, limpeza
   StatusLineChain.swift       roda o statusline que você já tinha (stdin/stdout, timeout 5 s)
+  StatusLineInstall.swift     troca e devolve o statusLine do settings.json (opt-in)
 Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/python)
   main.swift                  lê o JSON do hook no stdin, grava/apaga o arquivo de estado
 Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
@@ -498,7 +499,7 @@ Uso do CLI do hook:
 
 ```
 claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
-claudebar-hook install|uninstall [--dry-run]
+claudebar-hook install|uninstall [--statusline] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
 claudebar-hook statusline
@@ -518,10 +519,27 @@ bloqueia o prompt.
 
 `install`/`uninstall` mostram o diff do bloco `hooks` e aplicam com backup;
 `--dry-run` só mostra. O `install` também se copia para
-`~/.claude/claudebar/bin/claudebar-hook`; o `uninstall` apaga essa cópia.
+`~/.claude/claudebar/bin/claudebar-hook`; o `uninstall` apaga essa cópia
+(a menos que o statusline abaixo ainda esteja instalado).
 
-O `statusline` é para ser o comando do `statusLine` do Claude Code (nada o
-instala ainda; dá para configurar à mão). Do JSON que o Claude Code manda no
+`install --statusline` / `uninstall --statusline` mexem só no `statusLine`,
+nunca nos hooks, e vêm desligados por padrão (no app: *Mostrar limites no
+rodapé do Claude Code…* / *Parar de mostrar limites no rodapé…* no submenu da
+integração, com o mesmo diff e backup). Instalar guarda o seu objeto
+`statusLine` atual em `~/.claude/claudebar/statusline-original.json` (`0600`),
+além do backup com timestamp do `settings.json`, e aponta o
+`statusLine.command` para o hook estável, mantendo `padding`,
+`refreshInterval` e o resto. Instalar duas vezes nunca sobrescreve esse
+arquivo. Remover devolve o original igual (ou apaga a chave se você não tinha
+nenhum) e apaga o arquivo; se você trocou o `statusLine` depois de instalar,
+ele fica. Sem statusline anterior, o Claude Code esconde algumas dicas do
+rodapé (como `esc to interrupt`) e mostra `5h 23% · sem 41%` no lugar. Para
+desfazer à mão: copie o conteúdo de `~/.claude/claudebar/statusline-original.json`
+de volta para `statusLine` no `~/.claude/settings.json`, ou apague a chave se o
+arquivo não existir.
+
+O `statusline` é para ser o comando do `statusLine` do Claude Code (instalado
+pelo `install --statusline`, ou configurado à mão). Do JSON que o Claude Code manda no
 stdin ele guarda só o `rate_limits` (janelas de 5 h e semanal) em
 `~/.claude/claudebar/limits.json` (`0600`), e só regrava quando um número mudou
 ou o dado salvo já tem um minuto. Depois roda o statusline que você já tinha,
@@ -630,7 +648,8 @@ dele
 ./scripts/uninstall.sh
 ```
 
-Tira só os hooks do ClaudeBar do `settings.json` (com backup), fecha o app e
+Tira só os hooks e o statusline do ClaudeBar do `settings.json` (com backup; o
+seu statusline anterior volta), fecha o app e
 apaga `~/Applications/ClaudeBar.app`. Sem o repositório:
 `~/.claude/claudebar/bin/claudebar-hook uninstall`. Estado e backups ficam em
 `~/.claude/claudebar`; apague a pasta à mão se quiser.
