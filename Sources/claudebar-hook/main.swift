@@ -6,6 +6,8 @@ import Foundation
 //
 // Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
 //      claudebar-hook install|uninstall [--dry-run]
+//      claudebar-hook status [--json]   uma sessão por linha: estado<TAB>projeto<TAB>pasta
+//      claudebar-hook next              traz para a frente a sessão que espera há mais tempo
 
 /// Campos do payload que os hooks do Claude Code entregam no stdin.
 private struct HookPayload: Decodable {
@@ -82,16 +84,52 @@ private func manage(_ action: HookAction, dryRun: Bool) {
     }
 }
 
+/// Sem `ProcessProbe` (é do app): só apaga arquivo de processo que não existe mais.
+private func readSessions() -> [SessionStatus] {
+    StatusDirectory.readAll { $0.pid <= 0 || kill($0.pid, 0) == 0 || errno != ESRCH }
+}
+
+/// `status`: para a barra do tmux, scripts e leitor de tela. `--json` sai no
+/// formato dos arquivos de estado.
+private func printStatus(json: Bool) {
+    let sessions = readSessions()
+    if json {
+        let data = (try? StatusDirectory.encoder.encode(sessions)) ?? Data("[]".utf8)
+        FileHandle.standardOutput.write(data + Data("\n".utf8))
+        return
+    }
+    for session in sessions {
+        print("\(session.state.rawValue)\t\(session.projectName)\t\(session.cwd)")
+    }
+}
+
+/// `next`: leva você à sessão que espera há mais tempo. Sai 1 se não houver.
+@MainActor
+private func goToNextWaiting() async -> Int32 {
+    let waiting = readSessions()
+        .filter { $0.state == .waiting && $0.pid > 0 }
+        .min { $0.updatedAt < $1.updatedAt }
+    guard let waiting else { fail("nenhuma sessão esperando você") }
+    // `app(for:)` é síncrono e pede para ficar fora da main actor; aqui tudo
+    // bem: é um CLI de vida curta, sem interface para travar.
+    guard let app = SessionNavigator.app(for: waiting.pid), await SessionNavigator.bringToFront(app) else {
+        fail("não achei o app de \(waiting.projectName) (\(waiting.cwd))")
+    }
+    print(waiting.projectName)
+    return 0
+}
+
 private func run() {
     let arguments = Array(CommandLine.arguments.dropFirst())
     guard let command = arguments.first else {
-        fail("informe o estado (working|idle|waiting|error|end) ou install|uninstall")
+        fail("informe o estado (working|idle|waiting|error|end) ou install|uninstall|status|next")
     }
 
     // Antes de ler o stdin: num terminal, ler o stdin travaria esperando EOF.
     switch command {
     case "install": return manage(.install, dryRun: arguments.contains("--dry-run"))
     case "uninstall": return manage(.uninstall, dryRun: arguments.contains("--dry-run"))
+    case "status": return printStatus(json: arguments.contains("--json"))
     default: break
     }
 
@@ -154,4 +192,10 @@ private func run() {
     }
 }
 
+// `status` e `next` são digitados por você: o stdin é o terminal e nunca chega
+// EOF. Por isso são tratados antes de `run()` ler o stdin inteiro. O `next`
+// fica aqui porque precisa de `await` (o top-level é `@MainActor`).
+if CommandLine.arguments.dropFirst().first == "next" {
+    exit(await goToNextWaiting())
+}
 run()
