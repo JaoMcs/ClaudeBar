@@ -46,6 +46,8 @@ struct ProcessExitWatcherTests {
         let avisou = DispatchSemaphore(value: 0)
         let watcher = ProcessExitWatcher(queue: .global()) { avisou.signal() }
         watcher.watch([process.processIdentifier])
-        #expect(avisou.wait(timeout: .now() + 2) == .success)
+        // Folga de 10 s (o polling é de 60): no runner de 3 vCPU, com outros
+        // testes presos esperando processo, a fila global demora segundos.
+        #expect(avisou.wait(timeout: .now() + 10) == .success)
     }
 }
