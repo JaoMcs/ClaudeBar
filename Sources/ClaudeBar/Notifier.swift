@@ -123,6 +123,7 @@ final class Notifier {
     static let soundEnabledKey = "soundEnabled"
     static let reminderEnabledKey = "waitingReminderEnabled"
     static let reminderMinutesKey = "waitingReminderMinutes"
+    static let hideContentKey = "hideContent"
 
     /// Sons do sistema, sem extensão — é como o `NSSound(named:)` prefere o nome.
     /// Lidos do disco para acompanhar o que o macOS instalado tiver.
@@ -179,6 +180,10 @@ final class Notifier {
     /// Lembrete único de espera ligado nos Ajustes. Lido na hora, sem cópia.
     var isReminderEnabled: Bool { defaults.bool(forKey: Self.reminderEnabledKey) }
 
+    /// "Nunca mostrar o conteúdo da mensagem". Lido na hora, sem cópia, para
+    /// valer no próximo aviso sem reiniciar.
+    var hidesContent: Bool { defaults.bool(forKey: Self.hideContentKey) }
+
     /// Minutos até o lembrete, nunca menos de 1.
     var reminderMinutes: Int { max(defaults.integer(forKey: Self.reminderMinutesKey), 1) }
 
@@ -197,7 +202,9 @@ final class Notifier {
     /// Sem `onOpen`: o clique só fecha. Ignora o liga/desliga por tipo dos
     /// Ajustes: o exemplo é pedido na hora, não é um aviso de sessão.
     func showSample() {
-        post(.permission, body: "Exemplo: Claude needs your permission to use Bash", sample: true)
+        post(.permission, body: hidesContent
+            ? "Exemplo: meu-projeto precisa de você"
+            : "Exemplo: Claude needs your permission to use Bash", sample: true)
     }
 
     /// Fecha o popup de espera desta sessão, se for ele que está na tela.

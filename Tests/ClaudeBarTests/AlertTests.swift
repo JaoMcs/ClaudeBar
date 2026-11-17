@@ -144,6 +144,37 @@ struct AlertTests {
         #expect(notifier.reminderMinutes == 1)
     }
 
+    /// Modo "nunca mostrar conteúdo": o aviso de espera não leva a mensagem (F25).
+    @Test func modoSemConteudoEscondeAMensagem() {
+        let row = SessionRow(
+            sessionId: "s1", name: nil, cwd: "/tmp/my-app", state: .waiting, updatedAt: nil,
+            message: "Claude needs your permission to use Bash: rm -rf segredo", isSubagent: false
+        )
+        #expect(row.waitingBody(hidingContent: true) == "my-app precisa de você")
+        #expect(!row.waitingBody(hidingContent: true).contains("Bash"))
+        #expect(row.waitingBody(hidingContent: false) == row.message)
+    }
+
+    /// Modo desligado e sem mensagem: o nome, como antes (F25).
+    @Test func semMensagemUsaONome() {
+        let row = SessionRow(
+            sessionId: "s1", name: "my-app-4d", cwd: "/x", state: .waiting,
+            updatedAt: nil, message: nil, isSubagent: false
+        )
+        #expect(row.waitingBody(hidingContent: false) == "my-app-4d")
+    }
+
+    /// A preferência é lida na hora do aviso, não copiada no `init` (F25).
+    @MainActor @Test func modoSemConteudoLidoNaHora() throws {
+        let (defaults, suite) = try scratchDefaults()
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let notifier = Notifier(defaults: defaults, playSound: { _ in })
+        #expect(!notifier.hidesContent)
+        defaults.set(true, forKey: Notifier.hideContentKey)
+        #expect(notifier.hidesContent)
+    }
+
     /// Permissão e pergunta são espera: um toggle só para os três (F15).
     @MainActor @Test func permissaoEEsperaDividemOToggle() {
         #expect(Alert.permission.enabledKey == Alert.waiting.enabledKey)
