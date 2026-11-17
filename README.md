@@ -163,7 +163,8 @@ you, and one tells you the reply never came:
   turn the sound off while keeping the popup, and pick each alert's sound from
   the macOS system sounds (it plays when you pick it). Permission and "waiting"
   share one sound. The menu toggle **Notificações** stays the master switch.
-  The window also has **Sobre o ClaudeBar** (the standard About panel).
+  The window also has **Abrir ao iniciar sessão no Mac** (start at login, off
+  by default) and **Sobre o ClaudeBar** (the standard About panel).
 
 #### Why the app draws its own popup
 
@@ -437,8 +438,9 @@ Things to know:
 - Claude Code reloads `settings.json`, so open sessions pick the hooks up
   (folders must be trusted).
 
-To start at login: System Settings → General → Login Items → add
-`~/Applications/ClaudeBar.app`.
+To start at login: **Ajustes… → Abrir ao iniciar sessão no Mac** (off by
+default). If macOS asks for approval, the window links to System Settings →
+Login Items. After rebuilding the app, turn it on again.
 
 ### Moving or updating the app
 

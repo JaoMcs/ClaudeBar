@@ -161,7 +161,8 @@ conta que a resposta não veio:
   desliga o som mantendo o popup e escolhe o som de cada aviso entre os sons
   do macOS (toca ao escolher). Permissão e "esperando" dividem o mesmo som. O
   item **Notificações** do menu continua sendo o interruptor geral. A janela
-  também tem **Sobre o ClaudeBar** (o painel padrão do macOS).
+  também tem **Abrir ao iniciar sessão no Mac** (desligado por padrão) e
+  **Sobre o ClaudeBar** (o painel padrão do macOS).
 
 #### Por que o popup é desenhado pelo app
 
@@ -434,8 +435,9 @@ Bom saber:
 - O Claude Code recarrega o `settings.json`, então sessões abertas já pegam os
   hooks (as pastas precisam ser confiáveis).
 
-Para rodar no login: Ajustes do Sistema → Geral → Itens de Início → adicionar
-`~/Applications/ClaudeBar.app`.
+Para rodar no login: **Ajustes… → Abrir ao iniciar sessão no Mac** (desligado
+por padrão). Se o macOS pedir aprovação, a janela leva a Ajustes do Sistema →
+Itens de Início. Depois de recompilar o app, ligue de novo.
 
 ### Mover ou atualizar o app
 
