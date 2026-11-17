@@ -46,9 +46,9 @@ Clicking the menu bar icon shows your usage limits at the top, then lists every
 session, newest first, with background subagents grouped at the end:
 
 ```
-Limite 5 h: 23% · renova 14:30          (5-hour limit, reset time)
-Semanal: 41% · renova sex., 09:00       (weekly limit, reset time)
-Atualizado há 3 min                     (age of the data)
+5 h limit: 23% · resets 2:30 PM        (5-hour limit, reset time)
+Weekly: 41% · resets Fri 9:00 AM        (weekly limit, reset time)
+Updated 3 min ago                       (age of the data)
 ──────────────
 [checkmark.circle.fill]             my-app — ready (2 min ago)
 [ellipsis.circle]                   ClaudeBar · feat/x — working (10 sec ago)
@@ -65,16 +65,15 @@ Notifications  ✓
 Show sample popup
 Settings…                ⌘,
 ──────────────
-Integração com o Claude Code: ok  ▸  (hooks: status, install, remove)
+Claude Code integration: ok  ▸  (hooks: status, install, remove)
 Refresh
 Quit ClaudeBar           ⌘Q
 ```
 
 The limit lines come from `~/.claude/claudebar/limits.json`, written by
 `claudebar-hook statusline` (see [Command line](#command-line)).
-Without data they read *indisponível* (unavailable), never 0%. A window that
-already reset reads *renovado, aguardando dado novo* (reset, waiting for new
-data) until the next Claude Code reply brings a fresh number. The age is not
+Without data they read *unavailable*, never 0%. A window that
+already reset reads *reset, waiting for new data* until the next Claude Code reply brings a fresh number. The age is not
 a live clock: it is computed when the menu is built and does not tick while
 the menu stays open.
 
@@ -105,10 +104,10 @@ The app has no Dock icon and no window; it lives only in the menu bar
 
 ### Claude Code integration
 
-The **Integração** submenu shows whether the hooks are in place and lets you
-manage them without the terminal. Its title is the status: `ok`, `hooks não
-instalados` (not installed) or `⚠︎ precisa de atenção` (needs attention); the
-first line inside says what is wrong.
+The **Integration** submenu shows whether the hooks are in place and lets you
+manage them without the terminal. Its title is the status: `ok`, `hooks not
+installed` or `⚠︎ Integration needs attention`; the first line inside says
+what is wrong.
 
 - **Install hooks… / Reinstall hooks…** — registers ClaudeBar's hooks and
   copies the hook executable to `~/.claude/claudebar/bin/`. Also how you
@@ -136,12 +135,12 @@ first line inside says what is wrong.
 Nothing is written without an alert first. It shows the real file (symlinks
 resolved), the exact diff of the `hooks` block — never the rest of the file,
 which may hold tokens in `env` —, where the backup goes, and whether the file
-will be reformatted. Only the **Instalar** / **Remover** button writes. If
+will be reformatted. Only the **Install** / **Remove** button writes. If
 `settings.json` changes while the alert is open (Claude Code writes to it
 too), you get a fresh preview instead of a blind write.
 
 On first launch, and whenever the integration needs repair, the same alert
-shows up on its own **once**, with **Pular** (skip) instead of cancel. Skipping
+shows up on its own **once**, with **Skip** instead of **Cancel**. Skipping
 writes nothing and the app doesn't ask again until the state changes; the
 submenu stays there. After you update the `.app`, the copied executable is
 older than the bundled one, so the app offers to update it the same way.
@@ -178,7 +177,7 @@ you, and one tells you the reply never came:
 - **Reminder.** A session still waiting for you after about 5 minutes gets one
   more alert ("Still waiting: …", same sound). Answering cancels it; a new
   wait gets a new reminder. Turn it off or change the delay in **Settings…**.
-- **Settings… → Nunca mostrar o conteúdo da mensagem** (off by default) replaces
+- **Settings… → Never show the message content** (off by default) replaces
   Claude's message with "<project> needs you" in the waiting alerts and
   the reminder — useful when sharing your screen. macOS no longer honours "hide
   this window from screen capture", so the only real protection is not drawing
@@ -197,8 +196,8 @@ you, and one tells you the reply never came:
   turn the sound off while keeping the popup, and pick each alert's sound from
   the macOS system sounds (it plays when you pick it). Permission and "waiting"
   share one sound. The menu toggle **Notifications** stays the master switch.
-  The window also has **Abrir ao iniciar sessão no Mac** (start at login, off
-  by default) and **Sobre o ClaudeBar** (the standard About panel).
+  The window also has **Open at login** (off by default) and **About
+  ClaudeBar** (the standard About panel).
 
 #### Why the app draws its own popup
 
@@ -496,7 +495,7 @@ Things to know:
 - Claude Code reloads `settings.json`, so open sessions pick the hooks up
   (folders must be trusted).
 
-To start at login: **Settings… → Abrir ao iniciar sessão no Mac** (off by
+To start at login: **Settings… → Open at login** (off by
 default). If macOS asks for approval, the window links to System Settings →
 Login Items. After rebuilding the app, turn it on again.
 

@@ -13,21 +13,24 @@ struct MenuContent: View {
 
     /// Linhas dos limites no topo do menu. Sem dado é "indisponível", nunca 0%.
     static func limitLines(_ limits: RateLimits?, now: Date) -> [String] {
-        guard let limits else { return ["Limites de uso: indisponível"] }
+        guard let limits else { return [String(localized: "Usage limits: unavailable")] }
 
         func line(_ title: String, _ window: RateWindow?) -> String {
-            guard let window else { return "\(title): indisponível" }
+            guard let window else { return String(localized: "\(title): unavailable") }
             // Depois do reset o número velho não vale; o novo chega com a próxima resposta.
-            guard window.resetsAt > now else { return "\(title): renovado, aguardando dado novo" }
+            guard window.resetsAt > now else { return String(localized: "\(title): reset, waiting for new data") }
             let reset = Calendar.current.isDate(window.resetsAt, inSameDayAs: now)
                 ? window.resetsAt.formatted(date: .omitted, time: .shortened)
                 : window.resetsAt.formatted(.dateTime.weekday(.abbreviated).hour().minute())
-            return "\(title): \(window.displayPercent)% · renova \(reset)"
+            // `%` fora da chave: na tabela ele viraria `%%`.
+            let percent = "\(window.displayPercent)%"
+            return String(localized: "\(title): \(percent) · resets \(reset)")
         }
 
-        var lines = [line("Limite 5 h", limits.fiveHour), line("Semanal", limits.sevenDay)]
+        var lines = [line(String(localized: "5 h limit"), limits.fiveHour), line(String(localized: "Weekly"), limits.sevenDay)]
         if let updatedAt = limits.updatedAt {
-            lines.append("Atualizado \(relativeFormatter.localizedString(for: updatedAt, relativeTo: now))")
+            let age = relativeFormatter.localizedString(for: updatedAt, relativeTo: now)
+            lines.append(String(localized: "Updated \(age)"))
         }
         return lines
     }

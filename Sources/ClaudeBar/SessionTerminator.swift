@@ -54,8 +54,8 @@ enum SessionTerminator {
     /// `nil` quando não há ação possível.
     static func actionTitle(for row: SessionRow, probe: ProcessProbe = .live) -> String? {
         switch target(for: row, probe: probe) {
-        case .signal(let pid): "Finalizar sessão (kill \(pid))"
-        case .backgroundStop(let id): "Finalizar subagente (claude stop \(id))"
+        case .signal(let pid): String(localized: "Terminate session (kill \(String(pid)))")
+        case .backgroundStop(let id): String(localized: "Terminate subagent (claude stop \(id))")
         case .hostedByApp, .unavailable: nil
         }
     }
@@ -63,8 +63,8 @@ enum SessionTerminator {
     /// Explicação mostrada no lugar do botão, quando não há ação.
     static func unavailableReason(for row: SessionRow, probe: ProcessProbe = .live) -> String? {
         switch target(for: row, probe: probe) {
-        case .hostedByApp: "Sessão do app desktop — feche pelo próprio app"
-        case .unavailable: "Sem processo identificável para encerrar"
+        case .hostedByApp: String(localized: "Desktop app session — close it from the app")
+        case .unavailable: String(localized: "No identifiable process to terminate")
         case .signal, .backgroundStop: nil
         }
     }
@@ -75,31 +75,29 @@ enum SessionTerminator {
             // SIGTERM, não SIGKILL: o Claude Code ainda consegue fechar o
             // transcript e rodar o hook de saída.
             guard kill(pid, SIGTERM) == 0 else {
-                return .failed("não foi possível sinalizar o processo \(pid) (errno \(errno))")
+                return .failed(String(localized: "could not signal process \(String(pid)) (errno \(errno))"))
             }
             StatusDirectory.remove(sessionId: row.sessionId)
             return .terminated
 
         case .backgroundStop(let id):
             guard let claude = AgentsProbe.executableURL else {
-                return .failed("o executável do claude não foi encontrado")
+                return .failed(String(localized: "the claude executable was not found"))
             }
             guard Shell.output(of: claude, arguments: ["stop", id]) != nil else {
-                return .failed("`claude stop \(id)` falhou")
+                return .failed(String(localized: "`claude stop \(id)` failed"))
             }
             StatusDirectory.remove(sessionId: row.sessionId)
             return .terminated
 
         case .hostedByApp:
-            return .failed(
-                """
-                Essa sessão roda dentro do app do Claude e compartilha o grupo de \
-                processos com ele. Feche a sessão pelo próprio app.
-                """
-            )
+            return .failed(String(localized: """
+                This session runs inside the Claude app and shares its process group. \
+                Close the session from the app itself.
+                """))
 
         case .unavailable:
-            return .failed("essa sessão não expõe um processo que possa ser encerrado")
+            return .failed(String(localized: "this session doesn't expose a process that can be terminated"))
         }
     }
 }

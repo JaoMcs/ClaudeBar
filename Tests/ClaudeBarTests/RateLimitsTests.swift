@@ -124,17 +124,17 @@ struct StatusLineChainTests {
     }
 
     @MainActor @Test func menuSemDadoDizIndisponivel() {
-        #expect(MenuContent.limitLines(nil, now: Date()) == ["Limites de uso: indisponível"])
+        #expect(MenuContent.limitLines(nil, now: Date()) == ["Usage limits: unavailable"])
         let lines = MenuContent.limitLines(RateLimits(updatedAt: Date()), now: Date())
-        #expect(lines[0] == "Limite 5 h: indisponível")
-        #expect(lines[1] == "Semanal: indisponível")
+        #expect(lines[0] == "5 h limit: unavailable")
+        #expect(lines[1] == "Weekly: unavailable")
         #expect(!lines.contains { $0.contains("0%") })
     }
 
     @MainActor @Test func menuJanelaRenovada() {
         let now = Date()
         let limits = RateLimits(fiveHour: RateWindow(usedPercentage: 90, resetsAt: now.addingTimeInterval(-60)))
-        #expect(MenuContent.limitLines(limits, now: now)[0] == "Limite 5 h: renovado, aguardando dado novo")
+        #expect(MenuContent.limitLines(limits, now: now)[0] == "5 h limit: reset, waiting for new data")
     }
 }
 
