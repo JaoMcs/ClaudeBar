@@ -148,16 +148,23 @@ final class Notifier {
         hud.dismissWaiting(for: sessionId)
     }
 
-    /// - Parameter onOpen: o que o clique no popup faz antes de fechar. A
-    ///   notificação nativa ignora: não há delegate de clique ainda.
-    func post(_ alert: Alert, body: String, sessionId: String? = nil, onOpen: (@MainActor () -> Void)? = nil) {
+    /// - Parameters:
+    ///   - playSound: `false` mostra o aviso mudo — você já está olhando o app
+    ///     da sessão (F14).
+    ///   - onOpen: o que o clique no popup faz antes de fechar. A notificação
+    ///     nativa ignora: não há delegate de clique ainda.
+    func post(
+        _ alert: Alert,
+        body: String,
+        sessionId: String? = nil,
+        playSound: Bool = true,
+        onOpen: (@MainActor () -> Void)? = nil
+    ) {
         // Desligado no menu = silêncio total: nem popup nem som.
         guard isEnabled else { return }
 
-        if let soundOverride {
-            soundOverride(alert)
-        } else {
-            play(alert)
+        if playSound {
+            if let soundOverride { soundOverride(alert) } else { play(alert) }
         }
 
         guard canUseSystemNotifications else {

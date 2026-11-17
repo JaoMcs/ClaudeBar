@@ -172,6 +172,17 @@ final class SessionStore {
             && !NSWorkspace.shared.isFilePackage(atPath: path)
     }
 
+    /// Você já está olhando o app da sessão? Então o som é dispensável (F14).
+    /// Nível app; sem tmux aqui — seguir o tmux troca o pane de verdade. Sem
+    /// tmux sobra só `sysctl`, barato o bastante para a main actor.
+    private func isLookingAt(_ row: SessionRow) -> Bool {
+        guard let pid = row.pid, pid > 0,
+              let front = NSWorkspace.shared.frontmostApplication,
+              let app = SessionNavigator.app(for: pid, followTmux: false)
+        else { return false }
+        return app.processIdentifier == front.processIdentifier
+    }
+
     /// Traz para a frente o app (terminal, editor, Claude.app) onde a sessão
     /// roda. No tmux, troca também o pane. Traz a janela, não a aba.
     func goToSession(_ row: SessionRow) {
@@ -284,10 +295,14 @@ final class SessionStore {
 
             // Clique no popup leva à sessão (F10).
             let open: @MainActor () -> Void = { [weak self] in self?.goToSession(row) }
+            // `lazy`: só sobe a árvore de processos se for mesmo avisar.
+            lazy var playSound = !isLookingAt(row)
 
             switch row.state {
             case .idle:
-                notifier.post(.finished, body: row.name, sessionId: row.sessionId, onOpen: open)
+                notifier.post(
+                    .finished, body: row.name, sessionId: row.sessionId, playSound: playSound, onOpen: open
+                )
             case .waiting:
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
@@ -295,6 +310,7 @@ final class SessionStore {
                     Alert(waiting: row.kind),
                     body: row.message ?? row.name,
                     sessionId: row.sessionId,
+                    playSound: playSound,
                     onOpen: open
                 )
             case .error:
@@ -304,6 +320,7 @@ final class SessionStore {
                         .failed,
                         body: row.message.map { "\(row.name): \($0)" } ?? row.name,
                         sessionId: row.sessionId,
+                        playSound: playSound,
                         onOpen: open
                     )
                 }
