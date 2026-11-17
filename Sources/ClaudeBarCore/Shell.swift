@@ -2,10 +2,10 @@ import Foundation
 
 /// Execução de processo sem shell: argumentos vão separados, então não há
 /// interpolação e não há injeção.
-enum Shell {
+public enum Shell {
     /// `input` vai para o stdin do filho; `timeout` encerra um filho travado
     /// (devolve `nil`), para quem chama da main não congelar o app.
-    static func output(of url: URL, arguments: [String], input: Data? = nil,
+    public static func output(of url: URL, arguments: [String], input: Data? = nil,
                        timeout: TimeInterval? = nil) -> String? {
         let process = Process()
         let pipe = Pipe()

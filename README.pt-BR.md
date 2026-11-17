@@ -66,6 +66,9 @@ Cada linha de sessão abre um submenu com:
 - o caminho completo do projeto,
 - **Abrir pasta do projeto**: abre o `cwd` no Finder (só pastas de verdade; um
   `.app` nunca é executado),
+- **Ir para a sessão**: traz para a frente o terminal ou app onde a sessão roda
+  (veja [Ir para a sessão](#ir-para-a-sessão)); não aparece para subagente
+  background,
 - quando a resposta falhou, o código e o detalhe do erro da API
   (ex.: `rate_limit — 429 Too Many Requests`),
 - **Marcar como visto** — apaga o destaque de "pronto" ou "falhou" na barra
@@ -189,6 +192,33 @@ Para contar quantas vezes o CLI é consultado (uma linha por `claude agents --js
 ```bash
 /usr/bin/log stream --level info --predicate 'subsystem == "com.joaomarcos.claudebar" AND category == "agents"'
 ```
+
+### Ir para a sessão
+
+**Ir para a sessão** sobe a árvore de processos a partir do `claude` da sessão
+até o primeiro app comum (terminal, editor, app desktop do Claude) e traz esse
+app para a frente. A sessão também fica marcada como vista.
+
+- **tmux:** dentro do tmux a árvore termina no servidor do tmux, então o
+  ClaudeBar acha o pane pelo TTY da sessão, troca o cliente anexado usado por
+  último para esse pane e traz o terminal desse cliente para a frente. Só o
+  socket padrão é suportado, e precisa haver um terminal anexado.
+- **Traz a janela, não a aba.** Escolher a aba exata exigiria permissão de
+  Automação.
+- **Sem permissão nenhuma:** só `sysctl`, `NSRunningApplication` e
+  `NSWorkspace`.
+- Se o app não for encontrado, um alerta avisa; nada mais é aberto.
+
+| Onde a sessão roda | Status |
+|---|---|
+| App desktop do Claude | a árvore de processos chega ao app (verificado); ativação não verificada. Traz o app, não a conversa |
+| Terminal.app | não verificado |
+| Ghostty | não verificado |
+| iTerm2 | não verificado |
+| VS Code | não verificado |
+| Cursor | não verificado |
+| Warp | não verificado |
+| tmux (socket padrão) | não verificado |
 
 ### Finalizar uma sessão
 
@@ -329,7 +359,9 @@ seu shell.
 Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
   HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
+  SessionNavigator.swift      árvore de processos → app, pane do tmux, ativação
   SessionStatus.swift         estado da sessão (working/idle/waiting/error), PID
+  Shell.swift                 execução de processo sem shell (sem injeção)
   StatusDirectory.swift       ~/.claude/claudebar: permissões, escrita atômica, limpeza
 Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/python)
   main.swift                  lê o JSON do hook no stdin, grava/apaga o arquivo de estado
@@ -347,7 +379,6 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   ProcessProbe.swift          topologia do processo: lidera o grupo? ainda é claude?
   Notifier.swift              som por tipo de aviso, toggle, nativa vs. popup próprio
   StatusHUD.swift             o popup próprio (NSPanel flutuante)
-  Shell.swift                 execução de processo sem shell (sem injeção)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
@@ -456,10 +487,11 @@ encerrar uma sessão não derruba a irmã.
 - **`sessionId` é sanitizado** antes de virar nome de arquivo: só
   `[A-Za-z0-9-_]`, o resto vira `-`. Um `session_id` malicioso com `../` não
   escapa do diretório.
-- **Nenhum comando passa por shell.** O `claude` é invocado via `Process` com
-  argumentos separados — não há interpolação, então não há injeção. A única
-  exceção é o `zsh -lc "command -v claude"`, usado apenas como último recurso
-  quando o binário não está nos caminhos conhecidos.
+- **Nenhum comando passa por shell.** O `claude` e o `tmux` são invocados via
+  `Process`, por caminho conhecido e com argumentos separados — não há
+  interpolação, então não há injeção. A única exceção é o
+  `zsh -lc "command -v claude"`, usado apenas como último recurso quando o
+  binário não está nos caminhos conhecidos.
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
   Claude (`last_assistant_message` não é lido em estado nenhum). Para
@@ -485,8 +517,10 @@ Com o Little Snitch: abra o Network Monitor e busque "ClaudeBar". Não deve
 aparecer conexão nenhuma.
 
 Atenção: o ClaudeBar roda `claude agents --json` (e `claude stop` quando você
-encerra um subagente). Qualquer tráfego desses comandos aparece como `claude`,
-não como ClaudeBar: é do Claude Code e segue as configurações dele
+encerra um subagente), além de comandos locais do `tmux` quando você vai até
+uma sessão dentro do tmux. Qualquer tráfego dos comandos do `claude` aparece
+como `claude`, não como ClaudeBar: é do Claude Code e segue as configurações
+dele
 (https://code.claude.com/docs/en/data-usage#telemetry-services).
 
 ## Desinstalar

@@ -34,6 +34,13 @@ struct MenuContent: View {
 
                     Divider()
 
+                    // Subagente background não tem terminal para onde ir.
+                    if !row.isSubagent, let pid = row.pid, pid > 0 {
+                        Button("Ir para a sessão") {
+                            store.goToSession(row)
+                        }
+                    }
+
                     Button("Marcar como visto") {
                         store.acknowledge(row)
                     }

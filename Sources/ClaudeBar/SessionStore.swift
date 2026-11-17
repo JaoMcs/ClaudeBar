@@ -172,6 +172,32 @@ final class SessionStore {
             && !NSWorkspace.shared.isFilePackage(atPath: path)
     }
 
+    /// Traz para a frente o app (terminal, editor, Claude.app) onde a sessão
+    /// roda. No tmux, troca também o pane. Traz a janela, não a aba.
+    func goToSession(_ row: SessionRow) {
+        guard let pid = row.pid, pid > 0 else { return }
+        acknowledged.insert(row.sessionId)
+
+        Task {
+            // `sysctl` e `tmux` são síncronos: fora da main actor.
+            let app = await Task.detached(priority: .userInitiated) {
+                SessionNavigator.app(for: pid)
+            }.value
+            if let app, await SessionNavigator.bringToFront(app) { return }
+            // Não abre o Finder sozinho: seria uma ação que você não pediu.
+            report(
+                title: "Não foi possível ir até \(row.name)",
+                message: """
+                \(row.cwd)
+
+                Não achei o terminal ou app dessa sessão. No tmux, só o socket \
+                padrão é suportado e precisa haver um terminal anexado. A pasta \
+                do projeto continua em "Abrir pasta do projeto".
+                """
+            )
+        }
+    }
+
     private func confirmTermination(of row: SessionRow) -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
