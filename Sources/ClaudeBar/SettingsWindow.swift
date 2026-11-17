@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import SwiftUI
 
 /// Janela de Ajustes, aberta pelo item "Ajustes…" do menu.
@@ -49,6 +50,9 @@ private struct SettingsView: View {
     @AppStorage(Alert.waiting.soundKey) private var soundWaiting = Alert.waiting.soundName
     @AppStorage(Alert.question.soundKey) private var soundQuestion = Alert.question.soundName
     @AppStorage(Alert.failed.soundKey) private var soundFailed = Alert.failed.soundName
+    /// Lido do sistema, nunca guardado: dá para mudar em Ajustes do Sistema sem o app saber.
+    @State private var loginStatus = SMAppService.mainApp.status
+    @State private var loginError: String?
 
     var body: some View {
         Form {
@@ -68,6 +72,17 @@ private struct SettingsView: View {
             }
 
             Section("Sistema") {
+                Toggle("Abrir ao iniciar sessão no Mac", isOn: Binding(
+                    get: { loginStatus == .enabled || loginStatus == .requiresApproval },
+                    set: { setLaunchAtLogin($0) }
+                ))
+                if loginStatus == .requiresApproval {
+                    Text("Falta aprovar em Ajustes do Sistema → Itens de Início.").font(.caption)
+                    Button("Abrir Itens de Início") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                if let loginError {
+                    Text(loginError).font(.caption).foregroundStyle(.red)
+                }
                 Button("Sobre o ClaudeBar") {
                     // O clique veio desta janela, então o app já está ativo e o
                     // painel nasce na frente. Nome e versão passados à mão: sem
@@ -86,6 +101,21 @@ private struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 420)
+        // Voltou de Ajustes do Sistema: relê o login item (não há aviso de mudança).
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            loginStatus = SMAppService.mainApp.status
+        }
+    }
+
+    /// Só roda com clique: abrir no login começa desligado.
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+            loginError = nil
+        } catch {
+            loginError = "Não foi possível mudar: \(error.localizedDescription)"
+        }
+        loginStatus = SMAppService.mainApp.status
     }
 
     private func soundPicker(_ title: String, selection: Binding<String>, alert: Alert) -> some View {
