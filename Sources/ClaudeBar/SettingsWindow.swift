@@ -89,8 +89,12 @@ private struct SettingsView: View {
     }
 
     private func soundPicker(_ title: String, selection: Binding<String>, alert: Alert) -> some View {
-        Picker(title, selection: selection) {
-            ForEach(Notifier.systemSounds, id: \.self) { Text($0) }
+        // Som salvo que sumiu do sistema continua na lista, para o Picker não
+        // ficar sem seleção.
+        let sons = Notifier.systemSounds.contains(selection.wrappedValue)
+            ? Notifier.systemSounds : Notifier.systemSounds + [selection.wrappedValue]
+        return Picker(title, selection: selection) {
+            ForEach(sons, id: \.self) { Text($0) }
         }
         .disabled(!soundEnabled)
         // O valor novo vem no closure: não depende da ordem entre a escrita do

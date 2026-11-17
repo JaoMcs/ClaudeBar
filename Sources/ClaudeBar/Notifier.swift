@@ -183,9 +183,10 @@ final class Notifier {
     }
 
     /// Mostra um popup de exemplo, para conferir o canto da tela e o estilo.
-    /// Sem `onOpen`: o clique só fecha.
+    /// Sem `onOpen`: o clique só fecha. Ignora o liga/desliga por tipo dos
+    /// Ajustes: o exemplo é pedido na hora, não é um aviso de sessão.
     func showSample() {
-        post(.permission, body: "Exemplo: Claude needs your permission to use Bash")
+        post(.permission, body: "Exemplo: Claude needs your permission to use Bash", sample: true)
     }
 
     /// Fecha o popup de espera desta sessão, se for ele que está na tela.
@@ -198,15 +199,17 @@ final class Notifier {
     ///     da sessão (F14).
     ///   - onOpen: o que o clique no popup faz antes de fechar. A notificação
     ///     nativa ignora: não há delegate de clique ainda.
+    ///   - sample: `true` passa mesmo com este tipo desligado nos Ajustes.
     func post(
         _ alert: Alert,
         body: String,
         sessionId: String? = nil,
         playSound: Bool = true,
+        sample: Bool = false,
         onOpen: (@MainActor () -> Void)? = nil
     ) {
         // Desligado no menu, ou este tipo desligado nos Ajustes = silêncio total.
-        guard isEnabled, defaults.bool(forKey: alert.enabledKey) else { return }
+        guard isEnabled, sample || defaults.bool(forKey: alert.enabledKey) else { return }
 
         if playSound, let soundName = soundName(for: alert) {
             if let soundOverride { soundOverride(alert) } else { play(soundName, volume: alert.volume) }
