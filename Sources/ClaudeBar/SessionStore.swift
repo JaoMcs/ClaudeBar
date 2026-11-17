@@ -152,6 +152,26 @@ final class SessionStore {
         }
     }
 
+    /// Abre a pasta do projeto no gerenciador de arquivos padrão (o Finder).
+    func openFolder(_ row: SessionRow) {
+        guard Self.isOpenableFolder(row.cwd),
+              NSWorkspace.shared.open(URL(fileURLWithPath: row.cwd, isDirectory: true))
+        else {
+            report(title: "Não foi possível abrir a pasta",
+                   message: "\(row.cwd)\n\nA pasta não existe mais ou o macOS negou o acesso.")
+            return
+        }
+    }
+
+    /// Só pasta de verdade: um `.app` também é diretório, e abri-lo executaria o app.
+    static func isOpenableFolder(_ path: String) -> Bool {
+        var isDirectory: ObjCBool = false
+        return path.hasPrefix("/")
+            && FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
+            && !NSWorkspace.shared.isFilePackage(atPath: path)
+    }
+
     private func confirmTermination(of row: SessionRow) -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning

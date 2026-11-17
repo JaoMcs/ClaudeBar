@@ -65,6 +65,8 @@ Sair do ClaudeBar        ⌘Q   (quit)
 Each session row opens a submenu with:
 
 - the full project path,
+- **Open project folder**: opens the `cwd` in Finder (only real folders; an
+  `.app` is never launched),
 - for a failed reply, the API error code and details
   (e.g. `rate_limit — 429 Too Many Requests`),
 - **Mark as seen** — clears the "ready" or "failed" highlight in the bar for
