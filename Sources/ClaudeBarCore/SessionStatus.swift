@@ -36,6 +36,9 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     public let message: String?
     /// `WaitKind` em texto. `nil` em arquivo antigo e fora de `waiting`.
     public let kind: String?
+    /// Branch do repositório do `cwd` (`@sha7` com HEAD solto), lida pelo hook.
+    /// Opcional: arquivos gravados antes deste campo continuam válidos.
+    public let branch: String?
 
     /// `nil` também para valor desconhecido: espera genérica.
     public var waitKind: WaitKind? { kind.flatMap(WaitKind.init(rawValue:)) }
@@ -62,7 +65,8 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         pid: Int32,
         updatedAt: Date = Date(),
         message: String? = nil,
-        kind: WaitKind? = nil
+        kind: WaitKind? = nil,
+        branch: String? = nil
     ) {
         self.sessionId = sessionId
         self.state = state
@@ -71,6 +75,7 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         self.updatedAt = updatedAt
         self.message = message
         self.kind = kind?.rawValue
+        self.branch = branch
     }
 }
 

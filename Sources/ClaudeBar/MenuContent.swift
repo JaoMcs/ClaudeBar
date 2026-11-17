@@ -129,7 +129,10 @@ struct MenuContent: View {
         if row.isSubagent {
             text += "[subagente] "
         }
-        text += "\(row.name) — \(description(for: row))"
+        text += row.name
+        // A branch distingue duas sessões do mesmo projeto em worktrees diferentes.
+        if let branch = row.branch { text += " · \(branch)" }
+        text += " — \(description(for: row))"
         if let updatedAt = row.updatedAt {
             text += " (\(Self.relativeFormatter.localizedString(for: updatedAt, relativeTo: Date())))"
         }

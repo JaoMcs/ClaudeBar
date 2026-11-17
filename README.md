@@ -46,7 +46,7 @@ subagents grouped at the end:
 
 ```
 ✅  my-app — pronto (há 2 min)
-⏳  ClaudeBar — processando (há 10 s)
+⏳  ClaudeBar · feat/x — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
 ✋  infra — pede permissão (há 20 s)
 ❓  docs — fez uma pergunta (há 5 s)
@@ -329,6 +329,7 @@ A state file looks like this:
 
 ```json
 {
+  "branch" : "main",
   "cwd" : "/Users/me/code/my-project",
   "kind" : "permission",
   "message" : "Claude needs your permission to use Bash",
@@ -338,6 +339,13 @@ A state file looks like this:
   "updatedAt" : 1791400000
 }
 ```
+
+`branch` is read by the hook straight from `.git/HEAD` (following the `gitdir:`
+of a worktree), without running `git`. A detached HEAD shows as `@sha7`; a
+reftable repository, or a folder outside git, shows no branch. It is refreshed
+on every hook, so a `git checkout` done outside Claude shows up one turn late.
+It appears in the menu next to the name, to tell apart two sessions of the same
+project in different worktrees.
 
 Two design choices that avoid classic problems:
 
@@ -365,6 +373,7 @@ The `claude` binary is looked up in known locations (`~/.local/bin`,
 ```
 Package.swift                 SwiftPM, macOS 14, 3 targets + tests
 Sources/ClaudeBarCore/        shared model + reading/writing the state directory
+  GitHead.swift               branch read from .git/HEAD (by the hook, never runs git)
   HookInstaller.swift         adds/removes only ClaudeBar's hooks in settings.json (diff, backup)
   SessionNavigator.swift      process tree → app, tmux pane, activation
   SessionStatus.swift         session state (working/idle/waiting/error), PID
@@ -516,7 +525,10 @@ does not take down a sibling.
 - **No secrets in the project.** The app makes no network calls (see
   [Verify it yourself](#verify-it-yourself)), does not authenticate anywhere,
   and does not read conversation history — only project paths, `sessionId`,
-  session state and the hook's notification message.
+  session state, the git branch and the hook's notification message.
+- **The only file read inside your project is `.git/HEAD`** (or the `.git`
+  gitfile of a worktree), by the hook, never by the app, and `git` is never
+  run.
 - **`~/.claude/claudebar` is `0700`, files are `0600`.** The contents show which
   projects you work on, so other users on the machine can't read them.
 - **`sessionId` is sanitized** before it becomes a file name: only

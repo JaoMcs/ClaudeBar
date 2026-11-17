@@ -34,7 +34,8 @@ enum SessionMerge {
                 // quando a listagem do CLI não traz um.
                 pid: agent.pid ?? hook?.pid,
                 backgroundId: agent.isSubagent ? agent.id : nil,
-                kind: hook?.waitKind
+                kind: hook?.waitKind,
+                branch: hook?.branch
             )
         }
 
@@ -55,7 +56,8 @@ enum SessionMerge {
                     message: status.message,
                     isSubagent: false,
                     pid: status.pid,
-                    kind: status.waitKind
+                    kind: status.waitKind,
+                    branch: status.branch
                 )
             }
 

@@ -174,14 +174,18 @@ private func run() {
 
     let text = state == .error ? errorSummary(payload) : payload?.message
 
+    let cwd = payload?.cwd ?? FileManager.default.currentDirectoryPath
     let status = SessionStatus(
         sessionId: sessionId,
         state: state,
-        cwd: payload?.cwd ?? FileManager.default.currentDirectoryPath,
+        cwd: cwd,
         pid: parsePID(arguments),
         // A mensagem vem de fora e vai para uma notificação: limitamos o tamanho.
         message: text.map { String($0.prefix(200)) },
-        kind: kind
+        kind: kind,
+        // Lida aqui, e não no app: o hook roda no terminal, que já tem acesso à
+        // pasta do projeto. Qualquer falha vira `nil`, nunca erro.
+        branch: GitHead.branch(at: cwd)
     )
 
     do {
