@@ -46,14 +46,15 @@ struct AlertTests {
         #expect(Alert(waiting: .permission) == .permission)
         #expect(Alert(waiting: .question) == .question)
         #expect(Alert(waiting: nil) == .waiting)
-        #expect(Alert.permission.title == "Claude pede permissão")
-        #expect(Alert.question.title == "Claude fez uma pergunta")
+        #expect(Alert.permission.title == "Claude asks for permission")
+        #expect(Alert.question.title == "Claude asked a question")
     }
 
     @Test func cadaAvisoTemSeuTitulo() {
-        #expect(Alert.finished.title == "Claude terminou")
-        #expect(Alert.waiting.title.contains("esperando"))
-        #expect(Alert.failed.title.contains("falhou"))
+        // No `swift test` não há `.lproj`: volta a chave, que é o texto em inglês.
+        #expect(Alert.finished.title == "Claude finished")
+        #expect(Alert.waiting.title.contains("waiting"))
+        #expect(Alert.failed.title.contains("failed"))
     }
 
     /// Os três avisos de espera ficam na tela; "terminou" e "falhou" somem (F12).
@@ -150,7 +151,7 @@ struct AlertTests {
             sessionId: "s1", name: nil, cwd: "/tmp/my-app", state: .waiting, updatedAt: nil,
             message: "Claude needs your permission to use Bash: rm -rf segredo", isSubagent: false
         )
-        #expect(row.waitingBody(hidingContent: true) == "my-app precisa de você")
+        #expect(row.waitingBody(hidingContent: true) == "my-app needs you")
         #expect(!row.waitingBody(hidingContent: true).contains("Bash"))
         #expect(row.waitingBody(hidingContent: false) == row.message)
     }

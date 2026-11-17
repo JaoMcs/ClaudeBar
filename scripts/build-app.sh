@@ -40,6 +40,10 @@ cp "$BIN_DIR/claudebar-hook" "$BUNDLE/Contents/MacOS/claudebar-hook"
 # O sistema lê o ícone daqui (CFBundleIconFile). Copiar antes de assinar:
 # arquivo que entra depois do codesign invalida o selo.
 cp Resources/AppIcon.icns "$BUNDLE/Contents/Resources/AppIcon.icns"
+# Traduções (Bundle.main). Valida antes: .strings quebrado não dá erro em
+# runtime, só mostra a chave em inglês. Copiar antes de assinar.
+plutil -lint Resources/en.lproj/Localizable.strings Resources/pt-BR.lproj/Localizable.strings
+cp -R Resources/en.lproj Resources/pt-BR.lproj "$BUNDLE/Contents/Resources/"
 
 cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -47,7 +51,7 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>pt_BR</string>
+    <string>en</string>
     <key>CFBundleExecutable</key>
     <string>ClaudeBar</string>
     <key>CFBundleIconFile</key>

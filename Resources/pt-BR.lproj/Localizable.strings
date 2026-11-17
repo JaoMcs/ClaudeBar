@@ -1,0 +1,49 @@
+/* Chave = texto em inglês, como está no código. %@ é texto, %lld é Int,
+   %d é Int32 (errno). Mantenha os mesmos marcadores na tradução. */
+
+/* Menu */
+"No Claude sessions open" = "Nenhuma sessão do Claude aberta";
+"Open project folder" = "Abrir pasta do projeto";
+"Go to session" = "Ir para a sessão";
+"Mark as seen" = "Marcar como visto";
+"Mark all as seen" = "Marcar tudo como visto";
+"What the icons mean" = "O que os ícones significam";
+"Notifications" = "Notificações";
+"Show sample popup" = "Ver exemplo de popup";
+"Settings…" = "Ajustes…";
+"Refresh" = "Atualizar";
+"Quit ClaudeBar" = "Sair do ClaudeBar";
+"Copy hooks JSON" = "Copiar JSON dos hooks";
+"Reinstall hooks…" = "Reinstalar hooks…";
+"Install hooks…" = "Instalar hooks…";
+"Remove hooks…" = "Remover hooks…";
+"Show limits in the Claude Code footer…" = "Mostrar limites no rodapé do Claude Code…";
+"Stop showing limits in the footer…" = "Parar de mostrar limites no rodapé…";
+"Test integration" = "Testar integração";
+
+/* Linhas do menu */
+"[subagent]" = "[subagente]";
+"working" = "processando";
+"ready" = "pronto";
+"asks for permission" = "pede permissão";
+"asked a question" = "fez uma pergunta";
+"waiting for you" = "aguardando você";
+"failed" = "falhou";
+
+/* Estados da barra: legenda e VoiceOver */
+"Claude asks for permission" = "Claude pede permissão";
+"Claude asked a question" = "Claude fez uma pergunta";
+"Claude is waiting for you" = "Claude está esperando você";
+"A reply failed, not seen yet" = "Uma resposta falhou, ainda não vista";
+"Reply ready, not seen yet" = "Resposta pronta, ainda não vista";
+"Claude is working" = "Claude está trabalhando";
+"Nothing going on" = "Nada acontecendo";
+"ClaudeBar. Sessions: %lld. %@" = "ClaudeBar. Sessões: %lld. %@";
+
+/* Avisos */
+"Claude finished" = "Claude terminou";
+"Claude's reply failed" = "A resposta do Claude falhou";
+"Example: my-project needs you" = "Exemplo: meu-projeto precisa de você";
+"Example: Claude needs your permission to use Bash" = "Exemplo: Claude needs your permission to use Bash";
+"Still waiting: %@" = "Ainda esperando: %@";
+"%@ needs you" = "%@ precisa de você";

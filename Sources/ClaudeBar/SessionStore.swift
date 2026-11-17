@@ -35,20 +35,20 @@ enum BarState: CaseIterable {
     /// Texto do estado, usado na legenda do menu e no rótulo do VoiceOver.
     var title: String {
         switch self {
-        case .permission: "Claude pede permissão"
-        case .question: "Claude fez uma pergunta"
-        case .waiting: "Claude está esperando você"
-        case .error: "Uma resposta falhou, ainda não vista"
-        case .done: "Resposta pronta, ainda não vista"
-        case .working: "Claude está trabalhando"
-        case .idle: "Nada acontecendo"
+        case .permission: String(localized: "Claude asks for permission")
+        case .question: String(localized: "Claude asked a question")
+        case .waiting: String(localized: "Claude is waiting for you")
+        case .error: String(localized: "A reply failed, not seen yet")
+        case .done: String(localized: "Reply ready, not seen yet")
+        case .working: String(localized: "Claude is working")
+        case .idle: String(localized: "Nothing going on")
         }
     }
 
     /// Rótulo do item da barra para o VoiceOver. Sem plural de propósito
-    /// ("Sessões: 1"): dispensa `.stringsdict` quando o texto for traduzido.
+    /// ("Sessions: 1"): dispensa `.stringsdict`.
     func accessibilityLabel(openSessions: Int) -> String {
-        "ClaudeBar. Sessões: \(openSessions). \(title)"
+        String(localized: "ClaudeBar. Sessions: \(openSessions). \(title)")
     }
 }
 
@@ -320,7 +320,7 @@ final class SessionStore {
         for row in due {
             notifier.post(
                 Alert(waiting: row.kind),
-                body: "Ainda esperando: \(row.waitingBody(hidingContent: notifier.hidesContent))",
+                body: String(localized: "Still waiting: \(row.waitingBody(hidingContent: notifier.hidesContent))"),
                 sessionId: row.sessionId,
                 playSound: !isLookingAt(row),
                 onOpen: { [weak self] in self?.goToSession(row) }
