@@ -67,6 +67,9 @@ Each session row opens a submenu with:
 - the full project path,
 - **Open project folder**: opens the `cwd` in Finder (only real folders; an
   `.app` is never launched),
+- **Go to session** (*Ir para a sessão*): brings the terminal or app that hosts
+  the session to the front (see [Going to a session](#going-to-a-session)); not
+  shown for background subagents,
 - for a failed reply, the API error code and details
   (e.g. `rate_limit — 429 Too Many Requests`),
 - **Mark as seen** — clears the "ready" or "failed" highlight in the bar for
@@ -191,6 +194,33 @@ To count how often the CLI is queried (one line per `claude agents --json`):
 ```bash
 /usr/bin/log stream --level info --predicate 'subsystem == "com.joaomarcos.claudebar" AND category == "agents"'
 ```
+
+### Going to a session
+
+**Ir para a sessão** walks up the process tree from the session's `claude`
+process to the first regular app (terminal, editor, Claude desktop app) and
+brings it to the front. It also marks the session as seen.
+
+- **tmux:** inside tmux the tree ends at the tmux server, so ClaudeBar finds
+  the pane by the session's TTY, switches the most recently used attached
+  client to that pane and brings that client's terminal to the front. Only the
+  default socket is supported, and a terminal must be attached.
+- **It brings the window, not the tab.** Picking the exact tab would need
+  Automation permission.
+- **No permission needed:** only `sysctl`, `NSRunningApplication` and
+  `NSWorkspace`.
+- If the app can't be found, an alert says so; nothing else is opened.
+
+| Host | Status |
+|---|---|
+| Claude desktop app | process tree resolves to the app (verified); activation not verified. Brings the app, not the conversation |
+| Terminal.app | not verified |
+| Ghostty | not verified |
+| iTerm2 | not verified |
+| VS Code | not verified |
+| Cursor | not verified |
+| Warp | not verified |
+| tmux (default socket) | not verified |
 
 ### Terminating a session
 
@@ -332,7 +362,9 @@ The `claude` binary is looked up in known locations (`~/.local/bin`,
 Package.swift                 SwiftPM, macOS 14, 3 targets + tests
 Sources/ClaudeBarCore/        shared model + reading/writing the state directory
   HookInstaller.swift         adds/removes only ClaudeBar's hooks in settings.json (diff, backup)
+  SessionNavigator.swift      process tree → app, tmux pane, activation
   SessionStatus.swift         session state (working/idle/waiting/error), PID
+  Shell.swift                 runs processes without a shell (no injection)
   StatusDirectory.swift       ~/.claude/claudebar: permissions, atomic writes, cleanup
 Sources/claudebar-hook/       CLI called by the hooks (no jq/python needed)
   main.swift                  reads the hook JSON from stdin, writes/deletes the state file
@@ -350,7 +382,6 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
   ProcessProbe.swift          process topology: group leader? still claude?
   Notifier.swift              sound per alert, toggle, native vs. own popup
   StatusHUD.swift             the app's own popup (floating NSPanel)
-  Shell.swift                 runs processes without a shell (no injection)
 Tests/ClaudeBarTests/         subagents, count, icon, precedence, real kills, no network
 Resources/AppIcon.icns        app icon, copied into the bundle by build-app.sh
 scripts/build-app.sh          builds build/ClaudeBar.app (LSUIElement, ad-hoc signed)
@@ -458,8 +489,9 @@ does not take down a sibling.
 - **`sessionId` is sanitized** before it becomes a file name: only
   `[A-Za-z0-9-_]` is kept, everything else becomes `-`. A malicious
   `session_id` with `../` can't escape the directory.
-- **No command goes through a shell.** `claude` is run via `Process` with
-  separate arguments — no interpolation, so no injection. The only exception is
+- **No command goes through a shell.** `claude` and `tmux` are run via
+  `Process` from a known path with separate arguments — no interpolation, so no
+  injection. The only exception is
   `zsh -lc "command -v claude"`, used only as a last resort when the binary
   isn't in a known location.
 - **`message` is capped at 200 characters** before it is shown. For failures
@@ -487,7 +519,8 @@ With Little Snitch: open Network Monitor and search for "ClaudeBar". It should
 never show a connection.
 
 Note: ClaudeBar runs `claude agents --json` (and `claude stop` when you
-terminate a subagent). Any traffic from those commands shows up under
+terminate a subagent), plus local `tmux` commands when you go to a session
+inside tmux. Any traffic from the `claude` commands shows up under
 `claude`, not ClaudeBar: it belongs to Claude Code and follows its settings
 (https://code.claude.com/docs/en/data-usage#telemetry-services).
 
