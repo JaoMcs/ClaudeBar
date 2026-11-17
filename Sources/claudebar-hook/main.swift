@@ -8,6 +8,7 @@ import Foundation
 //      claudebar-hook install|uninstall [--dry-run]
 //      claudebar-hook status [--json]   uma sessão por linha: estado<TAB>projeto<TAB>pasta
 //      claudebar-hook next              traz para a frente a sessão que espera há mais tempo
+//      claudebar-hook statusline        comando do `statusLine` do Claude Code (limites de uso)
 
 /// Campos do payload que os hooks do Claude Code entregam no stdin.
 private struct HookPayload: Decodable {
@@ -84,6 +85,38 @@ private func manage(_ action: HookAction, dryRun: Bool) {
     }
 }
 
+/// Statusline: guarda os limites de uso e devolve o statusline que o usuário já
+/// tinha. Nunca falha por culpa própria — o pior caso é o rodapé sem texto.
+private func statusLine(_ stdinData: Data) -> Never {
+    // Grava antes de rodar o original: se o Claude Code cancelar este processo
+    // no meio, o dado já está salvo. Só regrava se mudou (ver `needsWrite`).
+    let limits = RateLimits.fromStatusLine(stdinData)
+    if let limits, limits.needsWrite(over: StatusDirectory.readLimits()) {
+        do {
+            try StatusDirectory.writeLimits(limits)
+        } catch {
+            FileHandle.standardError.write(Data("claudebar-hook: \(error.localizedDescription)\n".utf8))
+        }
+    }
+
+    let isReentry = ProcessInfo.processInfo.environment[StatusLineChain.reentryVariable] != nil
+    if !isReentry,
+       let command = StatusLineChain.originalCommand(),
+       // 5 s: a doc não fixa limite e o Claude Code cancela o script na
+       // próxima atualização; mais que isso já é rodapé travado.
+       let result = StatusLineChain.run(command: command, input: stdinData, timeout: 5) {
+        FileHandle.standardOutput.write(result.output)
+        exit(result.status)
+    }
+
+    // Sem statusline anterior (ou ele falhou em rodar): uma linha curta em vez
+    // de vazio, porque com statusline configurado o Claude Code esconde as
+    // dicas do rodapé.
+    let shown = limits ?? StatusDirectory.readLimits() ?? RateLimits()
+    print(shown.summary())
+    exit(0)
+}
+
 /// Sem `ProcessProbe` (é do app): só apaga arquivo de processo que não existe mais.
 private func readSessions() -> [SessionStatus] {
     StatusDirectory.readAll { $0.pid <= 0 || kill($0.pid, 0) == 0 || errno != ESRCH }
@@ -134,6 +167,9 @@ private func run() {
     }
 
     let stdinData = FileHandle.standardInput.readDataToEndOfFile()
+    if command == "statusline" {
+        statusLine(stdinData)
+    }
     let payload = try? StatusDirectory.decoder.decode(HookPayload.self, from: stdinData)
     // Sem `session_id` não há de quem gravar o estado. Sai bem, sem arquivo: um
     // `unknown.json` juntaria sessões diferentes num só fantasma.

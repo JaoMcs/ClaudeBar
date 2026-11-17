@@ -22,6 +22,19 @@ public enum StatusDirectory {
         return decoder
     }()
 
+    /// Últimos limites de uso, gravados pelo `claudebar-hook statusline`.
+    public static let limitsURL = url.appendingPathComponent("limits.json")
+    /// `statusLine` que o usuário tinha antes da instalação, encadeado pelo hook.
+    public static let originalStatusLineURL = url.appendingPathComponent("statusline-original.json")
+
+    /// `readAll` apaga todo `*.json` que não decodifica como sessão: estes dois
+    /// moram no mesmo diretório e precisam ficar de fora.
+    static func isSessionFile(_ file: URL) -> Bool {
+        file.pathExtension == "json"
+            && file.lastPathComponent != limitsURL.lastPathComponent
+            && file.lastPathComponent != originalStatusLineURL.lastPathComponent
+    }
+
     public static func fileURL(sessionId: String) -> URL {
         url.appendingPathComponent("\(sanitize(sessionId)).json")
     }
@@ -43,9 +56,21 @@ public enum StatusDirectory {
 
     /// Grava de forma atômica, para o app nunca ler um JSON pela metade.
     public static func write(_ status: SessionStatus) throws {
+        try writeAtomically(encoder.encode(status), to: fileURL(sessionId: status.sessionId))
+    }
+
+    public static func writeLimits(_ limits: RateLimits) throws {
+        try writeAtomically(encoder.encode(limits), to: limitsURL)
+    }
+
+    /// `nil` sem arquivo ou com arquivo inválido: o menu mostra "indisponível".
+    public static func readLimits() -> RateLimits? {
+        guard let data = try? Data(contentsOf: limitsURL) else { return nil }
+        return try? decoder.decode(RateLimits.self, from: data)
+    }
+
+    private static func writeAtomically(_ data: Data, to file: URL) throws {
         try createIfNeeded()
-        let data = try encoder.encode(status)
-        let file = fileURL(sessionId: status.sessionId)
         try data.write(to: file, options: .atomic)
         // A escrita atômica cria o arquivo novo pelo umask; reforçamos depois.
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
@@ -71,7 +96,7 @@ public enum StatusDirectory {
         )) ?? []
 
         return files
-            .filter { $0.pathExtension == "json" }
+            .filter(isSessionFile)
             .compactMap { file in
                 // Nome que não bate com o `sessionId` (ou `unknown.json`, gravado
                 // por hook antigo quando o payload falhava) não é de sessão nenhuma.
