@@ -25,23 +25,23 @@ final class HookSetup {
 
     var menuTitle: String {
         switch state {
-        case .ok: "Integração com o Claude Code: ok"
-        case .notInstalled: "Integração: hooks não instalados"
-        default: "⚠︎ Integração precisa de atenção"
+        case .ok: String(localized: "Claude Code integration: ok")
+        case .notInstalled: String(localized: "Integration: hooks not installed")
+        default: String(localized: "⚠︎ Integration needs attention")
         }
     }
 
     var summary: String {
         switch state {
-        case .ok: "Hooks registrados e executável em dia"
-        case .notInstalled: "Sem hooks, o app só vê as sessões a cada minuto"
-        case .binaryMissing: "O executável do hook sumiu de ~/.claude/claudebar/bin"
-        case .binaryOutdated: "O executável do hook é de outra versão do app"
-        case .hooksOutdated: "Faltam hooks do ClaudeBar no settings.json"
-        case .legacyHooks: "Hooks no formato antigo (caminho dentro do .app)"
-        case .invalidSettings: "O settings.json não é um JSON válido — nada será alterado"
-        case .readOnlySettings: "O settings.json é somente leitura: cole o JSON na ferramenta que o gera"
-        case .hooksDisabled: "disableAllHooks está ligado no seu settings.json"
+        case .ok: String(localized: "Hooks registered and executable up to date")
+        case .notInstalled: String(localized: "Without hooks, the app only sees sessions once a minute")
+        case .binaryMissing: String(localized: "The hook executable is gone from ~/.claude/claudebar/bin")
+        case .binaryOutdated: String(localized: "The hook executable is from another version of the app")
+        case .hooksOutdated: String(localized: "ClaudeBar hooks are missing from settings.json")
+        case .legacyHooks: String(localized: "Hooks in the old format (path inside the .app)")
+        case .invalidSettings: String(localized: "settings.json is not valid JSON — nothing will be changed")
+        case .readOnlySettings: String(localized: "settings.json is read-only: paste the JSON into the tool that generates it")
+        case .hooksDisabled: String(localized: "disableAllHooks is on in your settings.json")
         }
     }
 
@@ -63,22 +63,25 @@ final class HookSetup {
         let key = "\(state)"
         guard offerable.contains(state), defaults.string(forKey: Self.offeredKey) != key else { return }
         defaults.set(key, forKey: Self.offeredKey)
-        review(.install, cancelTitle: "Pular")
+        review(.install, cancelTitle: String(localized: "Skip"))
     }
 
     /// Mostra exatamente o que muda e grava só se você clicar na ação.
-    func review(_ action: HookAction, cancelTitle: String = "Cancelar") {
+    func review(_ action: HookAction, cancelTitle: String = String(localized: "Cancel")) {
         let plan: HookPlan
         do {
             plan = try HookInstaller.plan(action)
         } catch {
-            return report(title: "Não foi possível ler o settings.json", message: error.localizedDescription)
+            return report(title: String(localized: "Could not read settings.json"), message: error.localizedDescription)
         }
 
         let stable = HookInstaller.stableBinary
         let installs = action == .install || action == .installStatusLine
         if installs, bundledBinary == nil, !FileManager.default.isExecutableFile(atPath: stable.path) {
-            return report(title: "Executável do hook não encontrado", message: "Abra o ClaudeBar a partir do .app.")
+            return report(
+                title: String(localized: "Hook executable not found"),
+                message: String(localized: "Open ClaudeBar from the .app.")
+            )
         }
         let copiesBinary = installs && bundledBinary.map {
             !FileManager.default.contentsEqual(atPath: $0.path, andPath: stable.path)
@@ -89,55 +92,63 @@ final class HookSetup {
             && FileManager.default.fileExists(atPath: stable.path)
 
         guard plan.hasChanges || copiesBinary || removesBinary else {
-            return report(title: "Nada a mudar", message: plan.settingsURL.path)
+            return report(title: String(localized: "Nothing to change"), message: plan.settingsURL.path)
         }
 
         let alert = NSAlert()
         alert.messageText = switch action {
-        case .install: "Registrar os hooks do ClaudeBar no Claude Code?"
-        case .uninstall: "Remover os hooks do ClaudeBar?"
-        case .installStatusLine: "Mostrar os limites de uso no rodapé do Claude Code?"
-        case .uninstallStatusLine: "Parar de mostrar os limites no rodapé do Claude Code?"
+        case .install: String(localized: "Register the ClaudeBar hooks in Claude Code?")
+        case .uninstall: String(localized: "Remove the ClaudeBar hooks?")
+        case .installStatusLine: String(localized: "Show usage limits in the Claude Code footer?")
+        case .uninstallStatusLine: String(localized: "Stop showing limits in the Claude Code footer?")
         }
         var info: [String] = []
         if plan.hasChanges {
-            info.append("Arquivo: \(plan.settingsURL.path)")
-            info.append("Backup antes de gravar, em \(HookInstaller.backupsURL.path)")
+            info.append(String(localized: "File: \(plan.settingsURL.path)"))
+            info.append(String(localized: "Backup before writing, in \(HookInstaller.backupsURL.path)"))
             if plan.reformats {
-                info.append("O arquivo será reformatado (ordem das chaves); fora de \"hooks\" e \"statusLine\" o conteúdo não muda.")
+                info.append(String(localized: """
+                The file will be reformatted (key order); outside "hooks" and "statusLine" \
+                the content doesn't change.
+                """))
             }
             // Só `hooks` e `statusLine`: o resto do settings pode ter token em `env`.
             alert.accessoryView = codeView(plan.diff)
         }
         if copiesBinary {
-            info.append("Copia o executável do hook para \(stable.path).")
+            info.append(String(localized: "Copies the hook executable to \(stable.path)."))
         }
         if removesBinary {
-            info.append("Apaga o executável do hook em \(stable.path).")
+            info.append(String(localized: "Deletes the hook executable at \(stable.path)."))
         }
         switch (action, plan.statusLineOriginal) {
         case (.installStatusLine, .save?):
-            info.append(
-                "Seu statusline continua aparecendo igual. O ClaudeBar só lê os limites antes de repassar. "
-                    + "O original fica guardado em \(StatusDirectory.originalStatusLineURL.path)."
-            )
+            info.append(String(localized: """
+                Your statusline keeps showing as before. ClaudeBar only reads the limits before \
+                passing it on. The original is kept at \(StatusDirectory.originalStatusLineURL.path).
+                """))
         case (.installStatusLine, _):
-            info.append(
-                "O Claude Code esconde algumas dicas do rodapé (como `esc to interrupt`) quando existe um "
-                    + "statusline. No lugar delas aparece `5h 23% · sem 41%`. Os limites só aparecem para "
-                    + "assinantes Pro, Max e Ultra."
-            )
+            // O exemplo fica fora da chave: é a saída real do statusline, e o `%` dele
+            // viraria `%%` na tabela.
+            let example = "`5h 23% · sem 41%`"
+            info.append(String(localized: """
+                Claude Code hides some footer hints (like `esc to interrupt`) when there is a \
+                statusline. In their place you see \(example). Limits only show for Pro, Max \
+                and Ultra subscribers.
+                """))
         case (.uninstallStatusLine, _):
-            info.append("O statusLine que você tinha antes volta igual; se você o trocou depois, ele fica.")
+            info.append(String(localized: "The statusLine you had before comes back as it was; if you changed it since, yours stays."))
         default:
             info.append(
-                "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão. "
-                    + (action == .install ? "\"Remover hooks…\" no menu desfaz. " : "")
-                    + "O Claude Code aplica sem reiniciar."
+                [
+                    String(localized: "Only ClaudeBar's entries change; your own hooks stay as they are."),
+                    action == .install ? String(localized: "\"Remove hooks…\" in the menu undoes it.") : nil,
+                    String(localized: "Claude Code applies it without restarting."),
+                ].compactMap(\.self).joined(separator: " ")
             )
         }
         alert.informativeText = info.joined(separator: "\n\n")
-        alert.addButton(withTitle: installs ? "Instalar" : "Remover")
+        alert.addButton(withTitle: installs ? String(localized: "Install") : String(localized: "Remove"))
         alert.addButton(withTitle: cancelTitle)
 
         guard runInFront(alert) == .alertFirstButtonReturn else { return }
@@ -157,7 +168,7 @@ final class HookSetup {
             // Mudou enquanto você lia: mostra a prévia nova, nunca grava às cegas.
             return review(action, cancelTitle: cancelTitle)
         } catch {
-            report(title: "Não foi possível gravar", message: error.localizedDescription)
+            report(title: String(localized: "Could not write"), message: error.localizedDescription)
         }
         refresh()
     }
@@ -199,33 +210,34 @@ final class HookSetup {
         // Compara os bytes aqui: `.binaryOutdated` só existe com o settings em dia.
         let sameBinary = bundledBinary.map { manager.contentsEqual(atPath: $0.path, andPath: hook.path) }
         var lines = [
-            check(registered, "Hooks registrados no settings.json"),
-            check(manager.isExecutableFile(atPath: hook.path), "Executável em \(hook.path)"),
-            check(sameBinary, "Executável igual ao deste app"),
-            check(ran && wrote, "O hook rodou e gravou o estado"),
+            check(registered, String(localized: "Hooks registered in settings.json")),
+            check(manager.isExecutableFile(atPath: hook.path), String(localized: "Executable at \(hook.path)")),
+            check(sameBinary, String(localized: "Executable identical to this app's")),
+            check(ran && wrote, String(localized: "The hook ran and wrote the state")),
         ]
         if state == .hooksDisabled {
-            lines.append("⚠︎ disableAllHooks está ligado: o Claude Code não roda nenhum hook.")
+            lines.append(String(localized: "⚠︎ disableAllHooks is on: Claude Code runs no hooks."))
         }
 
         let lastEvent = StatusDirectory.readAll(isAlive: ProcessProbe.live.isAlive)
             .filter { $0.sessionId != id }.map(\.updatedAt).max()
         if let lastEvent {
-            lines.append("Último evento recebido: \(lastEvent.formatted(.relative(presentation: .named)))")
+            let when = lastEvent.formatted(.relative(presentation: .named))
+            lines.append(String(localized: "Last event received: \(when)"))
         } else if openSessions > 0 {
-            lines.append("""
-            ⚠︎ Há sessões abertas e nenhum evento chegou. A pasta já foi aceita no \
-            diálogo de confiança do Claude Code? Antes disso ele retém os hooks. \
-            Confira também `disableAllHooks` e o `/hooks` dentro do Claude Code.
-            """)
+            lines.append(String(localized: """
+            ⚠︎ There are open sessions and no event has arrived. Has the folder been accepted \
+            in Claude Code's trust dialog? Until then it holds back the hooks. \
+            Also check `disableAllHooks` and `/hooks` inside Claude Code.
+            """))
         }
 
-        report(title: "Teste da integração", message: lines.joined(separator: "\n"))
+        report(title: String(localized: "Integration test"), message: lines.joined(separator: "\n"))
     }
 
     /// `nil`: não deu para conferir. Nunca vira ✓.
     private func check(_ passed: Bool?, _ text: String) -> String {
-        guard let passed else { return "? \(text) (não verificado)" }
+        guard let passed else { return "? " + String(localized: "\(text) (not verified)") }
         return "\(passed ? "✓" : "✗") \(text)"
     }
 
@@ -237,7 +249,7 @@ final class HookSetup {
             textView.isEditable = false
             textView.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
             textView.string = text
-            textView.setAccessibilityLabel("Alterações no settings.json")
+            textView.setAccessibilityLabel(String(localized: "Changes to settings.json"))
         }
         return scroll
     }

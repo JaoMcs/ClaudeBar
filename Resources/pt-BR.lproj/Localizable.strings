@@ -47,3 +47,111 @@
 "Example: Claude needs your permission to use Bash" = "Exemplo: Claude needs your permission to use Bash";
 "Still waiting: %@" = "Ainda esperando: %@";
 "%@ needs you" = "%@ precisa de você";
+
+/* Finalizar sessão */
+"Terminate session (kill %@)" = "Finalizar sessão (kill %@)";
+"Terminate subagent (claude stop %@)" = "Finalizar subagente (claude stop %@)";
+"Desktop app session — close it from the app" = "Sessão do app desktop — feche pelo próprio app";
+"No identifiable process to terminate" = "Sem processo identificável para encerrar";
+"Terminate %@?" = "Finalizar %@?";
+"Process %@ gets SIGTERM. The conversation is kept (resume it with `claude --resume`), but whatever is running stops right away and the terminal is left with an empty shell." = "O processo %@ recebe SIGTERM. A conversa fica salva (dá para voltar com `claude --resume`), mas o que estiver em andamento para na hora e o terminal fica com um shell vazio.";
+"`claude stop %@` ends the agent and keeps the conversation: you can resume it later with `claude attach %@`." = "`claude stop %@` encerra o agente preservando a conversa: você pode retomá-la depois com `claude attach %@`.";
+"Terminate" = "Finalizar";
+"Cancel" = "Cancelar";
+"Could not terminate %@" = "Não foi possível finalizar %@";
+"could not signal process %@ (errno %d)" = "não foi possível sinalizar o processo %@ (errno %d)";
+"the claude executable was not found" = "o executável do claude não foi encontrado";
+"`claude stop %@` failed" = "`claude stop %@` falhou";
+"This session runs inside the Claude app and shares its process group. Close the session from the app itself." = "Essa sessão roda dentro do app do Claude e compartilha o grupo de processos com ele. Feche a sessão pelo próprio app.";
+"this session doesn't expose a process that can be terminated" = "essa sessão não expõe um processo que possa ser encerrado";
+
+/* Ir para a sessão e abrir pasta */
+"Could not go to %@" = "Não foi possível ir até %@";
+"Couldn't find the terminal or app for this session. In tmux, only the default socket is supported and a terminal must be attached. The project folder is still under \"Open project folder\"." = "Não achei o terminal ou app dessa sessão. No tmux, só o socket padrão é suportado e precisa haver um terminal anexado. A pasta do projeto continua em \"Abrir pasta do projeto\".";
+"Could not open the folder" = "Não foi possível abrir a pasta";
+"The folder no longer exists or macOS denied access." = "A pasta não existe mais ou o macOS negou o acesso.";
+
+/* Integração com o Claude Code */
+"Claude Code integration: ok" = "Integração com o Claude Code: ok";
+"Integration: hooks not installed" = "Integração: hooks não instalados";
+"⚠︎ Integration needs attention" = "⚠︎ Integração precisa de atenção";
+"Hooks registered and executable up to date" = "Hooks registrados e executável em dia";
+"Without hooks, the app only sees sessions once a minute" = "Sem hooks, o app só vê as sessões a cada minuto";
+"The hook executable is gone from ~/.claude/claudebar/bin" = "O executável do hook sumiu de ~/.claude/claudebar/bin";
+"The hook executable is from another version of the app" = "O executável do hook é de outra versão do app";
+"ClaudeBar hooks are missing from settings.json" = "Faltam hooks do ClaudeBar no settings.json";
+"Hooks in the old format (path inside the .app)" = "Hooks no formato antigo (caminho dentro do .app)";
+"settings.json is not valid JSON — nothing will be changed" = "O settings.json não é um JSON válido — nada será alterado";
+"settings.json is read-only: paste the JSON into the tool that generates it" = "O settings.json é somente leitura: cole o JSON na ferramenta que o gera";
+"disableAllHooks is on in your settings.json" = "disableAllHooks está ligado no seu settings.json";
+"Skip" = "Pular";
+"Could not read settings.json" = "Não foi possível ler o settings.json";
+"Hook executable not found" = "Executável do hook não encontrado";
+"Open ClaudeBar from the .app." = "Abra o ClaudeBar a partir do .app.";
+"Nothing to change" = "Nada a mudar";
+"Register the ClaudeBar hooks in Claude Code?" = "Registrar os hooks do ClaudeBar no Claude Code?";
+"Remove the ClaudeBar hooks?" = "Remover os hooks do ClaudeBar?";
+"Show usage limits in the Claude Code footer?" = "Mostrar os limites de uso no rodapé do Claude Code?";
+"Stop showing limits in the Claude Code footer?" = "Parar de mostrar os limites no rodapé do Claude Code?";
+"File: %@" = "Arquivo: %@";
+"Backup before writing, in %@" = "Backup antes de gravar, em %@";
+"The file will be reformatted (key order); outside \"hooks\" and \"statusLine\" the content doesn't change." = "O arquivo será reformatado (ordem das chaves); fora de \"hooks\" e \"statusLine\" o conteúdo não muda.";
+"Copies the hook executable to %@." = "Copia o executável do hook para %@.";
+"Deletes the hook executable at %@." = "Apaga o executável do hook em %@.";
+"Your statusline keeps showing as before. ClaudeBar only reads the limits before passing it on. The original is kept at %@." = "Seu statusline continua aparecendo igual. O ClaudeBar só lê os limites antes de repassar. O original fica guardado em %@.";
+"Claude Code hides some footer hints (like `esc to interrupt`) when there is a statusline. In their place you see %@. Limits only show for Pro, Max and Ultra subscribers." = "O Claude Code esconde algumas dicas do rodapé (como `esc to interrupt`) quando existe um statusline. No lugar delas aparece %@. Os limites só aparecem para assinantes Pro, Max e Ultra.";
+"The statusLine you had before comes back as it was; if you changed it since, yours stays." = "O statusLine que você tinha antes volta igual; se você o trocou depois, ele fica.";
+"Only ClaudeBar's entries change; your own hooks stay as they are." = "Só as entradas do ClaudeBar mudam; hooks seus ficam como estão.";
+"\"Remove hooks…\" in the menu undoes it." = "\"Remover hooks…\" no menu desfaz.";
+"Claude Code applies it without restarting." = "O Claude Code aplica sem reiniciar.";
+"Install" = "Instalar";
+"Remove" = "Remover";
+"Could not write" = "Não foi possível gravar";
+"Changes to settings.json" = "Alterações no settings.json";
+"settings.json is not valid JSON; nothing was changed" = "o settings.json não é um JSON válido; nada foi alterado";
+"settings.json is read-only; copy the JSON and paste it into the tool that generates it" = "o settings.json é somente leitura; copie o JSON e cole na ferramenta que o gera";
+"settings.json changed after the preview; nothing was changed" = "o settings.json mudou depois da prévia; nada foi alterado";
+
+/* Teste da integração */
+"Integration test" = "Teste da integração";
+"Hooks registered in settings.json" = "Hooks registrados no settings.json";
+"Executable at %@" = "Executável em %@";
+"Executable identical to this app's" = "Executável igual ao deste app";
+"The hook ran and wrote the state" = "O hook rodou e gravou o estado";
+"%@ (not verified)" = "%@ (não verificado)";
+"⚠︎ disableAllHooks is on: Claude Code runs no hooks." = "⚠︎ disableAllHooks está ligado: o Claude Code não roda nenhum hook.";
+"Last event received: %@" = "Último evento recebido: %@";
+"⚠︎ There are open sessions and no event has arrived. Has the folder been accepted in Claude Code's trust dialog? Until then it holds back the hooks. Also check `disableAllHooks` and `/hooks` inside Claude Code." = "⚠︎ Há sessões abertas e nenhum evento chegou. A pasta já foi aceita no diálogo de confiança do Claude Code? Antes disso ele retém os hooks. Confira também `disableAllHooks` e o `/hooks` dentro do Claude Code.";
+
+/* Limites no menu */
+"Usage limits: unavailable" = "Limites de uso: indisponível";
+"%@: unavailable" = "%@: indisponível";
+"%@: reset, waiting for new data" = "%@: renovado, aguardando dado novo";
+"%@: %@ · resets %@" = "%@: %@ · renova %@";
+"5 h limit" = "Limite 5 h";
+"Weekly" = "Semanal";
+"Updated %@" = "Atualizado %@";
+
+/* Ajustes e Sobre */
+"ClaudeBar Settings" = "Ajustes do ClaudeBar";
+"Alerts" = "Avisos";
+"Alert when Claude finishes" = "Avisar quando o Claude terminar";
+"Alert when Claude is waiting for you" = "Avisar quando o Claude esperar você";
+"Alert when a reply fails" = "Avisar quando a resposta falhar";
+"Remind once if still waiting" = "Lembrar uma vez se continuar esperando";
+"After %lld min" = "Depois de %lld min";
+"Never show the message content" = "Nunca mostrar o conteúdo da mensagem";
+"The alert only says \"<project> needs you\". Useful when sharing your screen." = "O aviso diz só \"<projeto> precisa de você\". Útil ao compartilhar a tela.";
+"Sound" = "Som";
+"Play sound" = "Tocar som";
+"Finished" = "Terminou";
+"Asks for permission / waiting" = "Pede permissão / esperando";
+"Question" = "Pergunta";
+"Failed" = "Falhou";
+"System" = "Sistema";
+"Open at login" = "Abrir ao iniciar sessão no Mac";
+"Needs approval in System Settings → Login Items." = "Falta aprovar em Ajustes do Sistema → Itens de Início.";
+"Open Login Items" = "Abrir Itens de Início";
+"About ClaudeBar" = "Sobre o ClaudeBar";
+"No network, no login. Doesn't read your conversations." = "Sem rede, sem login. Não lê suas conversas.";
+"Could not change it: %@" = "Não foi possível mudar: %@";

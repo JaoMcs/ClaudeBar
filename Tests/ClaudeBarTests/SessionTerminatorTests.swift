@@ -48,7 +48,7 @@ struct DesktopSessionTests {
     @Test func desktopNaoOferecebotaoEExplicaOMotivo() {
         #expect(SessionTerminator.actionTitle(for: row(pid: 35282), probe: desktopProbe) == nil)
         let motivo = SessionTerminator.unavailableReason(for: row(pid: 35282), probe: desktopProbe)
-        #expect(motivo?.contains("app desktop") == true)
+        #expect(motivo?.contains("Desktop app") == true)
     }
 
     @Test func desktopFalhaSemSinalizarNada() {
@@ -56,7 +56,7 @@ struct DesktopSessionTests {
             Issue.record("não deveria ter encerrado")
             return
         }
-        #expect(reason.contains("app do Claude"))
+        #expect(reason.contains("Claude app"))
     }
 
     @Test func terminalContinuaEncerravel() {
@@ -69,7 +69,7 @@ struct SessionTerminatorTests {
     @Test func sessaoDeTerminalUsaSigtermNoPid() {
         #expect(
             SessionTerminator.actionTitle(for: row(pid: 4321), probe: terminalProbe)
-                == "Finalizar sessão (kill 4321)"
+                == "Terminate session (kill 4321)"
         )
     }
 

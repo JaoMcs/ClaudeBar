@@ -175,7 +175,7 @@ final class SessionStore {
             merge()
             refreshAgents()
         case .failed(let reason):
-            report(title: "Não foi possível finalizar \(row.name)", message: reason)
+            report(title: String(localized: "Could not terminate \(row.name)"), message: reason)
         }
     }
 
@@ -184,8 +184,8 @@ final class SessionStore {
         guard Self.isOpenableFolder(row.cwd),
               NSWorkspace.shared.open(URL(fileURLWithPath: row.cwd, isDirectory: true))
         else {
-            report(title: "Não foi possível abrir a pasta",
-                   message: "\(row.cwd)\n\nA pasta não existe mais ou o macOS negou o acesso.")
+            report(title: String(localized: "Could not open the folder"),
+                   message: row.cwd + "\n\n" + String(localized: "The folder no longer exists or macOS denied access."))
             return
         }
     }
@@ -224,14 +224,12 @@ final class SessionStore {
             if let app, await SessionNavigator.bringToFront(app) { return }
             // Não abre o Finder sozinho: seria uma ação que você não pediu.
             report(
-                title: "Não foi possível ir até \(row.name)",
-                message: """
-                \(row.cwd)
-
-                Não achei o terminal ou app dessa sessão. No tmux, só o socket \
-                padrão é suportado e precisa haver um terminal anexado. A pasta \
-                do projeto continua em "Abrir pasta do projeto".
-                """
+                title: String(localized: "Could not go to \(row.name)"),
+                message: row.cwd + "\n\n" + String(localized: """
+                Couldn't find the terminal or app for this session. In tmux, only the \
+                default socket is supported and a terminal must be attached. The project \
+                folder is still under "Open project folder".
+                """)
             )
         }
     }
@@ -239,28 +237,27 @@ final class SessionStore {
     private func confirmTermination(of row: SessionRow) -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Finalizar \(row.name)?"
-        alert.informativeText = switch SessionTerminator.target(for: row) {
+        alert.messageText = String(localized: "Terminate \(row.name)?")
+        // O caminho fica fora da tradução: chave com caminho nunca seria encontrada.
+        let consequence: String? = switch SessionTerminator.target(for: row) {
         case .signal(let pid):
-            """
-            \(row.cwd)
-
-            O processo \(pid) recebe SIGTERM. A conversa fica salva (dá para \
-            voltar com `claude --resume`), mas o que estiver em andamento para \
-            na hora e o terminal fica com um shell vazio.
-            """
+            // `String(pid)`: número em `String(localized:)` sai com separador de milhar.
+            String(localized: """
+            Process \(String(pid)) gets SIGTERM. The conversation is kept (resume it \
+            with `claude --resume`), but whatever is running stops right away and \
+            the terminal is left with an empty shell.
+            """)
         case .backgroundStop(let id):
-            """
-            \(row.cwd)
-
-            `claude stop \(id)` encerra o agente preservando a conversa: você \
-            pode retomá-la depois com `claude attach \(id)`.
-            """
+            String(localized: """
+            `claude stop \(id)` ends the agent and keeps the conversation: you can \
+            resume it later with `claude attach \(id)`.
+            """)
         case .hostedByApp, .unavailable:
-            row.cwd
+            nil
         }
-        alert.addButton(withTitle: "Finalizar")
-        alert.addButton(withTitle: "Cancelar")
+        alert.informativeText = [row.cwd, consequence].compactMap(\.self).joined(separator: "\n\n")
+        alert.addButton(withTitle: String(localized: "Terminate"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
 
         // O app é accessory: sem ativar, o alerta nasce atrás das outras janelas.
         NSApplication.shared.activate(ignoringOtherApps: true)

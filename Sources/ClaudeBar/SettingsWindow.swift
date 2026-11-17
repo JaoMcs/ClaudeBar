@@ -19,7 +19,7 @@ enum SettingsWindow {
             let window = NSWindow(contentViewController: NSHostingController(
                 rootView: SettingsView(notifier: notifier)
             ))
-            window.title = "Ajustes do ClaudeBar"
+            window.title = String(localized: "ClaudeBar Settings")
             window.styleMask = [.titled, .closable]
             // Quem mantém a janela viva é a referência acima; sem isso o
             // `close()` a liberaria por conta própria.
@@ -59,40 +59,40 @@ private struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Avisos") {
-                Toggle("Avisar quando o Claude terminar", isOn: $notifyFinished)
-                Toggle("Avisar quando o Claude esperar você", isOn: $notifyWaiting)
-                Toggle("Avisar quando a resposta falhar", isOn: $notifyFailed)
-                Toggle("Lembrar uma vez se continuar esperando", isOn: $reminderEnabled)
-                Stepper("Depois de \(reminderMinutes) min", value: $reminderMinutes, in: 1...60)
+            Section("Alerts") {
+                Toggle("Alert when Claude finishes", isOn: $notifyFinished)
+                Toggle("Alert when Claude is waiting for you", isOn: $notifyWaiting)
+                Toggle("Alert when a reply fails", isOn: $notifyFailed)
+                Toggle("Remind once if still waiting", isOn: $reminderEnabled)
+                Stepper("After \(reminderMinutes) min", value: $reminderMinutes, in: 1...60)
                     .disabled(!reminderEnabled)
-                Toggle("Nunca mostrar o conteúdo da mensagem", isOn: $hideContent)
-                Text("O aviso diz só \"<projeto> precisa de você\". Útil ao compartilhar a tela.")
+                Toggle("Never show the message content", isOn: $hideContent)
+                Text("The alert only says \"<project> needs you\". Useful when sharing your screen.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("Som") {
-                Toggle("Tocar som", isOn: $soundEnabled)
-                soundPicker("Terminou", selection: $soundFinished, alert: .finished)
+            Section("Sound") {
+                Toggle("Play sound", isOn: $soundEnabled)
+                soundPicker("Finished", selection: $soundFinished, alert: .finished)
                 // Permissão e "esperando" dividem o mesmo som.
-                soundPicker("Pede permissão / esperando", selection: $soundWaiting, alert: .waiting)
-                soundPicker("Pergunta", selection: $soundQuestion, alert: .question)
-                soundPicker("Falhou", selection: $soundFailed, alert: .failed)
+                soundPicker("Asks for permission / waiting", selection: $soundWaiting, alert: .waiting)
+                soundPicker("Question", selection: $soundQuestion, alert: .question)
+                soundPicker("Failed", selection: $soundFailed, alert: .failed)
             }
 
-            Section("Sistema") {
-                Toggle("Abrir ao iniciar sessão no Mac", isOn: Binding(
+            Section("System") {
+                Toggle("Open at login", isOn: Binding(
                     get: { loginStatus == .enabled || loginStatus == .requiresApproval },
                     set: { setLaunchAtLogin($0) }
                 ))
                 if loginStatus == .requiresApproval {
-                    Text("Falta aprovar em Ajustes do Sistema → Itens de Início.").font(.caption)
-                    Button("Abrir Itens de Início") { SMAppService.openSystemSettingsLoginItems() }
+                    Text("Needs approval in System Settings → Login Items.").font(.caption)
+                    Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() }
                 }
                 if let loginError {
                     Text(loginError).font(.caption).foregroundStyle(.red)
                 }
-                Button("Sobre o ClaudeBar") {
+                Button("About ClaudeBar") {
                     // O clique veio desta janela, então o app já está ativo e o
                     // painel nasce na frente. Nome e versão passados à mão: sem
                     // bundle (`swift run`) não há Info.plist.
@@ -102,7 +102,7 @@ private struct SettingsView: View {
                             forInfoDictionaryKey: "CFBundleShortVersionString"
                         ) as? String ?? "dev",
                         .credits: NSAttributedString(
-                            string: "Sem rede, sem login. Não lê suas conversas."
+                            string: String(localized: "No network, no login. Doesn't read your conversations.")
                         ),
                     ])
                 }
@@ -122,12 +122,13 @@ private struct SettingsView: View {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             loginError = nil
         } catch {
-            loginError = "Não foi possível mudar: \(error.localizedDescription)"
+            loginError = String(localized: "Could not change it: \(error.localizedDescription)")
         }
         loginStatus = SMAppService.mainApp.status
     }
 
-    private func soundPicker(_ title: String, selection: Binding<String>, alert: Alert) -> some View {
+    // `LocalizedStringKey`: com `String` o `Picker` não traduz o título.
+    private func soundPicker(_ title: LocalizedStringKey, selection: Binding<String>, alert: Alert) -> some View {
         // Som salvo que sumiu do sistema continua na lista, para o Picker não
         // ficar sem seleção.
         let sons = Notifier.systemSounds.contains(selection.wrappedValue)

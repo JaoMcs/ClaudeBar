@@ -16,11 +16,12 @@ public enum HookInstallError: Error, Equatable, LocalizedError {
     /// O arquivo mudou entre a prévia e o clique (o próprio Claude Code grava nele).
     case changedSinceReview
 
+    /// No app acha a tradução no `Bundle.main`; no CLI (stderr) fica em inglês.
     public var errorDescription: String? {
         switch self {
-        case .invalidSettings: "o settings.json não é um JSON válido; nada foi alterado"
-        case .readOnly: "o settings.json é somente leitura; copie o JSON e cole na ferramenta que o gera"
-        case .changedSinceReview: "o settings.json mudou depois da prévia; nada foi alterado"
+        case .invalidSettings: String(localized: "settings.json is not valid JSON; nothing was changed")
+        case .readOnly: String(localized: "settings.json is read-only; copy the JSON and paste it into the tool that generates it")
+        case .changedSinceReview: String(localized: "settings.json changed after the preview; nothing was changed")
         }
     }
 }
