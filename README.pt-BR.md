@@ -45,7 +45,7 @@ antigas, com os subagentes em background agrupados no fim:
 
 ```
 ✅  my-app — pronto (há 2 min)
-⏳  ClaudeBar — processando (há 10 s)
+⏳  ClaudeBar · feat/x — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
 ✋  infra — pede permissão (há 20 s)
 ❓  docs — fez uma pergunta (há 5 s)
@@ -327,6 +327,7 @@ Um arquivo de estado tem esta cara:
 
 ```json
 {
+  "branch" : "main",
   "cwd" : "/Users/me/code/my-project",
   "kind" : "permission",
   "message" : "Claude needs your permission to use Bash",
@@ -336,6 +337,13 @@ Um arquivo de estado tem esta cara:
   "updatedAt" : 1791400000
 }
 ```
+
+A `branch` é lida pelo hook direto do `.git/HEAD` (seguindo o `gitdir:` de um
+worktree), sem rodar `git`. HEAD solto aparece como `@sha7`; repositório
+reftable, ou pasta fora de git, fica sem branch. Ela é atualizada a cada hook,
+então um `git checkout` feito fora do Claude aparece com um turno de atraso.
+No menu ela vem ao lado do nome, para distinguir duas sessões do mesmo projeto
+em worktrees diferentes.
 
 Duas decisões que evitam problemas clássicos:
 
@@ -362,6 +370,7 @@ seu shell.
 ```
 Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
+  GitHead.swift               branch lida do .git/HEAD (pelo hook, nunca roda git)
   HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
   SessionNavigator.swift      árvore de processos → app, pane do tmux, ativação
   SessionStatus.swift         estado da sessão (working/idle/waiting/error), PID
@@ -513,7 +522,10 @@ encerrar uma sessão não derruba a irmã.
 - **Sem segredo nenhum no projeto.** O app não fala com rede (veja
   [Confira você mesmo](#confira-você-mesmo)), não autentica em nada e não lê o
   histórico das conversas — só caminhos de projeto, `sessionId`, o estado da
-  sessão e a mensagem de notificação do hook.
+  sessão, a branch do git e a mensagem de notificação do hook.
+- **O único arquivo lido dentro do seu projeto é o `.git/HEAD`** (ou o arquivo
+  `.git` de um worktree), pelo hook, nunca pelo app, e o `git` nunca é
+  executado.
 - **`~/.claude/claudebar` é `0700`, os arquivos `0600`.** O conteúdo revela em
   que projetos você trabalha, então fica fora do alcance de outros usuários da
   máquina.

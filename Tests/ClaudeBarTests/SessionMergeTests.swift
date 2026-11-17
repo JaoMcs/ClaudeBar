@@ -124,6 +124,16 @@ struct SessionMergeTests {
         #expect(SessionMerge.openSessionCount(rows: rows) == 1)
     }
 
+    @Test func branchDoHookChegaNaLinha() throws {
+        let comBranch = SessionStatus(
+            sessionId: "aaaaaaaa-0000-0000-0000-000000000000",
+            state: .idle, cwd: "/Users/dev/my-app", pid: 1, branch: "feat/x"
+        )
+        let rows = SessionMerge.rows(agents: try decodeAgents(), statuses: [comBranch])
+        #expect(rows.first { $0.sessionId == comBranch.sessionId }?.branch == "feat/x")
+        #expect(SessionMerge.rows(agents: [], statuses: [comBranch]).first?.branch == "feat/x")
+    }
+
     @Test func pendenciaNaoVistaAcendeOIcone() throws {
         let rows = SessionMerge.rows(agents: [], statuses: [hook("s1", .idle)])
         #expect(SessionMerge.barState(rows: rows, acknowledged: []) == .done)

@@ -22,6 +22,8 @@ struct SessionRow: Identifiable, Equatable {
     let backgroundId: String?
     /// Por que está esperando, quando o hook disse. `nil` = espera genérica.
     let kind: WaitKind?
+    /// Branch gravada pelo hook. `nil` até o primeiro hook ou fora de repositório git.
+    let branch: String?
 
     var id: String { sessionId }
 
@@ -35,7 +37,8 @@ struct SessionRow: Identifiable, Equatable {
         isSubagent: Bool,
         pid: Int32? = nil,
         backgroundId: String? = nil,
-        kind: WaitKind? = nil
+        kind: WaitKind? = nil,
+        branch: String? = nil
     ) {
         self.sessionId = sessionId
         self.cwd = cwd
@@ -46,6 +49,7 @@ struct SessionRow: Identifiable, Equatable {
         self.pid = pid
         self.backgroundId = backgroundId
         self.kind = kind
+        self.branch = branch
 
         let folder = URL(fileURLWithPath: cwd).lastPathComponent
         self.name = name ?? (folder.isEmpty ? cwd : folder)
