@@ -7,7 +7,6 @@ struct MenuContent: View {
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
         formatter.unitsStyle = .short
         return formatter
     }()
@@ -42,7 +41,7 @@ struct MenuContent: View {
         Divider()
 
         if store.rows.isEmpty {
-            Text("Nenhuma sessão do Claude aberta")
+            Text("No Claude sessions open")
         } else {
             // Cada sessão abre um submenu: clicar na linha não faz nada
             // destrutivo por acidente.
@@ -52,7 +51,7 @@ struct MenuContent: View {
                 Menu {
                     Text(row.cwd)
 
-                    Button("Abrir pasta do projeto") {
+                    Button("Open project folder") {
                         store.openFolder(row)
                     }
 
@@ -66,12 +65,12 @@ struct MenuContent: View {
 
                     // Subagente background não tem terminal para onde ir.
                     if !row.isSubagent, let pid = row.pid, pid > 0 {
-                        Button("Ir para a sessão") {
+                        Button("Go to session") {
                             store.goToSession(row)
                         }
                     }
 
-                    Button("Marcar como visto") {
+                    Button("Mark as seen") {
                         store.acknowledge(row)
                     }
 
@@ -91,14 +90,14 @@ struct MenuContent: View {
 
             Divider()
 
-            Button("Marcar tudo como visto") {
+            Button("Mark all as seen") {
                 store.acknowledgeAll()
             }
         }
 
         Divider()
 
-        Menu("O que os ícones significam") {
+        Menu("What the icons mean") {
             ForEach(BarState.allCases, id: \.self) { state in
                 Label(state.title, systemImage: state.symbolName)
             }
@@ -106,18 +105,18 @@ struct MenuContent: View {
 
         Divider()
 
-        Toggle("Notificações", isOn: Binding(
+        Toggle("Notifications", isOn: Binding(
             get: { store.notifier.isEnabled },
             set: { store.notifier.setEnabled($0) }
         ))
 
         if store.notifier.state != .off {
-            Button("Ver exemplo de popup") {
+            Button("Show sample popup") {
                 store.notifier.showSample()
             }
         }
 
-        Button("Ajustes…") {
+        Button("Settings…") {
             SettingsWindow.show(notifier: store.notifier)
         }
         .keyboardShortcut(",")
@@ -126,12 +125,12 @@ struct MenuContent: View {
 
         integrationMenu
 
-        Button("Atualizar") {
+        Button("Refresh") {
             store.refreshAgents()
             store.hookSetup.refresh()
         }
 
-        Button("Sair do ClaudeBar") {
+        Button("Quit ClaudeBar") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
@@ -147,28 +146,28 @@ struct MenuContent: View {
 
             switch setup.state {
             case .readOnlySettings:
-                Button("Copiar JSON dos hooks") { setup.copySnippet() }
+                Button("Copy hooks JSON") { setup.copySnippet() }
             case .invalidSettings, .hooksDisabled:
                 EmptyView()
             default:
-                Button(setup.state == .ok ? "Reinstalar hooks…" : "Instalar hooks…") {
+                Button(setup.state == .ok ? "Reinstall hooks…" : "Install hooks…") {
                     setup.review(.install)
                 }
             }
 
             if setup.canRemove {
-                Button("Remover hooks…") { setup.review(.uninstall) }
+                Button("Remove hooks…") { setup.review(.uninstall) }
             }
 
             Divider()
 
             // Opt-in próprio, desligado por padrão: muda o rodapé do Claude Code.
-            Button("Mostrar limites no rodapé do Claude Code…") { setup.review(.installStatusLine) }
-            Button("Parar de mostrar limites no rodapé…") { setup.review(.uninstallStatusLine) }
+            Button("Show limits in the Claude Code footer…") { setup.review(.installStatusLine) }
+            Button("Stop showing limits in the footer…") { setup.review(.uninstallStatusLine) }
 
             Divider()
 
-            Button("Testar integração") {
+            Button("Test integration") {
                 setup.selfTest(openSessions: store.openSessionCount)
                 store.notifier.showSample()
             }
@@ -176,7 +175,7 @@ struct MenuContent: View {
     }
 
     static func label(for row: SessionRow, now: Date = Date()) -> String {
-        var text = row.isSubagent ? "[subagente] " : ""
+        var text = row.isSubagent ? String(localized: "[subagent]") + " " : ""
         text += row.name
         // A branch distingue duas sessões do mesmo projeto em worktrees diferentes.
         if let branch = row.branch { text += " · \(branch)" }
@@ -201,12 +200,12 @@ struct MenuContent: View {
 
     static func description(for row: SessionRow) -> String {
         switch (row.state, row.kind) {
-        case (.working, _): "processando"
-        case (.idle, _): "pronto"
-        case (.waiting, .permission): "pede permissão"
-        case (.waiting, .question): "fez uma pergunta"
-        case (.waiting, nil): "aguardando você"
-        case (.error, _): "falhou"
+        case (.working, _): String(localized: "working")
+        case (.idle, _): String(localized: "ready")
+        case (.waiting, .permission): String(localized: "asks for permission")
+        case (.waiting, .question): String(localized: "asked a question")
+        case (.waiting, nil): String(localized: "waiting for you")
+        case (.error, _): String(localized: "failed")
         }
     }
 }

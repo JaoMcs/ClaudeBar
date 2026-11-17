@@ -31,11 +31,11 @@ enum Alert {
 
     var title: String {
         switch self {
-        case .finished: "Claude terminou"
-        case .waiting: "Claude está esperando você"
-        case .permission: "Claude pede permissão"
-        case .question: "Claude fez uma pergunta"
-        case .failed: "A resposta do Claude falhou"
+        case .finished: String(localized: "Claude finished")
+        case .waiting: String(localized: "Claude is waiting for you")
+        case .permission: String(localized: "Claude asks for permission")
+        case .question: String(localized: "Claude asked a question")
+        case .failed: String(localized: "Claude's reply failed")
         }
     }
 
@@ -203,8 +203,8 @@ final class Notifier {
     /// Ajustes: o exemplo é pedido na hora, não é um aviso de sessão.
     func showSample() {
         post(.permission, body: hidesContent
-            ? "Exemplo: meu-projeto precisa de você"
-            : "Exemplo: Claude needs your permission to use Bash", sample: true)
+            ? String(localized: "Example: my-project needs you")
+            : String(localized: "Example: Claude needs your permission to use Bash"), sample: true)
     }
 
     /// Fecha o popup de espera desta sessão, se for ele que está na tela.

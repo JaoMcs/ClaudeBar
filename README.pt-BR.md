@@ -25,7 +25,9 @@ Quando várias coisas acontecem ao mesmo tempo, vale a mais urgente:
 "Pergunta" só aparece quando todas as esperas são pergunta; a permissão vence
 porque trava uma ferramenta que já está em andamento.
 
-> English version: [README.md](README.md).
+> English version: [README.md](README.md). O app segue o idioma do Mac:
+> português (Brasil), ou inglês para qualquer outro idioma. Depois de trocar o
+> idioma do macOS, feche e abra o ClaudeBar de novo.
 
 ## Requisitos
 
@@ -440,6 +442,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   SettingsWindow.swift        janela de Ajustes (NSWindow, não a cena Settings)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
+Resources/*.lproj/            traduções (chave = texto em inglês; en.lproj vazio de propósito)
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
 scripts/install.sh            instala em ~/Applications e registra os hooks
 scripts/uninstall.sh          remove os hooks (só os nossos) e o app
@@ -518,6 +521,11 @@ s=$(claude agents --json | jq -c '[.[] | select(.pid)][0]')
 echo "$s" | jq -c '{session_id: .sessionId, cwd}' | \
   build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid "$(echo "$s" | jq .pid)"
 ```
+
+Para achar texto sem tradução:
+`build/ClaudeBar.app/Contents/MacOS/ClaudeBar -AppleLanguages '(pt-BR)' -NSShowNonLocalizedStrings YES`
+— o que faltar aparece EM MAIÚSCULAS. Texto novo de UI é escrito em inglês
+(é a chave) mais uma linha em `Resources/pt-BR.lproj/Localizable.strings`.
 
 PID inventado não funciona: o app apaga o arquivo cujo PID não é um `claude`
 rodando (o PID 1 é o `launchd`).

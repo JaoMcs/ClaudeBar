@@ -30,7 +30,7 @@ struct SessionRow: Identifiable, Equatable {
     /// Texto do aviso de espera. Com "nunca mostrar conteúdo" ligado, a mensagem
     /// do Claude (que pode citar comando, arquivo ou pergunta) não é desenhada.
     func waitingBody(hidingContent: Bool) -> String {
-        hidingContent ? "\(name) precisa de você" : message ?? name
+        hidingContent ? String(localized: "\(name) needs you") : message ?? name
     }
 
     init(
