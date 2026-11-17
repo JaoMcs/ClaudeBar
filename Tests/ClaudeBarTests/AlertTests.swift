@@ -1,4 +1,5 @@
 import AppKit
+import ClaudeBarCore
 import Foundation
 import Testing
 
@@ -25,11 +26,28 @@ struct AlertTests {
     /// Nome errado dá `NSSound` nulo e o aviso sai calado — vale checar que os
     /// sons existem mesmo neste macOS.
     @Test func osDoisSonsExistemNoSistema() throws {
-        for alert in [Alert.finished, .waiting, .failed] {
+        for alert in [Alert.finished, .waiting, .permission, .question, .failed] {
             #expect(NSSound(named: alert.soundName) != nil, "som ausente: \(alert.soundName)")
             let arquivo = "/System/Library/Sounds/\(alert.soundName).aiff"
             #expect(FileManager.default.fileExists(atPath: arquivo))
         }
+    }
+
+    /// Dá para saber de ouvido se é pergunta ou permissão.
+    @Test func perguntaTemSomProprio() {
+        let sons = [Alert.finished, .permission, .question, .failed].map(\.soundName)
+        #expect(Set(sons).count == 4)
+        #expect(Alert.permission.soundName == Alert.waiting.soundName)
+        #expect(Alert.question.volume == 0.75)
+        #expect(Alert.permission.volume == 0.75)
+    }
+
+    @Test func tipoDaEsperaEscolheOAviso() {
+        #expect(Alert(waiting: .permission) == .permission)
+        #expect(Alert(waiting: .question) == .question)
+        #expect(Alert(waiting: nil) == .waiting)
+        #expect(Alert.permission.title == "Claude pede permissão")
+        #expect(Alert.question.title == "Claude fez uma pergunta")
     }
 
     @Test func cadaAvisoTemSeuTitulo() {

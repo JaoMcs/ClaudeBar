@@ -126,6 +126,14 @@ private func run() {
         ? value(after: "--kind", in: arguments).flatMap(WaitKind.init(rawValue:))
         : nil
 
+    // Pergunta aberta vence a "permissão" que o AskUserQuestion dispara depois.
+    // Sem arquivo ou arquivo ilegível: grava normalmente.
+    if let data = try? Data(contentsOf: StatusDirectory.fileURL(sessionId: sessionId)),
+       let current = try? StatusDirectory.decoder.decode(SessionStatus.self, from: data),
+       current.absorbs(state, kind: kind) {
+        return
+    }
+
     let text = state == .error ? errorSummary(payload) : payload?.message
 
     let status = SessionStatus(

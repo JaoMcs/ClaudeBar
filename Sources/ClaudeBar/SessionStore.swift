@@ -5,8 +5,12 @@ import Observation
 
 /// Estado agregado de todas as sessões, que define o ícone na barra.
 enum BarState {
-    /// Alguma sessão está esperando você (permissão, escolha).
+    /// Alguma sessão quer aprovar uma ferramenta.
+    case permission
+    /// Alguma sessão está esperando você, sem tipo conhecido (ou tipos misturados).
     case waiting
+    /// Todas as esperas são perguntas do Claude.
+    case question
     /// Alguma resposta falhou e você ainda não viu.
     case error
     /// Alguma sessão terminou e você ainda não viu.
@@ -18,7 +22,9 @@ enum BarState {
 
     var symbolName: String {
         switch self {
+        case .permission: "hand.raised.fill"
         case .waiting: "exclamationmark.bubble.fill"
+        case .question: "questionmark.bubble.fill"
         case .error: "exclamationmark.triangle.fill"
         case .done: "checkmark.circle.fill"
         case .working: "ellipsis.circle"
@@ -42,8 +48,8 @@ final class SessionStore {
     private var agents: [AgentSession]?
     /// Sessões concluídas ou com falha que já foram vistas — não acendem mais o ícone.
     private var acknowledged: Set<String> = []
-    /// Último estado conhecido de cada sessão, para detectar transições.
-    private var previousStates: [String: SessionState] = [:]
+    /// Última linha conhecida de cada sessão, para detectar transições.
+    private var previousRows: [String: SessionRow] = [:]
     private var watcher: DirectoryWatcher?
     private var exitWatcher: ProcessExitWatcher?
     private var pollTimer: Timer?
@@ -87,7 +93,7 @@ final class SessionStore {
         notifyTransitions(in: merged)
 
         acknowledged.formIntersection(Set(merged.map(\.sessionId)))
-        previousStates = Dictionary(uniqueKeysWithValues: merged.map { ($0.sessionId, $0.state) })
+        previousRows = Dictionary(uniqueKeysWithValues: merged.map { ($0.sessionId, $0) })
         rows = merged
         exitWatcher?.watch(Set(merged.compactMap(\.pid)))
     }
@@ -219,8 +225,8 @@ final class SessionStore {
     private func notifyTransitions(in merged: [SessionRow]) {
         // Subagente é trabalho delegado: aparece no menu, mas não avisa nada.
         for row in merged where !row.isSubagent {
-            let previous = previousStates[row.sessionId]
-            guard SessionMerge.relights(from: previous, to: row.state) else { continue }
+            let previous = previousRows[row.sessionId]
+            guard SessionMerge.relights(from: previous, to: row) else { continue }
             acknowledged.remove(row.sessionId)
 
             switch row.state {
@@ -229,9 +235,9 @@ final class SessionStore {
             case .waiting:
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
-                notifier.post(.waiting, body: row.message ?? row.name)
+                notifier.post(Alert(waiting: row.kind), body: row.message ?? row.name)
             case .error:
-                if previous == .working {
+                if previous?.state == .working {
                     // O código do erro diz se vale reenviar ou esperar o limite.
                     notifier.post(.failed, body: row.message.map { "\(row.name): \($0)" } ?? row.name)
                 }

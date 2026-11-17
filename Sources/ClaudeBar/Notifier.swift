@@ -1,4 +1,5 @@
 import AppKit
+import ClaudeBarCore
 import Observation
 import OSLog
 import UserNotifications
@@ -10,16 +11,30 @@ import UserNotifications
 enum Alert {
     /// A sessão passou de processando para pronto.
     case finished
-    /// A sessão está travada esperando permissão ou escolha sua.
+    /// A sessão está travada esperando você, sem tipo conhecido.
     case waiting
+    /// O Claude quer aprovar uma ferramenta.
+    case permission
+    /// O Claude fez uma pergunta e espera a resposta.
+    case question
     /// A resposta falhou por erro de API (limite, sobrecarga…): o turno acabou
     /// sem o "terminou" que você esperava.
     case failed
+
+    init(waiting kind: WaitKind?) {
+        self = switch kind {
+        case .permission: .permission
+        case .question: .question
+        case nil: .waiting
+        }
+    }
 
     var title: String {
         switch self {
         case .finished: "Claude terminou"
         case .waiting: "Claude está esperando você"
+        case .permission: "Claude pede permissão"
+        case .question: "Claude fez uma pergunta"
         case .failed: "A resposta do Claude falhou"
         }
     }
@@ -28,11 +43,13 @@ enum Alert {
     ///
     /// `Submarine` é um pulso grave, bem distinto do sino claro do `Glass`:
     /// dá para saber qual dos dois aconteceu sem olhar a tela. `Basso` é o
-    /// som de erro do macOS.
+    /// som de erro do macOS. `Purr` é mais suave que o `Submarine`: pergunta
+    /// não trava uma ferramenta no meio, permissão trava.
     var soundName: String {
         switch self {
         case .finished: "Glass"
-        case .waiting: "Submarine"
+        case .waiting, .permission: "Submarine"
+        case .question: "Purr"
         case .failed: "Basso"
         }
     }
@@ -42,7 +59,7 @@ enum Alert {
     var volume: Float {
         switch self {
         case .finished, .failed: 1
-        case .waiting: 0.75
+        case .waiting, .permission, .question: 0.75
         }
     }
 }
@@ -114,7 +131,7 @@ final class Notifier {
 
     /// Mostra um popup de exemplo, para conferir o canto da tela e o estilo.
     func showSample() {
-        post(.waiting, body: "Exemplo: Claude needs your permission to use Bash")
+        post(.permission, body: "Exemplo: Claude needs your permission to use Bash")
     }
 
     func post(_ alert: Alert, body: String) {

@@ -138,6 +138,8 @@ private struct HUDView: View {
         switch alert {
         case .finished: "checkmark.circle.fill"
         case .waiting: "exclamationmark.bubble.fill"
+        case .permission: "hand.raised.fill"
+        case .question: "questionmark.bubble.fill"
         case .failed: "exclamationmark.triangle.fill"
         }
     }
@@ -145,7 +147,7 @@ private struct HUDView: View {
     private var tint: Color {
         switch alert {
         case .finished: .green
-        case .waiting: .orange
+        case .waiting, .permission, .question: .orange
         case .failed: .red
         }
     }

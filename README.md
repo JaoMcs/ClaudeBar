@@ -16,10 +16,14 @@ shows what is happening in them:
 | `ellipsis.circle` | Claude is working |
 | `checkmark.circle.fill` | a reply is ready and you haven't seen it yet |
 | `exclamationmark.triangle.fill` | a reply failed (API error) and you haven't seen it yet |
-| `exclamationmark.bubble.fill` | Claude is waiting for you (permission, a choice) |
+| `hand.raised.fill` | Claude asks permission to use a tool |
+| `questionmark.bubble.fill` | Claude asked you a question |
+| `exclamationmark.bubble.fill` | Claude is waiting for you (no known reason, or mixed reasons) |
 
 When several things happen at once, the most urgent one wins:
-**waiting > failed (unseen) > ready (unseen) > working > idle**.
+**permission > waiting > question > failed (unseen) > ready (unseen) > working > idle**.
+"question" only shows when every waiting session is a question; a permission
+wins because it blocks a tool that is already running.
 
 > Portuguese version: [README.pt-BR.md](README.pt-BR.md). The app's menu and
 > popups are in Portuguese.
@@ -44,6 +48,8 @@ subagents grouped at the end:
 ✅  my-app — pronto (há 2 min)
 ⏳  ClaudeBar — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
+✋  infra — pede permissão (há 20 s)
+❓  docs — fez uma pergunta (há 5 s)
 🔸  [subagente] review-pr — aguardando você (há 1 min)
 ──────────────
 Marcar tudo como visto        (mark all as seen)
@@ -116,13 +122,15 @@ reports it and offers no install.
 
 ### Alerts
 
-There are three alerts, each with its own sound: one is informative, one
-blocks you, and one tells you the reply never came:
+Each alert has its own sound: one is informative, the waiting ones block
+you, and one tells you the reply never came:
 
 | Transition | Alert | Sound | Volume |
 |---|---|---|---|
 | working → ready | "Claude terminou" (*Claude is done*) + project name | `Glass` (bright bell) | 100% |
-| → waiting for you | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse) | 75% |
+| → permission | "Claude pede permissão" (*Claude asks permission*) + Claude's message | `Submarine` (low pulse) | 75% |
+| → question | "Claude fez uma pergunta" (*Claude asked a question*) + Claude's message, or project name | `Purr` (soft purr) | 75% |
+| → waiting for you (no known reason) | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse) | 75% |
 | working → failed | "A resposta do Claude falhou" (*Claude's reply failed*) + project and error code | `Basso` (error thud) | 100% |
 
 - Sounds are played with `NSSound`, not by the notification itself — it is the
@@ -132,6 +140,10 @@ blocks you, and one tells you the reply never came:
   `Notification` hook (e.g. *"Claude needs your permission to use Bash"*),
   capped at 200 characters. Claude Code sends the permission prompt after a
   few seconds without typing, so "waiting" can take a moment to show up.
+- A question shows up at once (`PreToolUse` on `AskUserQuestion`). Claude Code
+  then sends a permission prompt for the same screen a few seconds later; it
+  is ignored while the question is open, so the session stays on "question".
+  If the reason changes while the session waits, the alert fires again.
 - The "failed" alert only fires when the session was working right before the
   error, and does not repeat while it stays in error.
 - Subagents never trigger alerts.
@@ -259,7 +271,8 @@ used instead.
 | `UserPromptSubmit` | `working` |
 | `Stop` | `idle` |
 | `StopFailure` | `error` (the turn ended on an API error) |
-| `Notification` (`permission_prompt`) | `waiting --kind permission` |
+| `PreToolUse` (`AskUserQuestion`) | `waiting --kind question` |
+| `Notification` (`permission_prompt`) | `waiting --kind permission` (skipped while a question is open) |
 | `Notification` (`elicitation_dialog`) | `waiting --kind question` |
 | `PostToolUse`, `PostToolUseFailure` | `working`, only if the session was `waiting` (a permission was just approved) |
 | `SessionEnd` | deletes the file |
@@ -441,7 +454,9 @@ does not take down a sibling.
   isn't in a known location.
 - **`message` is capped at 200 characters** before it is shown. For failures
   only the API error code/details are stored, never Claude's reply
-  (`last_assistant_message` is not read in any state).
+  (`last_assistant_message` is not read in any state). For questions only
+  the fact that Claude asked is stored, never the question text (`tool_input`
+  is not read).
 - **Paths are never logged in the clear.** Any log line with a path, `cwd`,
   `sessionId` or hook message uses `privacy: .private(mask: .hash)`; never
   `.public`.

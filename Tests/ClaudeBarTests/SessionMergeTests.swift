@@ -194,8 +194,65 @@ struct ErrorStateTests {
 
     /// Nome de SF Symbol errado não falha no build: a barra só fica vazia.
     @Test func simbolosDaBarraExistem() {
-        for state in [BarState.waiting, .error, .done, .working, .idle] {
+        for state in [BarState.permission, .waiting, .question, .error, .done, .working, .idle] {
             #expect(NSImage(systemSymbolName: state.symbolName, accessibilityDescription: nil) != nil, "\(state)")
         }
+    }
+}
+
+@Suite("Tipo da espera na barra")
+struct WaitingBarStateTests {
+    private func hook(_ sessionId: String, _ state: SessionState, _ kind: WaitKind? = nil) -> SessionStatus {
+        SessionStatus(sessionId: sessionId, state: state, cwd: "/Users/dev/code", pid: 1, updatedAt: Date(), kind: kind)
+    }
+
+    private func bar(_ statuses: [SessionStatus]) -> BarState {
+        SessionMerge.barState(rows: SessionMerge.rows(agents: [], statuses: statuses), acknowledged: [])
+    }
+
+    @Test func permissaoVencePergunta() {
+        #expect(bar([hook("q", .waiting, .question), hook("p", .waiting, .permission)]) == .permission)
+        #expect(bar([hook("g", .waiting), hook("p", .waiting, .permission)]) == .permission)
+    }
+
+    @Test func soPerguntasMostramPergunta() {
+        #expect(bar([hook("q1", .waiting, .question), hook("q2", .waiting, .question)]) == .question)
+        // Misturada com espera sem tipo, cai no genérico.
+        #expect(bar([hook("q", .waiting, .question), hook("g", .waiting)]) == .waiting)
+    }
+
+    @Test func esperaSemTipoCaiNoGenerico() {
+        #expect(bar([hook("g", .waiting)]) == .waiting)
+    }
+
+    /// Mesmo estado, motivo novo: o aviso toca de novo. Motivo igual, não.
+    @Test func mudancaDeTipoReavisa() throws {
+        func row(_ state: SessionState, _ kind: WaitKind? = nil) throws -> SessionRow {
+            try #require(SessionMerge.rows(agents: [], statuses: [hook("s", state, kind)]).first)
+        }
+        #expect(SessionMerge.relights(from: try row(.waiting, .question), to: try row(.waiting, .permission)))
+        #expect(SessionMerge.relights(from: try row(.waiting, .permission), to: try row(.waiting, .question)))
+        #expect(SessionMerge.relights(from: try row(.waiting), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: try row(.waiting, .question), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: nil, to: try row(.waiting, .question)))
+        // Fora da espera vale a regra de estado.
+        #expect(SessionMerge.relights(from: try row(.working), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: try row(.waiting, .question), to: try row(.working)))
+    }
+
+    @Test func linhaCarregaOTipoDoHook() throws {
+        let listada = "aaaaaaaa-0000-0000-0000-000000000000"
+        let rows = SessionMerge.rows(
+            agents: try decodeAgents(),
+            statuses: [hook(listada, .waiting, .question), hook("orfa", .waiting, .permission)]
+        )
+        #expect(rows.first { $0.sessionId == listada }?.kind == .question)
+        #expect(rows.first { $0.sessionId == "orfa" }?.kind == .permission)
+        // Sessão que só o CLI conhece não tem tipo.
+        #expect(rows.filter { $0.kind == nil }.count == rows.count - 2)
+    }
+
+    @Test func erroPerdeParaPergunta() {
+        #expect(bar([hook("q", .waiting, .question), hook("e", .error)]) == .question)
     }
 }
