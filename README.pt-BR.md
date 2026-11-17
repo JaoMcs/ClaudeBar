@@ -392,10 +392,12 @@ Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
   GitHead.swift               branch lida do .git/HEAD (pelo hook, nunca roda git)
   HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
+  RateLimits.swift            limites de uso 5 h/semanal tirados do JSON do statusline
   SessionNavigator.swift      árvore de processos → app, pane do tmux, ativação
   SessionStatus.swift         estado da sessão (working/idle/waiting/error), PID
   Shell.swift                 execução de processo sem shell (sem injeção)
   StatusDirectory.swift       ~/.claude/claudebar: permissões, escrita atômica, limpeza
+  StatusLineChain.swift       roda o statusline que você já tinha (stdin/stdout, timeout 5 s)
 Sources/claudebar-hook/       CLI chamado pelos hooks (sem dependência de jq/python)
   main.swift                  lê o JSON do hook no stdin, grava/apaga o arquivo de estado
 Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
@@ -487,6 +489,7 @@ claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [
 claudebar-hook install|uninstall [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
+claudebar-hook statusline
 ```
 
 Ele lê o payload do hook (`session_id`, `cwd`, `message`; com `error`,
@@ -504,6 +507,18 @@ bloqueia o prompt.
 `install`/`uninstall` mostram o diff do bloco `hooks` e aplicam com backup;
 `--dry-run` só mostra. O `install` também se copia para
 `~/.claude/claudebar/bin/claudebar-hook`; o `uninstall` apaga essa cópia.
+
+O `statusline` é para ser o comando do `statusLine` do Claude Code (nada o
+instala ainda; dá para configurar à mão). Do JSON que o Claude Code manda no
+stdin ele guarda só o `rate_limits` (janelas de 5 h e semanal) em
+`~/.claude/claudebar/limits.json` (`0600`), e só regrava quando um número mudou
+ou o dado salvo já tem um minuto. Depois roda o statusline que você já tinha,
+salvo em `~/.claude/claudebar/statusline-original.json`, com `/bin/sh -c`,
+repassando stdin, stdout e código de saída, com timeout de 5 s. Sem statusline
+anterior (ou se ele falhar ao rodar ou estourar o prazo) imprime um resumo
+curto como `5h 23% · sem 41%` e sai 0. Limitações: só assinantes Pro, Max e
+Ultra recebem o `rate_limits`, e só depois da primeira resposta de uma sessão;
+com duas contas em terminais diferentes, vale a última sessão que atualizou.
 
 ### Linha de comando
 
@@ -558,13 +573,19 @@ encerrar uma sessão não derruba a irmã.
   `Process`, por caminho conhecido e com argumentos separados — não há
   interpolação, então não há injeção. A única exceção é o
   `zsh -lc "command -v claude"`, usado apenas como último recurso quando o
-  binário não está nos caminhos conhecidos.
+  binário não está nos caminhos conhecidos. O `claudebar-hook statusline` roda
+  o statusline que você já tinha com `/bin/sh -c`, mas esse comando é texto
+  que você escreveu nos seus próprios settings e vai como um argumento só; o
+  ClaudeBar não acrescenta nada a ele.
 - **Modo opcional "nunca mostrar conteúdo"** — veja [Avisos](#avisos).
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
   Claude (`last_assistant_message` não é lido em estado nenhum). Para
   perguntas só fica gravado o fato de o Claude ter perguntado, nunca o texto
   da pergunta (`tool_input` não é lido).
+- **Statusline: só o `rate_limits` é lido.** `transcript_path` e o resto do
+  JSON do statusline são ignorados; nenhuma chamada de rede, nenhum token,
+  nada de Keychain.
 - **Caminhos nunca vão em claro para o log.** Linha de log com caminho, `cwd`,
   `sessionId` ou mensagem do hook usa `privacy: .private(mask: .hash)`; nunca
   `.public`.

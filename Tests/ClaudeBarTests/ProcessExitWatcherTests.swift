@@ -44,7 +44,9 @@ struct ProcessExitWatcherTests {
         kill(process.processIdentifier, SIGKILL)
         process.waitUntilExit()
         let avisou = DispatchSemaphore(value: 0)
-        let watcher = ProcessExitWatcher(queue: .global()) { avisou.signal() }
+        // Fila serial própria: a global some quando outros testes prendem as
+        // poucas threads do pool no runner de CI.
+        let watcher = ProcessExitWatcher(queue: DispatchQueue(label: "teste")) { avisou.signal() }
         watcher.watch([process.processIdentifier])
         #expect(avisou.wait(timeout: .now() + 2) == .success)
     }
