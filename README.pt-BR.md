@@ -150,6 +150,10 @@ conta que a resposta não veio:
   "pergunta". Se o motivo mudar durante a espera, o aviso toca de novo.
 - O aviso de "falhou" só sai se a sessão estava processando logo antes do
   erro, e não repete enquanto ela continuar em erro.
+- **Lembrete.** Sessão que continua esperando você depois de uns 5 minutos
+  ganha mais um aviso ("Ainda esperando: …", mesmo som). Responder cancela;
+  uma nova espera ganha um novo lembrete. Desligue ou mude o tempo em
+  **Ajustes…**.
 - Subagente nunca avisa.
 - Sem som se o app da sessão já está na frente (o popup continua aparecendo).
   Vale por app: com o Claude desktop na frente, qualquer conversa dele conta;

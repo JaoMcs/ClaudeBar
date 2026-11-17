@@ -152,6 +152,9 @@ you, and one tells you the reply never came:
   If the reason changes while the session waits, the alert fires again.
 - The "failed" alert only fires when the session was working right before the
   error, and does not repeat while it stays in error.
+- **Reminder.** A session still waiting for you after about 5 minutes gets one
+  more alert ("Ainda esperando: …", same sound). Answering cancels it; a new
+  wait gets a new reminder. Turn it off or change the delay in **Ajustes…**.
 - Subagents never trigger alerts.
 - No sound if the session's app is already in front (the popup still shows).
   App level only: with the Claude desktop app in front, any of its

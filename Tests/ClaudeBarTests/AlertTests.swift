@@ -132,6 +132,18 @@ struct AlertTests {
         #expect(!Notifier.systemSounds.contains { $0.hasSuffix(".aiff") })
     }
 
+    /// Minutos do lembrete abaixo de 1 viram 1: nada de lembrete no mesmo merge (F13).
+    @MainActor @Test func minutosInvalidosViramUm() throws {
+        let (defaults, suite) = try scratchDefaults()
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let notifier = Notifier(defaults: defaults, playSound: { _ in })
+        #expect(notifier.isReminderEnabled)
+        #expect(notifier.reminderMinutes == 5)
+        defaults.set(0, forKey: Notifier.reminderMinutesKey)
+        #expect(notifier.reminderMinutes == 1)
+    }
+
     /// Permissão e pergunta são espera: um toggle só para os três (F15).
     @MainActor @Test func permissaoEEsperaDividemOToggle() {
         #expect(Alert.permission.enabledKey == Alert.waiting.enabledKey)

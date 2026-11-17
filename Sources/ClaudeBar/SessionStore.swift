@@ -50,6 +50,8 @@ final class SessionStore {
     private var acknowledged: Set<String> = []
     /// Última linha conhecida de cada sessão, para detectar transições.
     private var previousRows: [String: SessionRow] = [:]
+    /// Episódios de espera (`reminderKey`) que já ganharam lembrete.
+    private var reminded: Set<String> = []
     private var watcher: DirectoryWatcher?
     private var exitWatcher: ProcessExitWatcher?
     private var pollTimer: Timer?
@@ -91,6 +93,8 @@ final class SessionStore {
         )
 
         notifyTransitions(in: merged)
+        // Antes de `previousRows` mudar: o lembrete compara com a rodada anterior.
+        remindWaiting(in: merged)
 
         acknowledged.formIntersection(Set(merged.map(\.sessionId)))
         previousRows = Dictionary(uniqueKeysWithValues: merged.map { ($0.sessionId, $0) })
@@ -277,6 +281,24 @@ final class SessionStore {
         }
         timer.tolerance = 6
         pollTimer = timer
+    }
+
+    /// Um lembrete por episódio de espera, depois de N minutos (F13). Sem timer
+    /// próprio: roda a cada `merge()`, que acontece a cada evento e a cada
+    /// 60 s, então pode atrasar até ~1 min além de N.
+    private func remindWaiting(in merged: [SessionRow]) {
+        // Esquece episódios encerrados: a sessão saiu de `waiting` ou sumiu.
+        reminded.formIntersection(merged.filter { $0.state == .waiting }.compactMap(SessionMerge.reminderKey))
+        guard notifier.isReminderEnabled else { return }
+        let due = SessionMerge.dueReminders(
+            rows: merged, previous: previousRows.mapValues(\.state), reminded: reminded,
+            now: Date(), delay: TimeInterval(notifier.reminderMinutes * 60))
+        reminded.formUnion(due.compactMap(SessionMerge.reminderKey))
+        for row in due {
+            notifier.post(Alert(waiting: row.kind), body: "Ainda esperando: \(row.message ?? row.name)",
+                          sessionId: row.sessionId, playSound: !isLookingAt(row),
+                          onOpen: { [weak self] in self?.goToSession(row) })
+        }
     }
 
     private func notifyTransitions(in merged: [SessionRow]) {

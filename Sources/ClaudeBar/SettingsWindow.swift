@@ -46,6 +46,8 @@ private struct SettingsView: View {
     @AppStorage(Alert.waiting.enabledKey) private var notifyWaiting = true
     @AppStorage(Alert.failed.enabledKey) private var notifyFailed = true
     @AppStorage(Notifier.soundEnabledKey) private var soundEnabled = true
+    @AppStorage(Notifier.reminderEnabledKey) private var reminderEnabled = true
+    @AppStorage(Notifier.reminderMinutesKey) private var reminderMinutes = 5
     @AppStorage(Alert.finished.soundKey) private var soundFinished = Alert.finished.soundName
     @AppStorage(Alert.waiting.soundKey) private var soundWaiting = Alert.waiting.soundName
     @AppStorage(Alert.question.soundKey) private var soundQuestion = Alert.question.soundName
@@ -60,6 +62,9 @@ private struct SettingsView: View {
                 Toggle("Avisar quando o Claude terminar", isOn: $notifyFinished)
                 Toggle("Avisar quando o Claude esperar você", isOn: $notifyWaiting)
                 Toggle("Avisar quando a resposta falhar", isOn: $notifyFailed)
+                Toggle("Lembrar uma vez se continuar esperando", isOn: $reminderEnabled)
+                Stepper("Depois de \(reminderMinutes) min", value: $reminderMinutes, in: 1...60)
+                    .disabled(!reminderEnabled)
             }
 
             Section("Som") {
