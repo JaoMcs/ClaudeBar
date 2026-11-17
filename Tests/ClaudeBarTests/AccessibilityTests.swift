@@ -42,7 +42,7 @@ struct AccessibilityTests {
         for state in SessionState.allCases {
             for kind in [nil, WaitKind.permission, .question] {
                 let texto = MenuContent.label(for: linha(state, kind: kind))
-                #expect(!texto.unicodeScalars.contains { $0.properties.isEmojiPresentation }, "\(texto)")
+                #expect(!texto.unicodeScalars.contains { $0.properties.isEmojiPresentation || $0 == "\u{FE0F}" }, "\(texto)")
                 #expect(texto.contains("my-app"))
             }
         }
