@@ -32,11 +32,24 @@ struct GitHeadTests {
         try put("wt/.git", "gitdir: ../main/.git/worktrees/wt\n")
         try put("abs/.git", "gitdir: \(base.path)/main/.git/worktrees/wt\n")
         try put("solto/.keep", "")
+        // `.git` que não dá branch dentro de um repositório: não herda a do pai.
+        try put("main/lixo/.git", "lixo\n")
+        try manager.createDirectory(at: base.appendingPathComponent("link"), withIntermediateDirectories: true)
+        try manager.createSymbolicLink(
+            at: base.appendingPathComponent("link/.git"),
+            withDestinationURL: base.appendingPathComponent("main/.git"))
+        try manager.createDirectory(at: base.appendingPathComponent("main/quebrado"), withIntermediateDirectories: true)
+        try manager.createSymbolicLink(
+            atPath: base.appendingPathComponent("main/quebrado/.git").path,
+            withDestinationPath: "nao-existe")
 
         #expect(GitHead.branch(at: base.appendingPathComponent("main/Sources/x").path) == "main")
         #expect(GitHead.branch(at: base.appendingPathComponent("wt").path) == "feat/x")
         #expect(GitHead.branch(at: base.appendingPathComponent("abs").path) == "feat/x")
         #expect(GitHead.branch(at: base.appendingPathComponent("solto").path) == nil)
         #expect(GitHead.branch(at: "relativo") == nil)
+        #expect(GitHead.branch(at: base.appendingPathComponent("main/lixo").path) == nil)
+        #expect(GitHead.branch(at: base.appendingPathComponent("link").path) == "main")
+        #expect(GitHead.branch(at: base.appendingPathComponent("main/quebrado").path) == nil)
     }
 }

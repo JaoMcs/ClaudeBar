@@ -14,8 +14,11 @@ public enum GitHead {
         // O `cwd` pode ser subpasta do repositório: sobe até achar o `.git`.
         while true {
             let dotGit = dir.appendingPathComponent(".git")
-            if let head = headURL(dotGit: dotGit) {
-                return readRegularFile(head).flatMap(parse)
+            // Achou `.git` (lstat: vale até symlink quebrado): a busca para aqui.
+            // Se ele não der branch, o honesto é `nil`, não a branch de um
+            // repositório pai (ex.: dotfiles na pasta pessoal).
+            if (try? FileManager.default.attributesOfItem(atPath: dotGit.path)) != nil {
+                return headURL(dotGit: dotGit).flatMap(readRegularFile).flatMap(parse)
             }
             if dir.path == "/" { return nil }
             dir.deleteLastPathComponent()
@@ -25,6 +28,8 @@ public enum GitHead {
     /// `HEAD` dentro de `.git`, ou no destino do `gitdir:` quando `.git` é um
     /// arquivo (worktree linkado ou submódulo). O HEAD de um worktree é dele.
     static func headURL(dotGit: URL) -> URL? {
+        // `.git` pode ser symlink para a pasta de verdade; `resourceValues` não segue.
+        let dotGit = dotGit.resolvingSymlinksInPath()
         if (try? dotGit.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
             return dotGit.appendingPathComponent("HEAD")
         }
