@@ -16,12 +16,6 @@ struct SessionNavigatorTreeTests {
         #expect(SessionNavigator.ancestor(of: 500, parent: parent, isApp: { $0 == 200 }) == 200)
     }
 
-    /// VS Code/Cursor: o helper do Electron não é `.regular` e fica para trás.
-    @Test func helperNaoEOApp() {
-        let parent = tree([500: 450, 450: 200, 200: 1])
-        #expect(SessionNavigator.ancestor(of: 500, parent: parent, isApp: { $0 == 200 }) == 200)
-    }
-
     /// tmux: claude → servidor tmux → launchd. Sem app: cai no caminho do tmux.
     @Test func tmuxTerminaSemApp() {
         let parent = tree([500: 300, 300: 1])

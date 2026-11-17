@@ -488,9 +488,10 @@ encerrar uma sessão não derruba a irmã.
   `[A-Za-z0-9-_]`, o resto vira `-`. Um `session_id` malicioso com `../` não
   escapa do diretório.
 - **Nenhum comando passa por shell.** O `claude` e o `tmux` são invocados via
-  `Process`, por caminho conhecido e com argumentos separados — não há interpolação, então não há injeção. A única
-  exceção é o `zsh -lc "command -v claude"`, usado apenas como último recurso
-  quando o binário não está nos caminhos conhecidos.
+  `Process`, por caminho conhecido e com argumentos separados — não há
+  interpolação, então não há injeção. A única exceção é o
+  `zsh -lc "command -v claude"`, usado apenas como último recurso quando o
+  binário não está nos caminhos conhecidos.
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
   Claude (`last_assistant_message` não é lido em estado nenhum). Para
@@ -518,8 +519,8 @@ aparecer conexão nenhuma.
 Atenção: o ClaudeBar roda `claude agents --json` (e `claude stop` quando você
 encerra um subagente), além de comandos locais do `tmux` quando você vai até
 uma sessão dentro do tmux. Qualquer tráfego dos comandos do `claude` aparece
-como `claude`,
-não como ClaudeBar: é do Claude Code e segue as configurações dele
+como `claude`, não como ClaudeBar: é do Claude Code e segue as configurações
+dele
 (https://code.claude.com/docs/en/data-usage#telemetry-services).
 
 ## Desinstalar

@@ -107,20 +107,28 @@ public enum SessionNavigator {
     ///
     /// `select-window` + `select-pane` + `switch-client` para a sessão existem em
     /// qualquer tmux; `switch-client -t %pane` só nas versões novas.
+    ///
+    /// Os clientes vêm de `list-clients -t <sessão>`, ou seja, já estão nessa
+    /// sessão: quem troca de fato são `select-window`/`select-pane`, e o
+    /// `switch-client` só confirma. Sessão sem terminal anexado devolve `nil`
+    /// (alerta), mesmo com outro terminal anexado a outra sessão.
     private static func switchTmuxClient(toSessionOf pid: Int32) -> Int32? {
-        guard let tmux = tmuxURL,
-              let tty = ttyPath(of: pid),
-              let panes = Shell.output(of: tmux, arguments: ["list-panes", "-a", "-F", "#{pane_tty}\t#{pane_id}\t#{session_id}"]),
+        guard let tmux = tmuxURL, let tty = ttyPath(of: pid) else { return nil }
+        // Argumentos separados, nunca interpolados: id e tty vêm do tmux, mas
+        // continuam não passando por shell. O limite de tempo evita que um
+        // servidor tmux travado prenda a tarefa (e empilhe um processo por clique).
+        func run(_ arguments: String...) -> String? {
+            Shell.output(of: tmux, arguments: arguments, timeout: 2)
+        }
+        guard let panes = run("list-panes", "-a", "-F", "#{pane_tty}\t#{pane_id}\t#{session_id}"),
               let target = pane(forTTY: tty, in: panes),
-              let clients = Shell.output(of: tmux, arguments: ["list-clients", "-t", target.session, "-F", "#{client_activity}\t#{client_tty}\t#{client_pid}"]),
+              let clients = run("list-clients", "-t", target.session, "-F", "#{client_activity}\t#{client_tty}\t#{client_pid}"),
               let client = mostRecentClient(in: clients)
         else { return nil }
 
-        // Argumentos separados, nunca interpolados: id e tty vêm do tmux, mas
-        // continuam não passando por shell.
-        _ = Shell.output(of: tmux, arguments: ["select-window", "-t", target.pane])
-        _ = Shell.output(of: tmux, arguments: ["select-pane", "-t", target.pane])
-        _ = Shell.output(of: tmux, arguments: ["switch-client", "-c", client.tty, "-t", target.session])
+        _ = run("select-window", "-t", target.pane)
+        _ = run("select-pane", "-t", target.pane)
+        _ = run("switch-client", "-c", client.tty, "-t", target.session)
         return client.pid
     }
 
