@@ -40,10 +40,15 @@ porque trava uma ferramenta que já está em andamento.
 
 ### O menu
 
-Clicar no ícone da barra lista todas as sessões, das mais recentes para as mais
-antigas, com os subagentes em background agrupados no fim:
+Clicar no ícone da barra mostra os limites de uso no topo e lista todas as
+sessões, das mais recentes para as mais antigas, com os subagentes em background
+agrupados no fim:
 
 ```
+Limite 5 h: 23% · renova 14:30
+Semanal: 41% · renova sex., 09:00
+Atualizado há 3 min
+──────────────
 ✅  my-app — pronto (há 2 min)
 ⏳  ClaudeBar · feat/x — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
@@ -61,6 +66,13 @@ Integração com o Claude Code: ok  ▸
 Atualizar
 Sair do ClaudeBar        ⌘Q
 ```
+
+As linhas de limite vêm de `~/.claude/claudebar/limits.json`, gravado pelo
+`claudebar-hook statusline` (ver [Linha de comando](#linha-de-comando)). Sem
+dado aparece "indisponível", nunca 0%. Janela que já renovou mostra "renovado,
+aguardando dado novo" até a próxima resposta do Claude Code trazer o número
+novo. A idade não é um relógio: é calculada quando o menu é montado e não
+avança enquanto ele fica aberto.
 
 Cada linha de sessão abre um submenu com:
 

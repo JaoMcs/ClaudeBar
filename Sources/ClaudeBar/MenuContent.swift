@@ -12,7 +12,35 @@ struct MenuContent: View {
         return formatter
     }()
 
+    /// Linhas dos limites no topo do menu. Sem dado é "indisponível", nunca 0%.
+    static func limitLines(_ limits: RateLimits?, now: Date) -> [String] {
+        guard let limits else { return ["Limites de uso: indisponível"] }
+
+        func line(_ title: String, _ window: RateWindow?) -> String {
+            guard let window else { return "\(title): indisponível" }
+            // Depois do reset o número velho não vale; o novo chega com a próxima resposta.
+            guard window.resetsAt > now else { return "\(title): renovado, aguardando dado novo" }
+            let reset = Calendar.current.isDate(window.resetsAt, inSameDayAs: now)
+                ? window.resetsAt.formatted(date: .omitted, time: .shortened)
+                : window.resetsAt.formatted(.dateTime.weekday(.abbreviated).hour().minute())
+            return "\(title): \(window.displayPercent)% · renova \(reset)"
+        }
+
+        var lines = [line("Limite 5 h", limits.fiveHour), line("Semanal", limits.sevenDay)]
+        if let updatedAt = limits.updatedAt {
+            lines.append("Atualizado \(relativeFormatter.localizedString(for: updatedAt, relativeTo: now))")
+        }
+        return lines
+    }
+
     var body: some View {
+        // Sem timer: a idade é calculada quando o SwiftUI monta o menu (ao abrir).
+        ForEach(Self.limitLines(store.limits, now: Date()), id: \.self) { line in
+            Text(line)
+        }
+
+        Divider()
+
         if store.rows.isEmpty {
             Text("Nenhuma sessão do Claude aberta")
         } else {
