@@ -41,10 +41,14 @@ wins because it blocks a tool that is already running.
 
 ### The menu
 
-Clicking the menu bar icon lists every session, newest first, with background
-subagents grouped at the end:
+Clicking the menu bar icon shows your usage limits at the top, then lists every
+session, newest first, with background subagents grouped at the end:
 
 ```
+Limite 5 h: 23% · renova 14:30          (5-hour limit, reset time)
+Semanal: 41% · renova sex., 09:00       (weekly limit, reset time)
+Atualizado há 3 min                     (age of the data)
+──────────────
 ✅  my-app — pronto (há 2 min)
 ⏳  ClaudeBar · feat/x — processando (há 10 s)
 ⚠️  api — falhou (há 1 min)
@@ -62,6 +66,13 @@ Integração com o Claude Code: ok  ▸  (hooks: status, install, remove)
 Atualizar                     (refresh now)
 Sair do ClaudeBar        ⌘Q   (quit)
 ```
+
+The limit lines come from `~/.claude/claudebar/limits.json`, written by
+`claudebar-hook statusline` (see [Command line](#command-line)).
+Without data they read *indisponível* (unavailable), never 0%. A window that
+already reset reads *renovado, aguardando dado novo* (reset, waiting for new
+data) until the next Claude Code reply brings a fresh number. The age is
+computed when the menu opens; close and reopen it to update.
 
 Each session row opens a submenu with:
 

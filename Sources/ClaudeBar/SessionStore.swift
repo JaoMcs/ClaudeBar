@@ -44,6 +44,8 @@ enum BarState {
 @Observable
 final class SessionStore {
     private(set) var rows: [SessionRow] = []
+    /// Limites de 5 h e semanal gravados pelo `claudebar-hook statusline`.
+    private(set) var limits: RateLimits?
     /// Última lista devolvida pelo CLI. `nil` até a primeira consulta responder.
     private var agents: [AgentSession]?
     /// Sessões concluídas ou com falha que já foram vistas — não acendem mais o ícone.
@@ -100,6 +102,8 @@ final class SessionStore {
         previousRows = Dictionary(uniqueKeysWithValues: merged.map { ($0.sessionId, $0) })
         rows = merged
         exitWatcher?.watch(Set(merged.compactMap(\.pid)))
+        // Mesmo diretório do watcher: `limits.json` novo também chega aqui.
+        limits = StatusDirectory.readLimits()
     }
 
     /// Pergunta ao CLI quais sessões existem e recalcula as linhas.
