@@ -173,8 +173,9 @@ unless the cursor is there). It needs no signing and no permission.
 "Claude terminou" and "A resposta do Claude falhou" disappear after 4 seconds
 or on click. The three waiting alerts ("Claude está esperando você", "Claude
 pede permissão", "Claude fez uma pergunta") stay until you click the popup or
-that session stops waiting (you answered, it finished, or it was closed). The
-click only closes the popup. A "terminou" or "falhou" never covers a waiting
+that session stops waiting (you answered, it finished, or it was closed).
+Clicking the popup takes you to the session (same as **Ir para a sessão**);
+the sample popup only closes. A "terminou" or "falhou" never covers a waiting
 popup that is still open: you only hear its sound. With two sessions waiting,
 the popup shows the latest one; the menu bar icon keeps flagging the other.
 

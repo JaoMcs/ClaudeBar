@@ -138,6 +138,7 @@ final class Notifier {
     }
 
     /// Mostra um popup de exemplo, para conferir o canto da tela e o estilo.
+    /// Sem `onOpen`: o clique só fecha.
     func showSample() {
         post(.permission, body: "Exemplo: Claude needs your permission to use Bash")
     }
@@ -147,7 +148,9 @@ final class Notifier {
         hud.dismissWaiting(for: sessionId)
     }
 
-    func post(_ alert: Alert, body: String, sessionId: String? = nil) {
+    /// - Parameter onOpen: o que o clique no popup faz antes de fechar. A
+    ///   notificação nativa ignora: não há delegate de clique ainda.
+    func post(_ alert: Alert, body: String, sessionId: String? = nil, onOpen: (@MainActor () -> Void)? = nil) {
         // Desligado no menu = silêncio total: nem popup nem som.
         guard isEnabled else { return }
 
@@ -159,7 +162,7 @@ final class Notifier {
 
         guard canUseSystemNotifications else {
             // Caminho normal com assinatura ad-hoc: popup desenhado pelo app.
-            hud.show(alert, body: body, sessionId: sessionId)
+            hud.show(alert, body: body, sessionId: sessionId, onOpen: onOpen)
             return
         }
 
