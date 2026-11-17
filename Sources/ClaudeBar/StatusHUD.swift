@@ -47,6 +47,7 @@ final class StatusHUD {
         panel.setContentSize(size)
         reposition(panel, size: size)
         panel.orderFrontRegardless()
+        announce(alert, body: body)
 
         shownAlert = alert
         shownSessionId = sessionId
@@ -61,6 +62,18 @@ final class StatusHUD {
             guard !Task.isCancelled else { return }
             self?.dismiss()
         }
+    }
+
+    /// O painel não toma foco, então o VoiceOver não passa por ele sozinho.
+    private func announce(_ alert: Alert, body: String) {
+        NSAccessibility.post(
+            element: NSApplication.shared,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: "\(alert.title). \(body)",
+                .priority: NSAccessibilityPriorityLevel.high.rawValue,
+            ]
+        )
     }
 
     func dismiss() {
@@ -169,6 +182,8 @@ private struct HUDView: View {
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(.separator, lineWidth: 0.5)
         )
+        // Título e corpo lidos juntos se o VoiceOver chegar ao painel.
+        .accessibilityElement(children: .combine)
         .onTapGesture(perform: onDismiss)
     }
 

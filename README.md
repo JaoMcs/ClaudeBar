@@ -49,14 +49,16 @@ Limite 5 h: 23% · renova 14:30          (5-hour limit, reset time)
 Semanal: 41% · renova sex., 09:00       (weekly limit, reset time)
 Atualizado há 3 min                     (age of the data)
 ──────────────
-✅  my-app — pronto (há 2 min)
-⏳  ClaudeBar · feat/x — processando (há 10 s)
-⚠️  api — falhou (há 1 min)
-✋  infra — pede permissão (há 20 s)
-❓  docs — fez uma pergunta (há 5 s)
-🔸  [subagente] review-pr — aguardando você (há 1 min)
+[checkmark.circle.fill]             my-app — pronto (há 2 min)
+[ellipsis.circle]                   ClaudeBar · feat/x — processando (há 10 s)
+[exclamationmark.triangle.fill]     api — falhou (há 1 min)
+[hand.raised.fill]                  infra — pede permissão (há 20 s)
+[questionmark.bubble.fill]          docs — fez uma pergunta (há 5 s)
+[exclamationmark.bubble.fill]       [subagente] review-pr — aguardando você (há 1 min)
 ──────────────
 Marcar tudo como visto        (mark all as seen)
+──────────────
+O que os ícones significam  ▸ (legend: every bar symbol and what it means)
 ──────────────
 Notificações  ✓               (notifications on/off)
 Ver exemplo de popup          (show a sample popup)
@@ -86,8 +88,16 @@ Each session row opens a submenu with:
 - for a failed reply, the API error code and details
   (e.g. `rate_limit — 429 Too Many Requests`),
 - **Mark as seen** — clears the "ready" or "failed" highlight in the bar for
-  that session (a failed row stays ⚠️ until the next prompt),
+  that session (a failed row keeps the warning symbol until the next prompt),
 - **Terminate** — when possible (see [Terminating a session](#terminating-a-session)).
+
+Each row shows, at its left, the same SF Symbol the menu bar uses for that
+state, and says the state in words (no emoji). The submenu **O que os ícones
+significam** (*what the icons mean*) lists every bar symbol with its meaning.
+
+- **VoiceOver** — the menu bar item reads e.g. "ClaudeBar. Sessões: 2. Claude
+  está esperando você" (*Sessions: 2. Claude is waiting for you*); popups are
+  announced (when VoiceOver allows announcements from background apps).
 
 The app has no Dock icon and no window; it lives only in the menu bar
 (`LSUIElement`).
