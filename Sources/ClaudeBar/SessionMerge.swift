@@ -80,6 +80,13 @@ enum SessionMerge {
         }
     }
 
+    /// Igual à de cima, mais o motivo da espera: pergunta que vira permissão
+    /// (ou o contrário) avisa de novo, mesmo sem mudar de estado.
+    static func relights(from previous: SessionRow?, to row: SessionRow) -> Bool {
+        if previous?.state == .waiting, row.state == .waiting, previous?.kind != row.kind { return true }
+        return relights(from: previous?.state, to: row.state)
+    }
+
     /// O estado do ícone. Subagente é ignorado: é trabalho delegado, não uma
     /// sessão sua esperando resposta.
     static func barState(rows: [SessionRow], acknowledged: Set<String>) -> BarState {

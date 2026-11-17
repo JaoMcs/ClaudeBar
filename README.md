@@ -129,7 +129,7 @@ you, and one tells you the reply never came:
 |---|---|---|---|
 | working → ready | "Claude terminou" (*Claude is done*) + project name | `Glass` (bright bell) | 100% |
 | → permission | "Claude pede permissão" (*Claude asks permission*) + Claude's message | `Submarine` (low pulse) | 75% |
-| → question | "Claude fez uma pergunta" (*Claude asked a question*) + project name | `Purr` (soft purr) | 75% |
+| → question | "Claude fez uma pergunta" (*Claude asked a question*) + Claude's message, or project name | `Purr` (soft purr) | 75% |
 | → waiting for you (no known reason) | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse) | 75% |
 | working → failed | "A resposta do Claude falhou" (*Claude's reply failed*) + project and error code | `Basso` (error thud) | 100% |
 

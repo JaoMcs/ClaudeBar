@@ -127,7 +127,7 @@ conta que a resposta não veio:
 |---|---|---|---|
 | processando → pronto | "Claude terminou" + nome do projeto | `Glass` (sino claro) | 100% |
 | → permissão | "Claude pede permissão" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
-| → pergunta | "Claude fez uma pergunta" + nome do projeto | `Purr` (ronronar suave) | 75% |
+| → pergunta | "Claude fez uma pergunta" + mensagem do Claude, ou nome do projeto | `Purr` (ronronar suave) | 75% |
 | → aguardando você (sem motivo conhecido) | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
 | processando → falhou | "A resposta do Claude falhou" + projeto e código do erro | `Basso` (som de erro) | 100% |
 

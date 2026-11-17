@@ -225,6 +225,21 @@ struct WaitingBarStateTests {
         #expect(bar([hook("g", .waiting)]) == .waiting)
     }
 
+    /// Mesmo estado, motivo novo: o aviso toca de novo. Motivo igual, não.
+    @Test func mudancaDeTipoReavisa() throws {
+        func row(_ state: SessionState, _ kind: WaitKind? = nil) throws -> SessionRow {
+            try #require(SessionMerge.rows(agents: [], statuses: [hook("s", state, kind)]).first)
+        }
+        #expect(SessionMerge.relights(from: try row(.waiting, .question), to: try row(.waiting, .permission)))
+        #expect(SessionMerge.relights(from: try row(.waiting, .permission), to: try row(.waiting, .question)))
+        #expect(SessionMerge.relights(from: try row(.waiting), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: try row(.waiting, .question), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: nil, to: try row(.waiting, .question)))
+        // Fora da espera vale a regra de estado.
+        #expect(SessionMerge.relights(from: try row(.working), to: try row(.waiting, .question)))
+        #expect(!SessionMerge.relights(from: try row(.waiting, .question), to: try row(.working)))
+    }
+
     @Test func linhaCarregaOTipoDoHook() throws {
         let listada = "aaaaaaaa-0000-0000-0000-000000000000"
         let rows = SessionMerge.rows(

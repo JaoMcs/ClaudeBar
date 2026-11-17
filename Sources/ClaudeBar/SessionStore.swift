@@ -226,9 +226,7 @@ final class SessionStore {
         // Subagente é trabalho delegado: aparece no menu, mas não avisa nada.
         for row in merged where !row.isSubagent {
             let previous = previousRows[row.sessionId]
-            // Pergunta que vira permissão (ou o contrário) avisa de novo.
-            let kindChanged = previous?.state == .waiting && row.state == .waiting && previous?.kind != row.kind
-            guard SessionMerge.relights(from: previous?.state, to: row.state) || kindChanged else { continue }
+            guard SessionMerge.relights(from: previous, to: row) else { continue }
             acknowledged.remove(row.sessionId)
 
             switch row.state {
