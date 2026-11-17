@@ -39,6 +39,14 @@ enum Alert {
         }
     }
 
+    /// Avisos que pedem ação sua: ficam na tela até você agir.
+    var staysUntilAnswered: Bool {
+        switch self {
+        case .waiting, .permission, .question: true
+        case .finished, .failed: false
+        }
+    }
+
     /// Som do sistema, em `/System/Library/Sounds`.
     ///
     /// `Submarine` é um pulso grave, bem distinto do sino claro do `Glass`:
@@ -134,7 +142,12 @@ final class Notifier {
         post(.permission, body: "Exemplo: Claude needs your permission to use Bash")
     }
 
-    func post(_ alert: Alert, body: String) {
+    /// Fecha o popup de espera desta sessão, se for ele que está na tela.
+    func dismissWaiting(for sessionId: String) {
+        hud.dismissWaiting(for: sessionId)
+    }
+
+    func post(_ alert: Alert, body: String, sessionId: String? = nil) {
         // Desligado no menu = silêncio total: nem popup nem som.
         guard isEnabled else { return }
 
@@ -146,7 +159,7 @@ final class Notifier {
 
         guard canUseSystemNotifications else {
             // Caminho normal com assinatura ad-hoc: popup desenhado pelo app.
-            hud.show(alert, body: body)
+            hud.show(alert, body: body, sessionId: sessionId)
             return
         }
 

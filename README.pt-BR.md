@@ -159,9 +159,17 @@ status de autorização: 1 (denied)
 
 Não é permissão que você negou — é o sistema recusando a API para bundle sem
 Developer ID (`TeamIdentifier=not set`); `lsregister` não muda isso. Então o
-aviso sai num `NSPanel` flutuante próprio, no canto superior direito da tela
-onde está o mouse, que some em 4s ou ao clique — e não depende de assinatura
-nem de permissão.
+aviso sai num `NSPanel` flutuante próprio, num canto da tela onde está o
+mouse, longe do cursor (superior direito, a não ser que o cursor esteja lá) —
+e não depende de assinatura nem de permissão.
+
+"Claude terminou" e "A resposta do Claude falhou" somem em 4 s ou ao clique.
+Os três avisos de espera ("Claude está esperando você", "Claude pede
+permissão", "Claude fez uma pergunta") ficam até você clicar no popup ou
+aquela sessão sair de "esperando" (você respondeu, ela terminou ou foi
+fechada). O clique só fecha o popup. Um "terminou" ou "falhou" nunca cobre um
+popup de espera ainda aberto: você só ouve o som. Com duas sessões esperando,
+o popup mostra a última; o ícone da barra continua avisando da outra.
 
 Se algum dia o app for assinado com Developer ID, o `Notifier` passa a usar a
 notificação nativa sozinho: ele prefere a nativa e só cai no painel próprio

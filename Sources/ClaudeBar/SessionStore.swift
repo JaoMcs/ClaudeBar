@@ -223,6 +223,13 @@ final class SessionStore {
     }
 
     private func notifyTransitions(in merged: [SessionRow]) {
+        // Saiu de "esperando" (respondeu, terminou) ou sumiu (fechou): o popup
+        // daquela sessão fecha, antes de qualquer aviso novo.
+        let current = Dictionary(merged.map { ($0.sessionId, $0.state) }, uniquingKeysWith: { first, _ in first })
+        for (sessionId, previous) in previousRows where previous.state == .waiting && current[sessionId] != .waiting {
+            notifier.dismissWaiting(for: sessionId)
+        }
+
         // Subagente é trabalho delegado: aparece no menu, mas não avisa nada.
         for row in merged where !row.isSubagent {
             let previous = previousRows[row.sessionId]
@@ -231,15 +238,19 @@ final class SessionStore {
 
             switch row.state {
             case .idle:
-                notifier.post(.finished, body: row.name)
+                notifier.post(.finished, body: row.name, sessionId: row.sessionId)
             case .waiting:
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
-                notifier.post(Alert(waiting: row.kind), body: row.message ?? row.name)
+                notifier.post(Alert(waiting: row.kind), body: row.message ?? row.name, sessionId: row.sessionId)
             case .error:
                 if previous?.state == .working {
                     // O código do erro diz se vale reenviar ou esperar o limite.
-                    notifier.post(.failed, body: row.message.map { "\(row.name): \($0)" } ?? row.name)
+                    notifier.post(
+                        .failed,
+                        body: row.message.map { "\(row.name): \($0)" } ?? row.name,
+                        sessionId: row.sessionId
+                    )
                 }
             case .working:
                 break

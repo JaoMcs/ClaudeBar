@@ -12,13 +12,21 @@ import SwiftUI
 final class StatusHUD {
     private var panel: NSPanel?
     private var dismissTask: Task<Void, Never>?
+    /// O que está na tela agora, e de qual sessão. `nil` com o painel fechado.
+    private var shownAlert: Alert?
+    private var shownSessionId: String?
     private let log = Logger(subsystem: "com.joaomarcos.claudebar", category: "hud")
 
     private static let visibleDuration: Duration = .seconds(4)
     private static let margin: CGFloat = 16
     private static let width: CGFloat = 320
 
-    func show(_ alert: Alert, body: String) {
+    // ponytail: um painel só, sem fila. Com duas sessões esperando aparece a
+    // última; o ícone da barra segue avisando da outra. Fila se isso incomodar.
+    func show(_ alert: Alert, body: String, sessionId: String? = nil) {
+        // Aviso informativo não tapa um de espera ainda aberto: fica só o som.
+        if !alert.staysUntilAnswered, shownAlert?.staysUntilAnswered == true { return }
+
         let content = HUDView(alert: alert, body: body, width: Self.width) { [weak self] in
             self?.dismiss()
         }
@@ -38,8 +46,14 @@ final class StatusHUD {
         reposition(panel, size: size)
         panel.orderFrontRegardless()
 
-        // Aviso novo renova o tempo em vez de empilhar painéis.
+        shownAlert = alert
+        shownSessionId = sessionId
+
+        // Aviso novo renova o tempo em vez de empilhar painéis. Aviso de espera
+        // não tem tempo: fica até o clique ou até a sessão sair de "esperando".
         dismissTask?.cancel()
+        dismissTask = nil
+        guard !alert.staysUntilAnswered else { return }
         dismissTask = Task { [weak self] in
             try? await Task.sleep(for: Self.visibleDuration)
             guard !Task.isCancelled else { return }
@@ -50,7 +64,32 @@ final class StatusHUD {
     func dismiss() {
         dismissTask?.cancel()
         dismissTask = nil
+        shownAlert = nil
+        shownSessionId = nil
         panel?.orderOut(nil)
+    }
+
+    /// Fecha o aviso de espera se ele for desta sessão.
+    func dismissWaiting(for sessionId: String) {
+        guard shownAlert?.staysUntilAnswered == true, shownSessionId == sessionId else { return }
+        dismiss()
+    }
+
+    /// Canto da tela para o popup: superior direito, a não ser que o cursor
+    /// esteja lá — popup que fica na tela não pode nascer debaixo do clique.
+    /// Ordem: superior direito, inferior direito, superior esquerdo.
+    nonisolated static func origin(
+        for size: NSSize, in frame: NSRect, avoiding mouse: NSPoint, margin: CGFloat
+    ) -> NSPoint {
+        let right = frame.maxX - size.width - margin
+        let left = frame.minX + margin
+        let top = frame.maxY - size.height - margin
+        let bottom = frame.minY + margin
+        let corners = [NSPoint(x: right, y: top), NSPoint(x: right, y: bottom), NSPoint(x: left, y: top)]
+        // A margem entra na conta: cursor encostado na borda do popup também conta.
+        return corners.first { corner in
+            !NSRect(origin: corner, size: size).insetBy(dx: -margin, dy: -margin).contains(mouse)
+        } ?? corners[0]
     }
 
     private func makePanel() -> NSPanel {
@@ -71,17 +110,14 @@ final class StatusHUD {
         return panel
     }
 
-    /// Canto superior direito da tela onde está o cursor — a mesma tela em que a
-    /// barra de menu do ClaudeBar está sendo olhada.
+    /// Um canto da tela onde está o cursor — a mesma tela em que a barra de menu
+    /// do ClaudeBar está sendo olhada — mas longe dele.
     private func reposition(_ panel: NSPanel, size: NSSize) {
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
         guard let frame = screen?.visibleFrame else { return }
 
-        let origin = CGPoint(
-            x: frame.maxX - size.width - Self.margin,
-            y: frame.maxY - size.height - Self.margin
-        )
+        let origin = Self.origin(for: size, in: frame, avoiding: mouse, margin: Self.margin)
         panel.setFrameOrigin(origin)
 
         log.info("""

@@ -162,8 +162,16 @@ status de autorização: 1 (denied)
 This is not a permission you denied. The system refuses the API for any bundle
 without a Developer ID (`TeamIdentifier=not set`), and `lsregister` does not
 change that. So the alert is shown in the app's own floating `NSPanel`, in the
-top-right corner of the screen where the mouse is. It disappears after 4
-seconds or on click, and needs no signing and no permission.
+a corner of the screen where the mouse is, away from the cursor (top-right
+unless the cursor is there). It needs no signing and no permission.
+
+"Claude terminou" and "A resposta do Claude falhou" disappear after 4 seconds
+or on click. The three waiting alerts ("Claude está esperando você", "Claude
+pede permissão", "Claude fez uma pergunta") stay until you click the popup or
+that session stops waiting (you answered, it finished, or it was closed). The
+click only closes the popup. A "terminou" or "falhou" never covers a waiting
+popup that is still open: you only hear its sound. With two sessions waiting,
+the popup shows the latest one; the menu bar icon keeps flagging the other.
 
 If the app is ever signed with a Developer ID, `Notifier` switches to native
 notifications by itself: it prefers them and only falls back to its own panel
