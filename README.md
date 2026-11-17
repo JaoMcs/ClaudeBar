@@ -152,6 +152,9 @@ you, and one tells you the reply never came:
 - The "failed" alert only fires when the session was working right before the
   error, and does not repeat while it stays in error.
 - Subagents never trigger alerts.
+- No sound if the session's app is already in front (the popup still shows).
+  App level only: with the Claude desktop app in front, any of its
+  conversations counts; inside tmux the sound always plays.
 - The **Notificações** toggle in the menu turns alerts on and off — popup and
   sound together. The choice is saved in `UserDefaults` and is on by default.
 

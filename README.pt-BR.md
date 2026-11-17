@@ -150,6 +150,9 @@ conta que a resposta não veio:
 - O aviso de "falhou" só sai se a sessão estava processando logo antes do
   erro, e não repete enquanto ela continuar em erro.
 - Subagente nunca avisa.
+- Sem som se o app da sessão já está na frente (o popup continua aparecendo).
+  Vale por app: com o Claude desktop na frente, qualquer conversa dele conta;
+  dentro do tmux o som sempre toca.
 - O item **Notificações** no menu liga e desliga os avisos — popup e som
   juntos. A escolha fica salva no `UserDefaults` e vem ligada por padrão.
 
