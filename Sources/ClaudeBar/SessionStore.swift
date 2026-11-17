@@ -295,9 +295,13 @@ final class SessionStore {
             now: Date(), delay: TimeInterval(notifier.reminderMinutes * 60))
         reminded.formUnion(due.compactMap(SessionMerge.reminderKey))
         for row in due {
-            notifier.post(Alert(waiting: row.kind), body: "Ainda esperando: \(row.waitingBody(hidingContent: notifier.hidesContent))",
-                          sessionId: row.sessionId, playSound: !isLookingAt(row),
-                          onOpen: { [weak self] in self?.goToSession(row) })
+            notifier.post(
+                Alert(waiting: row.kind),
+                body: "Ainda esperando: \(row.waitingBody(hidingContent: notifier.hidesContent))",
+                sessionId: row.sessionId,
+                playSound: !isLookingAt(row),
+                onOpen: { [weak self] in self?.goToSession(row) }
+            )
         }
     }
 
