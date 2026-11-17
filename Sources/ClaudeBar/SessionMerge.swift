@@ -109,6 +109,29 @@ enum SessionMerge {
         return .idle
     }
 
+    /// Sessões suas que continuam esperando há `delay` ou mais e ainda não
+    /// ganharam lembrete neste episódio. Só quem já estava esperando na rodada
+    /// anterior: na rodada da transição o aviso normal acabou de tocar.
+    static func dueReminders(rows: [SessionRow], previous: [String: SessionState],
+                             reminded: Set<String>, now: Date, delay: TimeInterval) -> [SessionRow] {
+        rows.filter { row in
+            guard !row.isSubagent,
+                  row.state == .waiting,
+                  previous[row.sessionId] == .waiting,
+                  let since = row.updatedAt,
+                  let key = reminderKey(row)
+            else { return false }
+            return now.timeIntervalSince(since) >= delay && !reminded.contains(key)
+        }
+    }
+
+    /// Um episódio de espera: a sessão + quando ela entrou em `waiting`.
+    // ponytail: sessão só do CLI (sem hook) usa o início da sessão como
+    // `updatedAt`, então o lembrete pode vir já no 2º merge; raro com hooks.
+    static func reminderKey(_ row: SessionRow) -> String? {
+        row.updatedAt.map { "\(row.sessionId)|\($0.timeIntervalSince1970)" }
+    }
+
     /// O número fixo na barra: só as suas sessões, sem subagente.
     static func openSessionCount(rows: [SessionRow]) -> Int {
         rows.filter { !$0.isSubagent }.count

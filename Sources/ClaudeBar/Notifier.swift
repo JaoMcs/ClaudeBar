@@ -121,6 +121,8 @@ final class Notifier {
 
     private static let enabledKey = "notificationsEnabled"
     static let soundEnabledKey = "soundEnabled"
+    static let reminderEnabledKey = "waitingReminderEnabled"
+    static let reminderMinutesKey = "waitingReminderMinutes"
 
     /// Sons do sistema, sem extensão — é como o `NSSound(named:)` prefere o nome.
     /// Lidos do disco para acompanhar o que o macOS instalado tiver.
@@ -144,7 +146,10 @@ final class Notifier {
         self.defaults = defaults
         soundOverride = playSound
         // Padrão ligado: quem instalou um app de aviso quer ser avisado.
-        var padroes: [String: Any] = [Self.enabledKey: true, Self.soundEnabledKey: true]
+        var padroes: [String: Any] = [
+            Self.enabledKey: true, Self.soundEnabledKey: true,
+            Self.reminderEnabledKey: true, Self.reminderMinutesKey: 5,
+        ]
         for alert in [Alert.finished, .waiting, .permission, .question, .failed] {
             padroes[alert.enabledKey] = true
             padroes[alert.soundKey] = alert.soundName
@@ -170,6 +175,12 @@ final class Notifier {
             hud.dismiss()
         }
     }
+
+    /// Lembrete único de espera ligado nos Ajustes. Lido na hora, sem cópia.
+    var isReminderEnabled: Bool { defaults.bool(forKey: Self.reminderEnabledKey) }
+
+    /// Minutos até o lembrete, nunca menos de 1.
+    var reminderMinutes: Int { max(defaults.integer(forKey: Self.reminderMinutesKey), 1) }
 
     /// Som a tocar para o aviso, ou `nil` com o som desligado nos Ajustes.
     func soundName(for alert: Alert) -> String? {

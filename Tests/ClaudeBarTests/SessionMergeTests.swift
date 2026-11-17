@@ -266,3 +266,71 @@ struct WaitingBarStateTests {
         #expect(bar([hook("q", .waiting, .question), hook("e", .error)]) == .question)
     }
 }
+
+@Suite("Lembrete de espera")
+struct WaitingReminderTests {
+    private let agora = Date(timeIntervalSince1970: 1_800_000_000)
+    private let cincoMin: TimeInterval = 5 * 60
+
+    private func esperando(_ sessionId: String, ha segundos: TimeInterval, subagente: Bool = false) -> SessionRow {
+        SessionRow(
+            sessionId: sessionId,
+            name: nil,
+            cwd: "/Users/dev/code",
+            state: .waiting,
+            updatedAt: agora.addingTimeInterval(-segundos),
+            message: "Claude needs your permission to use Bash",
+            isSubagent: subagente
+        )
+    }
+
+    /// Por padrão, todas já estavam esperando na rodada anterior.
+    private func devidos(
+        _ rows: [SessionRow],
+        previous: [String: SessionState]? = nil,
+        reminded: Set<String> = []
+    ) -> [String] {
+        let anterior = previous ?? Dictionary(uniqueKeysWithValues: rows.map { ($0.sessionId, SessionState.waiting) })
+        return SessionMerge.dueReminders(rows: rows, previous: anterior, reminded: reminded, now: agora, delay: cincoMin)
+            .map(\.sessionId)
+    }
+
+    @Test func disparaAosCincoMinutosNaoAntes() {
+        #expect(devidos([esperando("s1", ha: cincoMin - 1)]).isEmpty)
+        #expect(devidos([esperando("s1", ha: cincoMin)]) == ["s1"])
+    }
+
+    /// Um lembrete por episódio: a chave lembrada segura os próximos `merge()`.
+    @Test func lembraUmaVezSo() throws {
+        let row = esperando("s1", ha: 600)
+        let chave = try #require(SessionMerge.reminderKey(row))
+        #expect(devidos([row], reminded: [chave]).isEmpty)
+    }
+
+    /// Nova espera grava outro `updatedAt`: a chave antiga não vale para ela.
+    @Test func novoEpisodioGanhaNovoLembrete() throws {
+        let antigo = try #require(SessionMerge.reminderKey(esperando("s1", ha: 900)))
+        #expect(devidos([esperando("s1", ha: 400)], reminded: [antigo]) == ["s1"])
+    }
+
+    /// Saiu de `waiting`: nada a lembrar, mesmo com o tempo vencido.
+    @Test func transicaoCancela() {
+        let respondida = SessionRow(
+            sessionId: "s1", name: nil, cwd: "/tmp", state: .working,
+            updatedAt: agora.addingTimeInterval(-900), message: nil, isSubagent: false
+        )
+        #expect(devidos([respondida], previous: ["s1": .waiting]).isEmpty)
+    }
+
+    /// Acabou de entrar em `waiting` (ou o app acabou de abrir): o aviso da
+    /// transição já tocou nesta rodada, o lembrete fica para a próxima.
+    @Test func naoDisparaNaRodadaDaTransicao() {
+        let row = esperando("s1", ha: 900)
+        #expect(devidos([row], previous: ["s1": .working]).isEmpty)
+        #expect(devidos([row], previous: [:]).isEmpty)
+    }
+
+    @Test func subagenteNaoLembra() {
+        #expect(devidos([esperando("bg", ha: 900, subagente: true)]).isEmpty)
+    }
+}
