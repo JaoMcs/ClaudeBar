@@ -22,6 +22,10 @@ struct MenuContent: View {
                 Menu(label(for: row)) {
                     Text(row.cwd)
 
+                    Button("Abrir pasta do projeto") {
+                        store.openFolder(row)
+                    }
+
                     // O código do erro ("rate_limit — 429 Too Many Requests")
                     // diz se vale reenviar agora ou esperar.
                     if row.state == .error, let message = row.message {

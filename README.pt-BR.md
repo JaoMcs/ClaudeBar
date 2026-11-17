@@ -64,6 +64,8 @@ Sair do ClaudeBar        ⌘Q
 Cada linha de sessão abre um submenu com:
 
 - o caminho completo do projeto,
+- **Abrir pasta do projeto**: abre o `cwd` no Finder (só pastas de verdade; um
+  `.app` nunca é executado),
 - quando a resposta falhou, o código e o detalhe do erro da API
   (ex.: `rate_limit — 429 Too Many Requests`),
 - **Marcar como visto** — apaga o destaque de "pronto" ou "falhou" na barra
