@@ -49,14 +49,16 @@ Limite 5 h: 23% · renova 14:30
 Semanal: 41% · renova sex., 09:00
 Atualizado há 3 min
 ──────────────
-✅  my-app — pronto (há 2 min)
-⏳  ClaudeBar · feat/x — processando (há 10 s)
-⚠️  api — falhou (há 1 min)
-✋  infra — pede permissão (há 20 s)
-❓  docs — fez uma pergunta (há 5 s)
-🔸  [subagente] review-pr — aguardando você (há 1 min)
+[checkmark.circle.fill]             my-app — pronto (há 2 min)
+[ellipsis.circle]                   ClaudeBar · feat/x — processando (há 10 s)
+[exclamationmark.triangle.fill]     api — falhou (há 1 min)
+[hand.raised.fill]                  infra — pede permissão (há 20 s)
+[questionmark.bubble.fill]          docs — fez uma pergunta (há 5 s)
+[exclamationmark.bubble.fill]       [subagente] review-pr — aguardando você (há 1 min)
 ──────────────
 Marcar tudo como visto
+──────────────
+O que os ícones significam  ▸ (legenda: cada símbolo da barra e o que ele quer dizer)
 ──────────────
 Notificações  ✓
 Ver exemplo de popup
@@ -85,8 +87,16 @@ Cada linha de sessão abre um submenu com:
 - quando a resposta falhou, o código e o detalhe do erro da API
   (ex.: `rate_limit — 429 Too Many Requests`),
 - **Marcar como visto** — apaga o destaque de "pronto" ou "falhou" na barra
-  para aquela sessão (a linha que falhou continua ⚠️ até o próximo prompt),
+  para aquela sessão (a linha que falhou mantém o símbolo de alerta até o próximo prompt),
 - **Finalizar** — quando possível (veja [Finalizar uma sessão](#finalizar-uma-sessão)).
+
+Cada linha mostra à esquerda o mesmo SF Symbol que a barra usa para aquele
+estado, e diz o estado em palavras (sem emoji). O submenu **O que os ícones
+significam** lista cada símbolo da barra com o significado.
+
+- **VoiceOver** — o item da barra lê, por exemplo, "ClaudeBar. Sessões: 2.
+  Claude está esperando você"; os popups são anunciados (quando o VoiceOver
+  permite anúncios de apps em segundo plano).
 
 O app não tem ícone no Dock nem janela; vive só na barra de menu
 (`LSUIElement`).

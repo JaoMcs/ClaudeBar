@@ -4,7 +4,7 @@ import Foundation
 import Observation
 
 /// Estado agregado de todas as sessões, que define o ícone na barra.
-enum BarState {
+enum BarState: CaseIterable {
     /// Alguma sessão quer aprovar uma ferramenta.
     case permission
     /// Alguma sessão está esperando você, sem tipo conhecido (ou tipos misturados).
@@ -30,6 +30,25 @@ enum BarState {
         case .working: "ellipsis.circle"
         case .idle: "circle.dotted"
         }
+    }
+
+    /// Texto do estado, usado na legenda do menu e no rótulo do VoiceOver.
+    var title: String {
+        switch self {
+        case .permission: "Claude pede permissão"
+        case .question: "Claude fez uma pergunta"
+        case .waiting: "Claude está esperando você"
+        case .error: "Uma resposta falhou, ainda não vista"
+        case .done: "Resposta pronta, ainda não vista"
+        case .working: "Claude está trabalhando"
+        case .idle: "Nada acontecendo"
+        }
+    }
+
+    /// Rótulo do item da barra para o VoiceOver. Sem plural de propósito
+    /// ("Sessões: 1"): dispensa `.stringsdict` quando o texto for traduzido.
+    func accessibilityLabel(openSessions: Int) -> String {
+        "ClaudeBar. Sessões: \(openSessions). \(title)"
     }
 }
 

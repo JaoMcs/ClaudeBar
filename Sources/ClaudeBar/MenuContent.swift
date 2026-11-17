@@ -47,7 +47,9 @@ struct MenuContent: View {
             // Cada sessão abre um submenu: clicar na linha não faz nada
             // destrutivo por acidente.
             ForEach(store.rows) { row in
-                Menu(label(for: row)) {
+                // Sem emoji no texto: o VoiceOver leria o nome dele. O símbolo é o da
+                // barra para o mesmo estado, então a legenda vale para as linhas.
+                Menu {
                     Text(row.cwd)
 
                     Button("Abrir pasta do projeto") {
@@ -82,6 +84,8 @@ struct MenuContent: View {
                     } else if let reason = SessionTerminator.unavailableReason(for: row) {
                         Text(reason)
                     }
+                } label: {
+                    Label(Self.label(for: row), systemImage: Self.symbolName(for: row))
                 }
             }
 
@@ -89,6 +93,14 @@ struct MenuContent: View {
 
             Button("Marcar tudo como visto") {
                 store.acknowledgeAll()
+            }
+        }
+
+        Divider()
+
+        Menu("O que os ícones significam") {
+            ForEach(BarState.allCases, id: \.self) { state in
+                Label(state.title, systemImage: state.symbolName)
             }
         }
 
@@ -163,33 +175,31 @@ struct MenuContent: View {
         }
     }
 
-    private func label(for row: SessionRow) -> String {
-        var text = "\(icon(for: row))  "
-        if row.isSubagent {
-            text += "[subagente] "
-        }
+    static func label(for row: SessionRow, now: Date = Date()) -> String {
+        var text = row.isSubagent ? "[subagente] " : ""
         text += row.name
         // A branch distingue duas sessões do mesmo projeto em worktrees diferentes.
         if let branch = row.branch { text += " · \(branch)" }
         text += " — \(description(for: row))"
         if let updatedAt = row.updatedAt {
-            text += " (\(Self.relativeFormatter.localizedString(for: updatedAt, relativeTo: Date())))"
+            text += " (\(relativeFormatter.localizedString(for: updatedAt, relativeTo: now)))"
         }
         return text
     }
 
-    private func icon(for row: SessionRow) -> String {
+    /// O mesmo símbolo da barra para o mesmo estado, então a legenda vale para as linhas.
+    private static func symbolName(for row: SessionRow) -> String {
         switch (row.state, row.kind) {
-        case (.working, _): "⏳"
-        case (.idle, _): "✅"
-        case (.waiting, .permission): "✋"
-        case (.waiting, .question): "❓"
-        case (.waiting, nil): "🔸"
-        case (.error, _): "⚠️"
+        case (.working, _): BarState.working.symbolName
+        case (.idle, _): BarState.done.symbolName
+        case (.error, _): BarState.error.symbolName
+        case (.waiting, .permission): BarState.permission.symbolName
+        case (.waiting, .question): BarState.question.symbolName
+        case (.waiting, nil): BarState.waiting.symbolName
         }
     }
 
-    private func description(for row: SessionRow) -> String {
+    static func description(for row: SessionRow) -> String {
         switch (row.state, row.kind) {
         case (.working, _): "processando"
         case (.idle, _): "pronto"

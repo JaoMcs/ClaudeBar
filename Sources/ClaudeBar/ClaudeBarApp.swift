@@ -12,8 +12,13 @@ struct ClaudeBarApp: App {
         } label: {
             // O símbolo diz o que está acontecendo; o número, quantas sessões
             // estão abertas — e ele fica sempre visível.
-            Image(systemName: store.barState.symbolName)
-            Text("\(store.openSessionCount)")
+            // Um elemento só para o VoiceOver: sem isso ele lê apenas o número.
+            HStack {
+                Image(systemName: store.barState.symbolName)
+                Text("\(store.openSessionCount)")
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(store.barState.accessibilityLabel(openSessions: store.openSessionCount))
         }
         .menuBarExtraStyle(.menu)
     }
