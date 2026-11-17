@@ -23,11 +23,13 @@ final class StatusHUD {
 
     // ponytail: um painel só, sem fila. Com duas sessões esperando aparece a
     // última; o ícone da barra segue avisando da outra. Fila se isso incomodar.
-    func show(_ alert: Alert, body: String, sessionId: String? = nil) {
+    /// - Parameter onOpen: chamado no clique, antes de fechar — leva à sessão.
+    func show(_ alert: Alert, body: String, sessionId: String? = nil, onOpen: (@MainActor () -> Void)? = nil) {
         // Aviso informativo não tapa um de espera ainda aberto: fica só o som.
         if !alert.staysUntilAnswered, shownAlert?.staysUntilAnswered == true { return }
 
         let content = HUDView(alert: alert, body: body, width: Self.width) { [weak self] in
+            onOpen?()
             self?.dismiss()
         }
 

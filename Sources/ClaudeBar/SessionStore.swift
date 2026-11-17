@@ -282,20 +282,29 @@ final class SessionStore {
             guard SessionMerge.relights(from: previous, to: row) else { continue }
             acknowledged.remove(row.sessionId)
 
+            // Clique no popup leva à sessão (F10).
+            let open: @MainActor () -> Void = { [weak self] in self?.goToSession(row) }
+
             switch row.state {
             case .idle:
-                notifier.post(.finished, body: row.name, sessionId: row.sessionId)
+                notifier.post(.finished, body: row.name, sessionId: row.sessionId, onOpen: open)
             case .waiting:
                 // A mensagem do Claude ("needs your permission to use Bash") diz
                 // mais que o nome do projeto quando ele está travado.
-                notifier.post(Alert(waiting: row.kind), body: row.message ?? row.name, sessionId: row.sessionId)
+                notifier.post(
+                    Alert(waiting: row.kind),
+                    body: row.message ?? row.name,
+                    sessionId: row.sessionId,
+                    onOpen: open
+                )
             case .error:
                 if previous?.state == .working {
                     // O código do erro diz se vale reenviar ou esperar o limite.
                     notifier.post(
                         .failed,
                         body: row.message.map { "\(row.name): \($0)" } ?? row.name,
-                        sessionId: row.sessionId
+                        sessionId: row.sessionId,
+                        onOpen: open
                     )
                 }
             case .working:

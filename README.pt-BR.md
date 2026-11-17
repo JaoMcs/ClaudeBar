@@ -172,7 +172,8 @@ e não depende de assinatura nem de permissão.
 Os três avisos de espera ("Claude está esperando você", "Claude pede
 permissão", "Claude fez uma pergunta") ficam até você clicar no popup ou
 aquela sessão sair de "esperando" (você respondeu, ela terminou ou foi
-fechada). O clique só fecha o popup. Um "terminou" ou "falhou" nunca cobre um
+fechada). Clicar no popup leva até a sessão (o mesmo que **Ir para a
+sessão**); o popup de exemplo só fecha. Um "terminou" ou "falhou" nunca cobre um
 popup de espera ainda aberto: você só ouve o som. Com duas sessões esperando,
 o popup mostra a última; o ícone da barra continua avisando da outra.
 
