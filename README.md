@@ -445,10 +445,30 @@ Resources/AppIcon.icns        app icon, copied into the bundle by build-app.sh
 scripts/build-app.sh          builds build/ClaudeBar.app (LSUIElement, ad-hoc signed)
 scripts/install.sh            installs to ~/Applications and registers the hooks
 scripts/uninstall.sh          removes the hooks (only ours) and the app
+scripts/make-dmg.sh           universal DMG + SHA-256 in dist/ (publishes nothing)
 VERSION                       app version (X.Y.Z), read by build-app.sh
 ```
 
 ## Installation
+
+### From a DMG
+
+1. Build it with `./scripts/make-dmg.sh` (full Xcode, not just the Command
+   Line Tools). It writes `dist/ClaudeBar-<version>.dmg` (arm64 + x86_64)
+   and the `.sha256` next to it. Check it with
+   `cd dist && shasum -c ClaudeBar-<version>.dmg.sha256`.
+2. Open the DMG and **drag ClaudeBar into Applications before opening it**.
+   Opened straight from the DMG, macOS runs the app from a random read-only
+   path (App Translocation).
+3. The app is ad-hoc signed, not notarized, so macOS blocks the first launch.
+   Go to System Settings → Privacy & Security → "Open Anyway". Do not turn
+   Gatekeeper off.
+4. When it opens, the app offers to register the hooks and shows the diff
+   first (see [Claude Code integration](#claude-code-integration)). From the
+   terminal instead:
+   `/Applications/ClaudeBar.app/Contents/MacOS/claudebar-hook install`.
+
+### From source
 
 ```bash
 ./scripts/install.sh
@@ -506,6 +526,10 @@ A fake PID does not work: the app deletes a file whose PID is not a running
 
 The version lives in `VERSION` (X.Y.Z). The build number is the commit count
 (`git rev-list --count HEAD`); shallow clones restart the count.
+
+`UNIVERSAL=1 ./scripts/build-app.sh` builds arm64 + x86_64 (without it, only
+this Mac's architecture). `./scripts/make-dmg.sh` uses it and writes `dist/`.
+The SHA changes on every build: the DMG is not reproducible.
 
 Hook CLI usage:
 
