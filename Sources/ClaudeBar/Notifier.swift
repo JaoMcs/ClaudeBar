@@ -62,6 +62,27 @@ enum Alert {
         }
     }
 
+    /// Chave em `UserDefaults` do "avisar" deste tipo (Ajustes). Permissão e
+    /// pergunta são espera: dividem o toggle com "esperando você".
+    var enabledKey: String {
+        switch self {
+        case .finished: "notifyFinished"
+        case .waiting, .permission, .question: "notifyWaiting"
+        case .failed: "notifyFailed"
+        }
+    }
+
+    /// Chave em `UserDefaults` do som escolhido para este tipo (Ajustes).
+    /// Permissão usa o mesmo som de "esperando", como no padrão.
+    var soundKey: String {
+        switch self {
+        case .finished: "soundFinished"
+        case .waiting, .permission: "soundWaiting"
+        case .question: "soundQuestion"
+        case .failed: "soundFailed"
+        }
+    }
+
     /// Fração do volume principal. O aviso de "esperando" toca mais baixo por
     /// ser o que repete enquanto você não responde.
     var volume: Float {
@@ -99,6 +120,14 @@ final class Notifier {
     private let log = Logger(subsystem: "com.joaomarcos.claudebar", category: "notifications")
 
     private static let enabledKey = "notificationsEnabled"
+    static let soundEnabledKey = "soundEnabled"
+
+    /// Sons do sistema, sem extensão — é como o `NSSound(named:)` prefere o nome.
+    /// Lidos do disco para acompanhar o que o macOS instalado tiver.
+    static let systemSounds: [String] = {
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: "/System/Library/Sounds")) ?? []
+        return files.map { ($0 as NSString).deletingPathExtension }.sorted()
+    }()
 
     /// Notificação nativa exige assinatura com Developer ID; ad-hoc é recusado
     /// com "Notifications are not allowed for this application".
@@ -115,7 +144,12 @@ final class Notifier {
         self.defaults = defaults
         soundOverride = playSound
         // Padrão ligado: quem instalou um app de aviso quer ser avisado.
-        defaults.register(defaults: [Self.enabledKey: true])
+        var padroes: [String: Any] = [Self.enabledKey: true, Self.soundEnabledKey: true]
+        for alert in [Alert.finished, .waiting, .permission, .question, .failed] {
+            padroes[alert.enabledKey] = true
+            padroes[alert.soundKey] = alert.soundName
+        }
+        defaults.register(defaults: padroes)
         isEnabled = defaults.bool(forKey: Self.enabledKey)
 
         if isEnabled {
@@ -135,6 +169,17 @@ final class Notifier {
         } else {
             hud.dismiss()
         }
+    }
+
+    /// Som a tocar para o aviso, ou `nil` com o som desligado nos Ajustes.
+    func soundName(for alert: Alert) -> String? {
+        guard defaults.bool(forKey: Self.soundEnabledKey) else { return nil }
+        return defaults.string(forKey: alert.soundKey) ?? alert.soundName
+    }
+
+    /// Toca o som escolhido nos Ajustes, para você ouvir antes de decidir.
+    func preview(_ soundName: String, for alert: Alert) {
+        play(soundName, volume: alert.volume)
     }
 
     /// Mostra um popup de exemplo, para conferir o canto da tela e o estilo.
@@ -160,11 +205,11 @@ final class Notifier {
         playSound: Bool = true,
         onOpen: (@MainActor () -> Void)? = nil
     ) {
-        // Desligado no menu = silêncio total: nem popup nem som.
-        guard isEnabled else { return }
+        // Desligado no menu, ou este tipo desligado nos Ajustes = silêncio total.
+        guard isEnabled, defaults.bool(forKey: alert.enabledKey) else { return }
 
-        if playSound {
-            if let soundOverride { soundOverride(alert) } else { play(alert) }
+        if playSound, let soundName = soundName(for: alert) {
+            if let soundOverride { soundOverride(alert) } else { play(soundName, volume: alert.volume) }
         }
 
         guard canUseSystemNotifications else {
@@ -216,17 +261,18 @@ final class Notifier {
         }
     }
 
-    private func play(_ alert: Alert) {
+    private func play(_ name: String, volume: Float) {
         // O NSSound é reaproveitado por nome; tocar de novo enquanto ainda soa
-        // não faz nada, então rebobina antes.
-        let sound = sounds[alert.soundName] ?? NSSound(named: alert.soundName)
+        // não faz nada, então rebobina antes. Nome que sumiu do sistema dá
+        // `nil` e o aviso sai calado, sem quebrar.
+        let sound = sounds[name] ?? NSSound(named: name)
         guard let sound else { return }
-        sounds[alert.soundName] = sound
+        sounds[name] = sound
 
         if sound.isPlaying {
             sound.stop()
         }
-        sound.volume = alert.volume
+        sound.volume = volume
         sound.play()
     }
 }

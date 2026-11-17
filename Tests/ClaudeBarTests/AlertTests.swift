@@ -66,10 +66,15 @@ struct AlertTests {
         }
     }
 
+    /// Suíte de `UserDefaults` descartável: nunca `.standard` em teste.
+    private func scratchDefaults() throws -> (UserDefaults, String) {
+        let suite = "claudebar.tests.\(UUID().uuidString)"
+        return (try #require(UserDefaults(suiteName: suite)), suite)
+    }
+
     /// Toggle "Notificações" desligado não pode tocar som (F01).
     @MainActor @Test func desligadoNaoTocaSom() throws {
-        let suite = "claudebar.tests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
+        let (defaults, suite) = try scratchDefaults()
         defer { defaults.removePersistentDomain(forName: suite) }
 
         var tocados: [Alert] = []
@@ -80,6 +85,58 @@ struct AlertTests {
         notifier.post(.waiting, body: "Claude needs your permission to use Bash")
 
         #expect(tocados.isEmpty)
+    }
+
+    /// "Avisar quando terminar" desligado nos Ajustes cala esse aviso, som
+    /// incluído, com o toggle geral ligado (F15).
+    @MainActor @Test func tipoDesligadoNosAjustesNaoAvisa() throws {
+        let (defaults, suite) = try scratchDefaults()
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        var tocados: [Alert] = []
+        let notifier = Notifier(defaults: defaults, playSound: { tocados.append($0) })
+        notifier.setEnabled(true)
+        defaults.set(true, forKey: Notifier.soundEnabledKey)
+        defaults.set(false, forKey: Alert.finished.enabledKey)
+
+        notifier.post(.finished, body: "projeto")
+
+        #expect(tocados.isEmpty)
+    }
+
+    /// Som escolhido nos Ajustes vale no próximo aviso; som desligado = nenhum
+    /// nome. Lido na hora, sem reiniciar o `Notifier` (F15).
+    @MainActor @Test func somVemDosAjustes() throws {
+        let (defaults, suite) = try scratchDefaults()
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let notifier = Notifier(defaults: defaults, playSound: { _ in })
+        defaults.set(true, forKey: Notifier.soundEnabledKey)
+        #expect(notifier.soundName(for: .finished) == "Glass")
+
+        defaults.set("Ping", forKey: Alert.finished.soundKey)
+        #expect(notifier.soundName(for: .finished) == "Ping")
+        #expect(notifier.soundName(for: .waiting) == "Submarine")
+        #expect(notifier.soundName(for: .question) == "Purr")
+        #expect(notifier.soundName(for: .failed) == "Basso")
+
+        defaults.set(false, forKey: Notifier.soundEnabledKey)
+        #expect(notifier.soundName(for: .finished) == nil)
+    }
+
+    /// A lista do Picker tem os quatro padrões, sem extensão (F15).
+    @MainActor @Test func listaDeSonsTemOsPadroes() {
+        for som in ["Glass", "Submarine", "Purr", "Basso"] {
+            #expect(Notifier.systemSounds.contains(som), "som ausente: \(som)")
+        }
+        #expect(!Notifier.systemSounds.contains { $0.hasSuffix(".aiff") })
+    }
+
+    /// Permissão e pergunta são espera: um toggle só para os três (F15).
+    @MainActor @Test func permissaoEEsperaDividemOToggle() {
+        #expect(Alert.permission.enabledKey == Alert.waiting.enabledKey)
+        #expect(Alert.question.enabledKey == Alert.waiting.enabledKey)
+        #expect(Alert.permission.soundKey == Alert.waiting.soundKey)
     }
 }
 

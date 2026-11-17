@@ -56,6 +56,7 @@ Marcar tudo como visto        (mark all as seen)
 ──────────────
 Notificações  ✓               (notifications on/off)
 Ver exemplo de popup          (show a sample popup)
+Ajustes…                 ⌘,   (settings)
 ──────────────
 Integração com o Claude Code: ok  ▸  (hooks: status, install, remove)
 Atualizar                     (refresh now)
@@ -132,11 +133,11 @@ you, and one tells you the reply never came:
 
 | Transition | Alert | Sound | Volume |
 |---|---|---|---|
-| working → ready | "Claude terminou" (*Claude is done*) + project name | `Glass` (bright bell) | 100% |
-| → permission | "Claude pede permissão" (*Claude asks permission*) + Claude's message | `Submarine` (low pulse) | 75% |
-| → question | "Claude fez uma pergunta" (*Claude asked a question*) + Claude's message, or project name | `Purr` (soft purr) | 75% |
-| → waiting for you (no known reason) | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse) | 75% |
-| working → failed | "A resposta do Claude falhou" (*Claude's reply failed*) + project and error code | `Basso` (error thud) | 100% |
+| working → ready | "Claude terminou" (*Claude is done*) + project name | `Glass` (bright bell, default) | 100% |
+| → permission | "Claude pede permissão" (*Claude asks permission*) + Claude's message | `Submarine` (low pulse, default) | 75% |
+| → question | "Claude fez uma pergunta" (*Claude asked a question*) + Claude's message, or project name | `Purr` (soft purr, default) | 75% |
+| → waiting for you (no known reason) | "Claude está esperando você" (*Claude is waiting for you*) + Claude's message | `Submarine` (low pulse, default) | 75% |
+| working → failed | "A resposta do Claude falhou" (*Claude's reply failed*) + project and error code | `Basso` (error thud, default) | 100% |
 
 - Sounds are played with `NSSound`, not by the notification itself — it is the
   only way to pick a different sound and volume per alert. You can tell which
@@ -157,6 +158,12 @@ you, and one tells you the reply never came:
   conversations counts; inside tmux the sound always plays.
 - The **Notificações** toggle in the menu turns alerts on and off — popup and
   sound together. The choice is saved in `UserDefaults` and is on by default.
+- **Ajustes… (⌘,)** opens a settings window: turn each alert on or off
+  (finished, waiting for you — permission and question included — and failed),
+  turn the sound off while keeping the popup, and pick each alert's sound from
+  the macOS system sounds (it plays when you pick it). Permission and "waiting"
+  share one sound. The menu toggle **Notificações** stays the master switch.
+  The window also has **Sobre o ClaudeBar** (the standard About panel).
 
 #### Why the app draws its own popup
 
@@ -395,6 +402,7 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
   ProcessProbe.swift          process topology: group leader? still claude?
   Notifier.swift              sound per alert, toggle, native vs. own popup
   StatusHUD.swift             the app's own popup (floating NSPanel)
+  SettingsWindow.swift        settings window (NSWindow, not the Settings scene)
 Tests/ClaudeBarTests/         subagents, count, icon, precedence, real kills, no network
 Resources/AppIcon.icns        app icon, copied into the bundle by build-app.sh
 scripts/build-app.sh          builds build/ClaudeBar.app (LSUIElement, ad-hoc signed)
