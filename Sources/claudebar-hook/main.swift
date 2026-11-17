@@ -155,7 +155,7 @@ private func goToNextWaiting() async -> Int32 {
 private func run() {
     let arguments = Array(CommandLine.arguments.dropFirst())
     guard let command = arguments.first else {
-        fail("informe o estado (working|idle|waiting|error|end) ou install|uninstall|status|next")
+        fail("informe o estado (working|idle|waiting|error|end) ou install|uninstall|status|next|statusline")
     }
 
     // Antes de ler o stdin: num terminal, ler o stdin travaria esperando EOF.

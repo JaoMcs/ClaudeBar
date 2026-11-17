@@ -35,62 +35,10 @@ public enum StatusLineChain {
         input: Data,
         timeout: TimeInterval
     ) -> (output: Data, status: Int32)? {
-        // Filho que sai sem ler o stdin faria o `write` abaixo matar o hook
-        // com SIGPIPE. Ignorado, o `write` só lança erro.
-        signal(SIGPIPE, SIG_IGN)
-
-        let process = Process()
-        let stdin = Pipe()
-        let stdout = Pipe()
-        process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", command]
         var environment = ProcessInfo.processInfo.environment
         environment[reentryVariable] = "1"
-        process.environment = environment
-        process.standardInput = stdin
-        process.standardOutput = stdout
         // stderr do filho segue para o nosso: aparece no `claude --debug`.
-        process.standardError = FileHandle.standardError
-
-        // Espera duas coisas: o EOF do stdout e o fim do processo, ambos dentro
-        // do mesmo prazo.
-        let done = DispatchGroup()
-        done.enter()
-        process.terminationHandler = { _ in done.leave() }
-
-        do {
-            try process.run()
-        } catch {
-            return nil
-        }
-
-        // stdin e stdout em paralelo: o pipe tem buffer finito, e escrever tudo
-        // antes de ler trava se o filho imprimir muito antes de ler o resto.
-        let writer = stdin.fileHandleForWriting
-        DispatchQueue.global().async {
-            try? writer.write(contentsOf: input)
-            try? writer.close()
-        }
-
-        let output = OutputBox()
-        let reader = stdout.fileHandleForReading
-        done.enter()
-        DispatchQueue.global().async {
-            output.data = reader.readDataToEndOfFile()
-            done.leave()
-        }
-
-        // ponytail: neto que herdou o stdout (`cmd &`) segura o EOF; o timeout
-        // cobre, mas ele pode sobrar vivo. Grupo de processos se isso aparecer.
-        guard done.wait(timeout: .now() + timeout) == .success else {
-            process.terminate()
-            return nil
-        }
-        return (output.data, process.terminationStatus)
+        return Shell.run(URL(fileURLWithPath: "/bin/sh"), arguments: ["-c", command], input: input,
+                         environment: environment, standardError: .standardError, timeout: timeout)
     }
-}
-
-/// O `DispatchGroup` ordena a escrita (leitor) antes da leitura (quem espera).
-private final class OutputBox: @unchecked Sendable {
-    var data = Data()
 }
