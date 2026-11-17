@@ -161,8 +161,8 @@ status de autorização: 1 (denied)
 
 This is not a permission you denied. The system refuses the API for any bundle
 without a Developer ID (`TeamIdentifier=not set`), and `lsregister` does not
-change that. So the alert is shown in the app's own floating `NSPanel`, in the
-a corner of the screen where the mouse is, away from the cursor (top-right
+change that. So the alert is shown in the app's own floating `NSPanel`, in a
+corner of the screen where the mouse is, away from the cursor (top-right
 unless the cursor is there). It needs no signing and no permission.
 
 "Claude terminou" and "A resposta do Claude falhou" disappear after 4 seconds
