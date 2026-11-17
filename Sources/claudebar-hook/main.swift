@@ -109,10 +109,11 @@ private func goToNextWaiting() async -> Int32 {
     let waiting = readSessions()
         .filter { $0.state == .waiting && $0.pid > 0 }
         .min { $0.updatedAt < $1.updatedAt }
-    guard let waiting else { print("nenhuma sessão esperando você"); return 1 }
+    guard let waiting else { fail("nenhuma sessão esperando você") }
+    // `app(for:)` é síncrono e pede para ficar fora da main actor; aqui tudo
+    // bem: é um CLI de vida curta, sem interface para travar.
     guard let app = SessionNavigator.app(for: waiting.pid), await SessionNavigator.bringToFront(app) else {
-        print("não achei o app de \(waiting.projectName) (\(waiting.cwd))")
-        return 1
+        fail("não achei o app de \(waiting.projectName) (\(waiting.cwd))")
     }
     print(waiting.projectName)
     return 0
