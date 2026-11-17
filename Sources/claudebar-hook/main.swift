@@ -5,7 +5,7 @@ import Foundation
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
 // Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
-//      claudebar-hook install|uninstall [--dry-run]
+//      claudebar-hook install|uninstall [--statusline] [--dry-run]
 //      claudebar-hook status [--json]   uma sessão por linha: estado<TAB>projeto<TAB>pasta
 //      claudebar-hook next              traz para a frente a sessão que espera há mais tempo
 //      claudebar-hook statusline        comando do `statusLine` do Claude Code (limites de uso)
@@ -69,7 +69,7 @@ private func manage(_ action: HookAction, dryRun: Bool) {
         }
         guard !dryRun else { return }
 
-        if action == .install {
+        if action == .install || action == .installStatusLine {
             // O próprio executável que está rodando vira a cópia estável.
             guard let me = processExecutablePath(getpid()) else { fail("executável não encontrado") }
             try HookInstaller.installBinary(from: URL(fileURLWithPath: me))
@@ -77,7 +77,8 @@ private func manage(_ action: HookAction, dryRun: Bool) {
         if plan.hasChanges, let backup = try HookInstaller.apply(plan) {
             print("Backup: \(backup.path)")
         }
-        if action == .uninstall {
+        // Com o statusline ainda instalado, o executável fica: é ele que imprime o rodapé.
+        if action == .uninstall, !plan.statusLineInstalled {
             try? FileManager.default.removeItem(at: HookInstaller.stableBinary)
         }
     } catch {
@@ -160,8 +161,13 @@ private func run() {
 
     // Antes de ler o stdin: num terminal, ler o stdin travaria esperando EOF.
     switch command {
-    case "install": return manage(.install, dryRun: arguments.contains("--dry-run"))
-    case "uninstall": return manage(.uninstall, dryRun: arguments.contains("--dry-run"))
+    // `--statusline` é opt-in próprio: mexe só no `statusLine`, nunca nos hooks.
+    case "install":
+        let action: HookAction = arguments.contains("--statusline") ? .installStatusLine : .install
+        return manage(action, dryRun: arguments.contains("--dry-run"))
+    case "uninstall":
+        let action: HookAction = arguments.contains("--statusline") ? .uninstallStatusLine : .uninstall
+        return manage(action, dryRun: arguments.contains("--dry-run"))
     case "status": return printStatus(json: arguments.contains("--json"))
     default: break
     }

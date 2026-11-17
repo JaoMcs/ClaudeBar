@@ -3,6 +3,9 @@ import Foundation
 public enum HookAction: Sendable {
     case install
     case uninstall
+    /// `statusLine` do ClaudeBar (limites de uso). Opt-in próprio, separado dos hooks.
+    case installStatusLine
+    case uninstallStatusLine
 }
 
 public enum HookInstallError: Error, Equatable, LocalizedError {
@@ -29,12 +32,18 @@ public struct HookPlan: Sendable {
     /// Bytes lidos ao montar a prévia. `apply` recusa se o arquivo mudou.
     let original: Data
     let updated: Data
-    /// Só o bloco `hooks`, linha a linha com `+`/`-`. O resto do arquivo
+    /// Só `hooks` e `statusLine`, linha a linha com `+`/`-`. O resto do arquivo
     /// (que pode ter `env` com token) não aparece.
     public let diff: String
     public let hasChanges: Bool
     /// O arquivo vai ser reformatado (ordem das chaves, espaços).
     public let reformats: Bool
+    /// Ações de statusline: o que fazer com `statusline-original.json`.
+    /// `.save` grava antes do settings; `.remove` apaga depois.
+    public let statusLineOriginal: StatusLineInstall.Original?
+    /// O `statusLine` continua apontando para o hook: remover os hooks não pode
+    /// apagar o executável, senão o rodapé fica em branco.
+    public let statusLineInstalled: Bool
 }
 
 /// Em que pé está a integração. Tudo que não é `ok`/`notInstalled` vira oferta
@@ -113,30 +122,52 @@ public enum HookInstaller {
     public static func plan(
         _ action: HookAction,
         settings: URL = settingsURL,
-        binary: String = stableBinary.path
+        binary: String = stableBinary.path,
+        original: URL = StatusDirectory.originalStatusLineURL
     ) throws -> HookPlan {
         // Settings em dotfiles costuma ser symlink: gravar `.atomic` no link
         // trocaria o link por um arquivo comum e o repositório pararia de mudar.
         let real = settings.resolvingSymlinksInPath()
-        let original = FileManager.default.fileExists(atPath: real.path) ? try Data(contentsOf: real) : Data()
-        let root = try parse(original)
-        let next = action == .install ? install(root, binary: binary) : strip(root, binary: binary)
+        let bytes = FileManager.default.fileExists(atPath: real.path) ? try Data(contentsOf: real) : Data()
+        let root = try parse(bytes)
+        let next: [String: Any]
+        var statusLineOriginal: StatusLineInstall.Original?
+        switch action {
+        case .install: next = install(root, binary: binary)
+        case .uninstall: next = strip(root, binary: binary)
+        case .installStatusLine:
+            let result = StatusLineInstall.install(root, hookCommand: shellQuoted(binary) + " statusline")
+            next = result.settings
+            statusLineOriginal = result.original
+        case .uninstallStatusLine:
+            // Pode faltar (não havia statusline): aí a chave sai.
+            let saved = (try? Data(contentsOf: original))
+                .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            next = StatusLineInstall.uninstall(root, original: saved)
+            statusLineOriginal = .remove
+        }
 
         let current = try serialize(root)
         let updated = try serialize(next)
         return HookPlan(
             settingsURL: real,
-            original: original,
+            original: bytes,
             updated: updated,
-            diff: lineDiff(from: try serialize(hooksOnly(root)), to: try serialize(hooksOnly(next))),
+            diff: lineDiff(from: try serialize(relevantKeys(root)), to: try serialize(relevantKeys(next))),
             hasChanges: current != updated,
-            reformats: !original.isEmpty && current != original
+            reformats: !bytes.isEmpty && current != bytes,
+            statusLineOriginal: statusLineOriginal,
+            statusLineInstalled: StatusLineInstall.isOurs(next["statusLine"])
         )
     }
 
     /// Grava exatamente o que a prévia mostrou. Devolve o backup, se havia arquivo.
     @discardableResult
-    public static func apply(_ plan: HookPlan, backups: URL = backupsURL) throws -> URL? {
+    public static func apply(
+        _ plan: HookPlan,
+        backups: URL = backupsURL,
+        original: URL = StatusDirectory.originalStatusLineURL
+    ) throws -> URL? {
         let manager = FileManager.default
         let exists = manager.fileExists(atPath: plan.settingsURL.path)
         let now = exists ? try Data(contentsOf: plan.settingsURL) : Data()
@@ -168,9 +199,25 @@ public enum HookInstaller {
             backup = url
         }
 
+        // Original antes do settings: se a escrita do settings falhar, ele
+        // continua com o statusline do usuário e o arquivo extra é inofensivo.
+        if case .save(let object) = plan.statusLineOriginal {
+            try manager.createDirectory(
+                at: original.deletingLastPathComponent(),
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+            try serialize(object).write(to: original, options: .atomic)
+            try manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: original.path)
+        }
+
         try plan.updated.write(to: plan.settingsURL, options: .atomic)
         if !exists {
             try? manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: plan.settingsURL.path)
+        }
+        // Depois do settings: até aqui o hook ainda podia precisar do original.
+        if case .remove = plan.statusLineOriginal {
+            try? manager.removeItem(at: original)
         }
         return backup
     }
@@ -379,8 +426,14 @@ public enum HookInstaller {
         return formatter.string(from: Date())
     }
 
-    private static func hooksOnly(_ root: [String: Any]) -> [String: Any] {
-        root["hooks"].map { ["hooks": $0] } ?? [:]
+    /// Só o que o ClaudeBar mexe: o resto do settings pode ter token em `env`.
+    private static func relevantKeys(_ root: [String: Any]) -> [String: Any] {
+        root.filter { $0.key == "hooks" || $0.key == "statusLine" }
+    }
+
+    /// O `statusLine.command` roda em shell: o caminho vai entre aspas simples.
+    static func shellQuoted(_ path: String) -> String {
+        "'" + path.replacingOccurrences(of: "'", with: #"'\''"#) + "'"
     }
 
     private static func handlers(in root: [String: Any]) -> [(event: String, matcher: String?, handler: [String: Any])] {
