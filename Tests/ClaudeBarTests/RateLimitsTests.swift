@@ -77,7 +77,10 @@ struct RateLimitsTests {
     }
 }
 
-@Suite("Encadeamento do statusline")
+/// Em série: cada teste prende uma thread esperando o filho, e o `Process`
+/// depende da fila global para saber que ele saiu. No runner de 3 vCPU, quatro
+/// em paralelo deixaram a fila sem thread por segundos.
+@Suite("Encadeamento do statusline", .serialized)
 struct StatusLineChainTests {
     @Test func repassaStdinEDevolveStdout() throws {
         let input = Data(String(repeating: "x", count: 200_000).utf8) // maior que o buffer do pipe
