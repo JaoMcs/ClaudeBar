@@ -155,6 +155,14 @@ you, and one tells you the reply never came:
 - **Reminder.** A session still waiting for you after about 5 minutes gets one
   more alert ("Ainda esperando: …", same sound). Answering cancels it; a new
   wait gets a new reminder. Turn it off or change the delay in **Ajustes…**.
+- **Ajustes… → Nunca mostrar o conteúdo da mensagem** (off by default) replaces
+  Claude's message with "<project> precisa de você" in the waiting alerts and
+  the reminder — useful when sharing your screen. macOS no longer honours "hide
+  this window from screen capture", so the only real protection is not drawing
+  the text. The message is still stored in the state file (`0600`); this mode
+  only changes what is shown. The "failed" alert and the error submenu keep
+  showing the API error code (e.g. `rate_limit — 429`): it is not conversation
+  content.
 - Subagents never trigger alerts.
 - No sound if the session's app is already in front (the popup still shows).
   App level only: with the Claude desktop app in front, any of its
@@ -552,6 +560,7 @@ does not take down a sibling.
   injection. The only exception is
   `zsh -lc "command -v claude"`, used only as a last resort when the binary
   isn't in a known location.
+- **Optional "never show content" mode** — see [Alerts](#alerts).
 - **`message` is capped at 200 characters** before it is shown. For failures
   only the API error code/details are stored, never Claude's reply
   (`last_assistant_message` is not read in any state). For questions only

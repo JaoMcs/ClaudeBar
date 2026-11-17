@@ -48,6 +48,7 @@ private struct SettingsView: View {
     @AppStorage(Notifier.soundEnabledKey) private var soundEnabled = true
     @AppStorage(Notifier.reminderEnabledKey) private var reminderEnabled = true
     @AppStorage(Notifier.reminderMinutesKey) private var reminderMinutes = 5
+    @AppStorage(Notifier.hideContentKey) private var hideContent = false
     @AppStorage(Alert.finished.soundKey) private var soundFinished = Alert.finished.soundName
     @AppStorage(Alert.waiting.soundKey) private var soundWaiting = Alert.waiting.soundName
     @AppStorage(Alert.question.soundKey) private var soundQuestion = Alert.question.soundName
@@ -65,6 +66,9 @@ private struct SettingsView: View {
                 Toggle("Lembrar uma vez se continuar esperando", isOn: $reminderEnabled)
                 Stepper("Depois de \(reminderMinutes) min", value: $reminderMinutes, in: 1...60)
                     .disabled(!reminderEnabled)
+                Toggle("Nunca mostrar o conteúdo da mensagem", isOn: $hideContent)
+                Text("O aviso diz só \"<projeto> precisa de você\". Útil ao compartilhar a tela.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("Som") {

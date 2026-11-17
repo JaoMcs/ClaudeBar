@@ -154,6 +154,14 @@ conta que a resposta não veio:
   ganha mais um aviso ("Ainda esperando: …", mesmo som). Responder cancela;
   uma nova espera ganha um novo lembrete. Desligue ou mude o tempo em
   **Ajustes…**.
+- **Ajustes… → Nunca mostrar o conteúdo da mensagem** (desligado por padrão)
+  troca a mensagem do Claude por "<projeto> precisa de você" nos avisos de
+  espera e no lembrete — útil ao compartilhar a tela. O macOS não respeita mais
+  "esconder esta janela da captura de tela", então a única proteção real é não
+  desenhar o texto. A mensagem continua gravada no arquivo de estado (`0600`);
+  o modo só muda o que é exibido. O aviso de "falhou" e o submenu de erro
+  continuam mostrando o código do erro da API (ex.: `rate_limit — 429`): não é
+  conteúdo da conversa.
 - Subagente nunca avisa.
 - Sem som se o app da sessão já está na frente (o popup continua aparecendo).
   Vale por app: com o Claude desktop na frente, qualquer conversa dele conta;
@@ -551,6 +559,7 @@ encerrar uma sessão não derruba a irmã.
   interpolação, então não há injeção. A única exceção é o
   `zsh -lc "command -v claude"`, usado apenas como último recurso quando o
   binário não está nos caminhos conhecidos.
+- **Modo opcional "nunca mostrar conteúdo"** — veja [Avisos](#avisos).
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
   Claude (`last_assistant_message` não é lido em estado nenhum). Para

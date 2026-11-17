@@ -295,9 +295,13 @@ final class SessionStore {
             now: Date(), delay: TimeInterval(notifier.reminderMinutes * 60))
         reminded.formUnion(due.compactMap(SessionMerge.reminderKey))
         for row in due {
-            notifier.post(Alert(waiting: row.kind), body: "Ainda esperando: \(row.message ?? row.name)",
-                          sessionId: row.sessionId, playSound: !isLookingAt(row),
-                          onOpen: { [weak self] in self?.goToSession(row) })
+            notifier.post(
+                Alert(waiting: row.kind),
+                body: "Ainda esperando: \(row.waitingBody(hidingContent: notifier.hidesContent))",
+                sessionId: row.sessionId,
+                playSound: !isLookingAt(row),
+                onOpen: { [weak self] in self?.goToSession(row) }
+            )
         }
     }
 
@@ -327,10 +331,11 @@ final class SessionStore {
                 )
             case .waiting:
                 // A mensagem do Claude ("needs your permission to use Bash") diz
-                // mais que o nome do projeto quando ele está travado.
+                // mais que o nome do projeto quando ele está travado, salvo no
+                // modo "nunca mostrar conteúdo" (F25).
                 notifier.post(
                     Alert(waiting: row.kind),
-                    body: row.message ?? row.name,
+                    body: row.waitingBody(hidingContent: notifier.hidesContent),
                     sessionId: row.sessionId,
                     playSound: playSound,
                     onOpen: open
