@@ -71,8 +71,8 @@ As linhas de limite vêm de `~/.claude/claudebar/limits.json`, gravado pelo
 `claudebar-hook statusline` (ver [Linha de comando](#linha-de-comando)). Sem
 dado aparece "indisponível", nunca 0%. Janela que já renovou mostra "renovado,
 aguardando dado novo" até a próxima resposta do Claude Code trazer o número
-novo. A idade é calculada ao abrir o menu; feche e
-abra de novo para atualizar.
+novo. A idade não é um relógio: é calculada quando o menu é montado e não
+avança enquanto ele fica aberto.
 
 Cada linha de sessão abre um submenu com:
 

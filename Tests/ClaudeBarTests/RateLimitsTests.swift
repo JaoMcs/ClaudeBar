@@ -123,7 +123,7 @@ struct StatusLineChainTests {
         #expect(StatusLineChain.originalCommand(at: dir.appendingPathComponent("nao-existe.json")) == nil)
     }
 
-    @Test func menuSemDadoDizIndisponivel() {
+    @MainActor @Test func menuSemDadoDizIndisponivel() {
         #expect(MenuContent.limitLines(nil, now: Date()) == ["Limites de uso: indisponível"])
         let lines = MenuContent.limitLines(RateLimits(updatedAt: Date()), now: Date())
         #expect(lines[0] == "Limite 5 h: indisponível")
@@ -131,7 +131,7 @@ struct StatusLineChainTests {
         #expect(!lines.contains { $0.contains("0%") })
     }
 
-    @Test func menuJanelaRenovada() {
+    @MainActor @Test func menuJanelaRenovada() {
         let now = Date()
         let limits = RateLimits(fiveHour: RateWindow(usedPercentage: 90, resetsAt: now.addingTimeInterval(-60)))
         #expect(MenuContent.limitLines(limits, now: now)[0] == "Limite 5 h: renovado, aguardando dado novo")

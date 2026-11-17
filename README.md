@@ -71,8 +71,9 @@ The limit lines come from `~/.claude/claudebar/limits.json`, written by
 `claudebar-hook statusline` (see [Command line](#command-line)).
 Without data they read *indisponível* (unavailable), never 0%. A window that
 already reset reads *renovado, aguardando dado novo* (reset, waiting for new
-data) until the next Claude Code reply brings a fresh number. The age is
-computed when the menu opens; close and reopen it to update.
+data) until the next Claude Code reply brings a fresh number. The age is not
+a live clock: it is computed when the menu is built and does not tick while
+the menu stays open.
 
 Each session row opens a submenu with:
 
