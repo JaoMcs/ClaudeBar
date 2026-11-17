@@ -42,7 +42,10 @@ public enum Shell {
         let pid = process.processIdentifier
         let deadline = DispatchWorkItem { _ = kill(pid, SIGTERM) }
         if let timeout {
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: deadline)
+            // Fila serial própria, não a global: fila criada assim ganha thread
+            // mesmo com o pool cheio de threads presas esperando processo (no
+            // runner de 3 vCPU, a global chegou a não rodar o prazo por segundos).
+            DispatchQueue(label: "Shell.deadline").asyncAfter(deadline: .now() + timeout, execute: deadline)
         }
         defer { deadline.cancel() }
 
@@ -54,8 +57,8 @@ public enum Shell {
             _ = fcntl(handle.fileDescriptor, F_SETNOSIGPIPE, 1)
             // Escreve em thread própria enquanto esta lê o stdout: o pipe tem
             // buffer finito, e escrever tudo antes de ler trava se o filho
-            // imprimir muito antes de ler o resto. Thread, não fila global: com
-            // poucas CPUs a fila pode não ter thread livre.
+            // imprimir muito antes de ler o resto. Thread própria,
+            // pelo mesmo motivo do prazo.
             Thread.detachNewThread {
                 try? handle.write(contentsOf: input)
                 try? handle.close()

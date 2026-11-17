@@ -77,9 +77,8 @@ struct RateLimitsTests {
     }
 }
 
-/// Em série: cada teste prende uma thread esperando o filho, e o `Process`
-/// depende da fila global para saber que ele saiu. No runner de 3 vCPU, quatro
-/// em paralelo deixaram a fila sem thread por segundos.
+/// Em série: cada teste prende uma thread do pool esperando o filho, e o
+/// runner de CI tem só 3 vCPU.
 @Suite("Encadeamento do statusline", .serialized)
 struct StatusLineChainTests {
     @Test func repassaStdinEDevolveStdout() throws {
