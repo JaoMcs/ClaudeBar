@@ -18,9 +18,18 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
 
+# UNIVERSAL=1 compila arm64 + x86_64 (usado pelo make-dmg.sh). Sem ele, só a
+# arquitetura desta máquina, que é mais rápido para o install.sh.
+ARCH_ARGS=()
+if [[ "${UNIVERSAL:-0}" == 1 ]]; then
+    ARCH_ARGS=(--arch arm64 --arch x86_64)
+fi
+
 echo "==> Compilando em release ($VERSION, build $BUILD)"
-swift build -c release
-BIN_DIR="$(swift build -c release --show-bin-path)"
+# "${ARCH_ARGS[@]+...}": com set -u, array vazio quebra no bash 3.2 do macOS.
+swift build -c release ${ARCH_ARGS[@]+"${ARCH_ARGS[@]}"}
+# Os mesmos --arch aqui, senão o caminho aponta para o binário de uma arquitetura só.
+BIN_DIR="$(swift build -c release ${ARCH_ARGS[@]+"${ARCH_ARGS[@]}"} --show-bin-path)"
 
 echo "==> Montando $BUNDLE"
 rm -rf "$BUNDLE"
@@ -64,6 +73,10 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 PLIST
 
 echo "==> Assinando (ad-hoc)"
+# De dentro para fora: o hook é um segundo executável em Contents/MacOS e o
+# build universal sai sem assinatura nenhuma; sem isso o `--verify --strict`
+# do bundle falha ("code object is not signed at all").
+codesign --force --sign - --timestamp=none "$BUNDLE/Contents/MacOS/claudebar-hook" >/dev/null
 codesign --force --sign - --timestamp=none "$BUNDLE" >/dev/null
 
 echo "==> Pronto: $BUNDLE"
