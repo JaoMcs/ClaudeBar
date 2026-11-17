@@ -55,6 +55,7 @@ Marcar tudo como visto
 ──────────────
 Notificações  ✓
 Ver exemplo de popup
+Ajustes…                 ⌘,
 ──────────────
 Integração com o Claude Code: ok  ▸
 Atualizar
@@ -130,11 +131,11 @@ conta que a resposta não veio:
 
 | Transição | Aviso | Som | Volume |
 |---|---|---|---|
-| processando → pronto | "Claude terminou" + nome do projeto | `Glass` (sino claro) | 100% |
-| → permissão | "Claude pede permissão" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
-| → pergunta | "Claude fez uma pergunta" + mensagem do Claude, ou nome do projeto | `Purr` (ronronar suave) | 75% |
-| → aguardando você (sem motivo conhecido) | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave) | 75% |
-| processando → falhou | "A resposta do Claude falhou" + projeto e código do erro | `Basso` (som de erro) | 100% |
+| processando → pronto | "Claude terminou" + nome do projeto | `Glass` (sino claro, padrão) | 100% |
+| → permissão | "Claude pede permissão" + a mensagem do Claude | `Submarine` (pulso grave, padrão) | 75% |
+| → pergunta | "Claude fez uma pergunta" + mensagem do Claude, ou nome do projeto | `Purr` (ronronar suave, padrão) | 75% |
+| → aguardando você (sem motivo conhecido) | "Claude está esperando você" + a mensagem do Claude | `Submarine` (pulso grave, padrão) | 75% |
+| processando → falhou | "A resposta do Claude falhou" + projeto e código do erro | `Basso` (som de erro, padrão) | 100% |
 
 - O som sai pelo `NSSound`, não pela notificação: é o único jeito de escolher
   som e volume por tipo de aviso. Dá para saber qual deles aconteceu sem
@@ -155,6 +156,12 @@ conta que a resposta não veio:
   dentro do tmux o som sempre toca.
 - O item **Notificações** no menu liga e desliga os avisos — popup e som
   juntos. A escolha fica salva no `UserDefaults` e vem ligada por padrão.
+- **Ajustes… (⌘,)** abre uma janela de ajustes: liga e desliga cada aviso
+  (terminou, esperando você — permissão e pergunta incluídas — e falhou),
+  desliga o som mantendo o popup e escolhe o som de cada aviso entre os sons
+  do macOS (toca ao escolher). Permissão e "esperando" dividem o mesmo som. O
+  item **Notificações** do menu continua sendo o interruptor geral. A janela
+  também tem **Sobre o ClaudeBar** (o painel padrão do macOS).
 
 #### Por que o popup é desenhado pelo app
 
@@ -392,6 +399,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   ProcessProbe.swift          topologia do processo: lidera o grupo? ainda é claude?
   Notifier.swift              som por tipo de aviso, toggle, nativa vs. popup próprio
   StatusHUD.swift             o popup próprio (NSPanel flutuante)
+  SettingsWindow.swift        janela de Ajustes (NSWindow, não a cena Settings)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
 scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)

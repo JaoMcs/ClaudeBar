@@ -77,6 +77,11 @@ struct MenuContent: View {
             }
         }
 
+        Button("Ajustes…") {
+            SettingsWindow.show(notifier: store.notifier)
+        }
+        .keyboardShortcut(",")
+
         Divider()
 
         integrationMenu
