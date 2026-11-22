@@ -303,7 +303,7 @@ struct ShellTimeoutTests {
     }
 }
 
-@Suite("Rótulo de onde a sessão roda")
+@MainActor @Suite("Rótulo de onde a sessão roda")
 struct SessionHostTests {
     @Test func lideraGrupoEhTerminal() {
         #expect(SessionTerminator.hostKind(for: row(pid: 10), probe: terminalProbe) == .terminal)
