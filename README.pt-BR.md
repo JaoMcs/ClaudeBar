@@ -83,7 +83,9 @@ As linhas de limite vêm de `~/.claude/claudebar/limits.json`, gravado pelo
 dado aparece "indisponível", nunca 0%. Janela que já renovou mostra "renovado,
 aguardando dado novo" até a próxima resposta do Claude Code trazer o número
 novo. A idade não é um relógio: é calculada quando o menu é montado e não
-avança enquanto ele fica aberto.
+avança enquanto ele fica aberto. Opcionalmente (**Ajustes…**, desligado por
+padrão) o app avisa uma vez por janela de 5 h quando o uso passa de um percentual
+à sua escolha (50–95%, padrão 80%).
 
 Cada linha de sessão abre um submenu com:
 

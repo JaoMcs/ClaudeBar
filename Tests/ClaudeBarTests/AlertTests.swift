@@ -219,3 +219,41 @@ struct PopupCornerTests {
         #expect(origem(mouse: NSPoint(x: -100, y: 1000), tela: esquerda) == NSPoint(x: -336, y: 16))
     }
 }
+
+@Suite("Aviso de limite (Notifier)")
+struct LimitAlertTests {
+    /// Nasce desligado; ligado, respeita o toggle geral do menu.
+    @MainActor @Test func respeitaOTogglePropioEOGeral() throws {
+        let suite = "claudebar.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        var tocados: [Alert] = []
+        let notifier = Notifier(defaults: defaults, playSound: { tocados.append($0) })
+        notifier.setEnabled(true)
+        #expect(!notifier.isLimitAlertEnabled)
+        #expect(notifier.limitThreshold == 80)
+
+        notifier.post(.limit, body: "x")
+        #expect(tocados.isEmpty)
+
+        defaults.set(true, forKey: Alert.limit.enabledKey)
+        #expect(notifier.isLimitAlertEnabled)
+        notifier.post(.limit, body: "x")
+        #expect(tocados == [.limit])
+
+        notifier.setEnabled(false)
+        #expect(!notifier.isLimitAlertEnabled)
+        notifier.post(.limit, body: "x")
+        #expect(tocados == [.limit])
+    }
+
+    @MainActor @Test func janelaAvisadaPersiste() throws {
+        let suite = "claudebar.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let data = Date(timeIntervalSince1970: 5_000)
+        Notifier(defaults: defaults, playSound: { _ in }).limitAlertedWindow = data
+        #expect(Notifier(defaults: defaults, playSound: { _ in }).limitAlertedWindow == data)
+    }
+}

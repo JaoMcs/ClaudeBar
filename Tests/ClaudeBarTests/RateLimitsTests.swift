@@ -230,3 +230,34 @@ struct StatusLineInstallTests {
         #expect(HookInstaller.shellQuoted("/Users/a b/it's") == #"'/Users/a b/it'\''s'"#)
     }
 }
+
+@Suite("Aviso de limite")
+struct LimitThresholdTests {
+    private let now = Date(timeIntervalSince1970: 1_000)
+    private let reset = Date(timeIntervalSince1970: 5_000)
+    private func window(_ pct: Double, resets: Date? = nil) -> RateWindow {
+        RateWindow(usedPercentage: pct, resetsAt: resets ?? reset)
+    }
+
+    @Test func abaixoDoLimiarNao() {
+        #expect(!window(79.9).crossedThreshold(80, alertedWindow: nil, now: now))
+    }
+
+    @Test func cruzouOuNoLimiarSim() {
+        #expect(window(85).crossedThreshold(80, alertedWindow: nil, now: now))
+        #expect(window(80).crossedThreshold(80, alertedWindow: nil, now: now))
+    }
+
+    @Test func jaAvisadoNaMesmaJanelaNao() {
+        #expect(!window(90).crossedThreshold(80, alertedWindow: reset, now: now))
+    }
+
+    @Test func janelaNovaAvisaDeNovo() {
+        let nova = Date(timeIntervalSince1970: 9_000)
+        #expect(window(90, resets: nova).crossedThreshold(80, alertedWindow: reset, now: now))
+    }
+
+    @Test func janelaVencidaNao() {
+        #expect(!window(95, resets: now).crossedThreshold(80, alertedWindow: nil, now: now))
+    }
+}
