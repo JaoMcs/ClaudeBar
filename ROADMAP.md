@@ -7,11 +7,7 @@ Ideias ainda válidas e decisões que valem lembrar. Itens que dependem do dono 
 | Ideia | Por quê | Depende de |
 |---|---|---|
 | Ir para a aba exata (Terminal, iTerm2, Ghostty via AppleScript) | Hoje traz a janela, não a aba. | Developer ID: com ad-hoc o macOS pede Automação de novo a cada build. Precisa de `NSAppleEventsUsageDescription`. |
-| Aviso perto do limite (ex.: 80% da janela de 5 h) | Barato com os limites já no menu. | Confirmar que o número do statusline é confiável. |
 | Pausa por limite com motivo | Dizer "pausado até 14h" em vez de "falhou". | Um payload real ao bater o limite (`PENDENCIAS.md`). |
-| Atalho global "próxima sessão esperando" | Já existe `claudebar-hook next`; falta a tecla. `RegisterEventHotKey` não pede Acessibilidade. | — |
-| Copiar diagnóstico anonimizado | Suporte sem pedir print. Precisa de prévia e caminhos anonimizados. | — |
-| Rótulo "app desktop" × "terminal" na linha | Falta confirmar que os hooks disparam no app desktop. | — |
 | Homebrew | Instalar e atualizar com um comando. Serve de auto-update, sem abrir rede no app. | Nome, licença, notarização. |
 
 Depois, se alguém pedir: previsão de ritmo dos limites (só com amostras suficientes; previsão errada faz desinstalar), cronômetro "esperando há X", pergunta pendente em uma linha (só atrás do modo sem conteúdo, truncada), agrupar por worktree, modelo/contexto da sessão, várias contas (`CLAUDE_CONFIG_DIR`), ação customizada por mudança de estado (executável + args fixos, dados via env).

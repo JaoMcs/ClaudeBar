@@ -92,3 +92,29 @@ Seu `settings.json` hoje tem os hooks no **formato antigo** (4 eventos apontando
 **Segure até rodar o roteiro manual:** `05-specs/G09-popup-lembrete.md` (código do `FirstClickHostingView`), `05-specs/G10-ajustes-privacidade.md` (código do plano B do login) e `05-specs/G07-ir-para-sessao.md` (detalhe do plano B do iTerm2). O `ROADMAP.md` resume os três, mas o código pronto está só ali. Depois do roteiro, apague.
 
 Os journals dos workflows (fora do repo, na pasta de projetos do Claude Code) só servem para auditoria; este relatório já tirou o que importa.
+
+## Rodadas T36–T46 (22 nov 2026)
+
+| Task | PR | Modelo | Ficou sem verificar |
+|---|---|---|---|
+| T36 — Popup entre Spaces | #39 | Haiku → Sonnet (2ª tentativa) | Trocar de Space com o popup aberto (depende de tela) |
+| T37 — Nome Awaitbar | #40 | Sonnet | `install.sh` com um `ClaudeBar.app` real instalado e hooks antigos; Abrir ao iniciar sessão no Mac no app novo |
+| T38 — `activate` moderno | #43 | Haiku | O alerta de encerrar/erro aparece na frente de outro app em tela (depende de tela e foco) |
+| T39 — `elicitation_url_dialog` | #44 | Haiku | Se o Claude Code emite `elicitation_url_dialog` com esse nome exato e aceita `a\|b` no matcher; comportamento na tela ("hooks desatualizados" e reinstalação) em sessão real |
+| T40 — Atalho próxima sessão | #49 | Opus | Pressionar o atalho com o app em segundo plano; mensagem de combinação já tomada por outro app (`⌃⌥⌘N`); registro na abertura do app com a opção ligada |
+| T41 — Aviso perto do limite | #45 | Sonnet | O popup real na tela com o limite cruzando de verdade |
+| T42 — Copiar diagnóstico | #47 | Sonnet | O alerta na tela real e a cópia para o `NSPasteboard` |
+| T43 — Campo `agent` | #48 | Sonnet | Aparência do rótulo no menu real e `--agent` com um agente de verdade (T44) |
+| T44 — Hooks do Gemini CLI | #52 | Opus | Se o Gemini CLI executa `command` por shell; se `~/.gemini/settings.json` aceita `hooks` na versão instalada; sessão real com `[gemini]`; comportamento sem pid / sem `SessionEnd` / em sessão aberta; `hooks` com chaves antigas não-array |
+| T45 — Rótulo desktop × terminal | #50 | Sonnet | Hooks nas sessões do app desktop e comportamento com VS Code/Cursor/tmux; texto do VoiceOver (`description(for:)`) ficou sem o rótulo, de propósito |
+| T46 — Ferramentas do processo | #53 | — | `impl-loop.js` não executado de ponta a ponta no runtime de Workflow (só `node --check`); `rebase-auto.sh` não exercitado contra PR real `BEHIND` ou `CONFLICTING`; `pr-open.sh --task` não abriu PR real |
+
+### Custo por papel (de `planning/11-analise-rodadas.md`)
+
+| Papel | Antigo (T04–T35, 33 tasks) média | Novo (T36–T45, 10 tasks) média | Variação |
+|---|---|---|---|
+| Implementador | 567 mil | 614 mil | +8% |
+| Revisor | 210 mil | 73 mil | −65% |
+| Corretor | 278 mil; 0,73 rodada por task (24/33) | 280 mil; 0,5 rodada por task (5/10) | −31% em rodadas por task |
+| Merge | 99 mil | 13 mil | −87% |
+| **Total por task** | **~1,08 mi** (567+210+202+99) | **~0,84 mi** (614+73+140+13) | **−22%** |
