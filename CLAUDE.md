@@ -10,6 +10,10 @@ App macOS de barra de menu (SwiftUI `MenuBarExtra`), SwiftPM sem Xcode project, 
 ## Orquestração
 Papéis, roteamento de modelo por complexidade (`scripts/dev/route.sh`), contexto mínimo e regras do revisor: `AGENTS.md`. Executar tasks: skill `task-loop`. Revisar PR: skill `review-pr`.
 
+## Worktrees
+- Worktree de agente (`.claude/worktrees/`) é apagado assim que a task termina: o `merge.sh` chama `scripts/dev/wt-prune.sh` depois de cada merge, e o orquestrador roda o mesmo script quando um workflow acaba. Só ficam os com lock (agente ainda trabalhando).
+- Nunca deixe worktree próprio para trás: ao terminar, `git switch --detach` e saia; quem apaga é o prune.
+
 ## Regras que todo mundo segue
 - **Nunca tocar no `~/.claude` real** (settings.json, claudebar/) em teste ou experimento: `mktemp -d` + `CFFIXED_USER_HOME`.
 - Sem rede no app. Não ler conversas do usuário. Estado `0700`/`0600`. `Process` com argumentos separados, nunca shell com interpolação. Hook fail-open.

@@ -18,4 +18,5 @@ if [ -n "$task" ] && [ -f "$idx" ] && ! git ls-files --error-unmatch "$idx" >/de
   # troca a última coluna (Status) da linha da task por FEITA (#pr)
   sed -i '' -E "/^\| \[$task\]/ s/\| [^|]*\|[[:space:]]*$/| FEITA (#$pr) |/" "$idx"
 fi
+"$d/wt-prune.sh" >/dev/null 2>&1 || true   # worktrees de agentes que já terminaram
 echo "merged=${sha:0:7}"
