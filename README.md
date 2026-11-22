@@ -378,6 +378,8 @@ Other notification types (idle reminder, auth, quota…) are not registered: the
 idle reminder used to turn "ready" into "waiting" about a minute after every
 reply.
 
+`--agent <name>` (default `claude`) records which agent wrote the file; the `agent` key is only written for a non-Claude agent, and the menu shows `[name]` on that row. A state file without `agent` is Claude Code.
+
 A state file looks like this:
 
 ```json
@@ -552,7 +554,7 @@ The SHA changes on every build: the DMG is not reproducible.
 Hook CLI usage:
 
 ```
-claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>]
+claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>] [--agent <name>]
 claudebar-hook install|uninstall [--statusline] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next

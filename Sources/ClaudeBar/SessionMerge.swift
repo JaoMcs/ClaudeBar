@@ -35,7 +35,8 @@ enum SessionMerge {
                 pid: agent.pid ?? hook?.pid,
                 backgroundId: agent.isSubagent ? agent.id : nil,
                 kind: hook?.waitKind,
-                branch: hook?.branch
+                branch: hook?.branch,
+                agent: hook?.agent
             )
         }
 
@@ -57,7 +58,8 @@ enum SessionMerge {
                     isSubagent: false,
                     pid: status.pid,
                     kind: status.waitKind,
-                    branch: status.branch
+                    branch: status.branch,
+                    agent: status.agent
                 )
             }
 

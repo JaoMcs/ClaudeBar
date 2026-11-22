@@ -180,6 +180,8 @@ struct MenuContent: View {
 
     static func label(for row: SessionRow, now: Date = Date()) -> String {
         var text = row.isSubagent ? String(localized: "[subagent]") + " " : ""
+        // O nome do agente não se traduz.
+        if let agent = row.agent, agent != "claude" { text += "[\(agent)] " }
         text += row.name
         // A branch distingue duas sessões do mesmo projeto em worktrees diferentes.
         if let branch = row.branch { text += " · \(branch)" }

@@ -4,7 +4,7 @@ import Foundation
 // CLI chamado pelos hooks do Claude Code. Lê o payload JSON no stdin e grava
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
-// Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
+// Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>] [--agent <nome>]
 //      claudebar-hook install|uninstall [--statusline] [--dry-run]
 //      claudebar-hook status [--json]   uma sessão por linha: estado<TAB>projeto<TAB>pasta
 //      claudebar-hook next              traz para a frente a sessão que espera há mais tempo
@@ -54,6 +54,7 @@ private func parsePID(_ arguments: [String]) -> Int32 {
     if let pid = value(after: "--pid", in: arguments).flatMap({ Int32($0) }) { return pid }
     // Exec form (sem shell) não tem `$PPID`: o pai direto deve ser o Claude
     // Code. Só aceita se for mesmo um `claude`; senão 0 = "sem pid", como antes.
+    // Outro agente (`--agent`) exige `--pid` ou outra checagem aqui (T44).
     let parent = getppid()
     let isClaude = processExecutablePath(parent)?.lowercased().contains("claude") == true
     return isClaude ? parent : 0
@@ -227,7 +228,8 @@ private func run() {
         kind: kind,
         // Lida aqui, e não no app: o hook roda no terminal, que já tem acesso à
         // pasta do projeto. Qualquer falha vira `nil`, nunca erro.
-        branch: GitHead.branch(at: cwd)
+        branch: GitHead.branch(at: cwd),
+        agent: value(after: "--agent", in: arguments)
     )
 
     do {

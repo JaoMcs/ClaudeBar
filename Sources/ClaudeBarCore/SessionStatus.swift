@@ -40,9 +40,15 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
     /// Branch do repositório do `cwd` (`@sha7` com HEAD solto), lida pelo hook.
     /// Opcional: arquivos gravados antes deste campo continuam válidos.
     public let branch: String?
+    /// Agente que gravou o estado (`gemini`…), em texto pelo mesmo motivo de `kind`.
+    /// `nil` em arquivo antigo e para `claude`: a chave só existe para outro agente.
+    public let agent: String?
 
     /// `nil` também para valor desconhecido: espera genérica.
     public var waitKind: WaitKind? { kind.flatMap(WaitKind.init(rawValue:)) }
+
+    /// Nome do agente; arquivo sem o campo é Claude Code.
+    public var agentName: String { agent ?? "claude" }
 
     public var id: String { sessionId }
 
@@ -67,7 +73,8 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         updatedAt: Date = Date(),
         message: String? = nil,
         kind: WaitKind? = nil,
-        branch: String? = nil
+        branch: String? = nil,
+        agent: String? = nil
     ) {
         self.sessionId = sessionId
         self.state = state
@@ -77,6 +84,7 @@ public struct SessionStatus: Codable, Identifiable, Sendable, Equatable {
         self.message = message
         self.kind = kind?.rawValue
         self.branch = branch
+        self.agent = agent == "claude" ? nil : agent
     }
 }
 

@@ -380,6 +380,8 @@ Os outros tipos de notificação (lembrete de ociosidade, autenticação, cota�
 não são registrados: o lembrete de ociosidade trocava "pronto" por "esperando"
 cerca de um minuto depois de cada resposta.
 
+`--agent <nome>` (padrão `claude`) grava qual agente escreveu o arquivo; a chave `agent` só existe para outro agente que não o Claude, e o menu mostra `[nome]` nessa linha. Arquivo sem `agent` é Claude Code.
+
 Um arquivo de estado tem esta cara:
 
 ```json
@@ -553,7 +555,7 @@ O SHA muda a cada build: o DMG não é reprodutível.
 Uso do CLI do hook:
 
 ```
-claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>]
+claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>] [--agent <nome>]
 claudebar-hook install|uninstall [--statusline] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
