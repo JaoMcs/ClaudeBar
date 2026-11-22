@@ -12,9 +12,9 @@ Sessões do Codex CLI aparecerem no menu com `--agent codex`, como o Gemini (T44
 
 ## Pesquisa obrigatória antes de codar
 
-- Ler a documentação oficial atual do Codex CLI (OpenAI) sobre `notify` e sobre hooks, se existirem. Responder na descrição do PR, com links: quais eventos existem (fim de turno, pedido de aprovação, início/fim de sessão), se o comando recebe JSON por argv ou stdin, e o nome dos campos de sessão e diretório.
+- Ler a documentação oficial atual do Codex CLI (OpenAI) sobre `notify` e sobre hooks, se existirem. Responder na descrição do PR, com links: quais eventos existem (fim de turno, pedido de aprovação, início/fim de sessão), o nome dos campos de sessão e diretório, e confirmar o que o `TODO.md` já registra (o `notify` recebe o JSON como **argumento**, não pelo stdin, e só avisa fim de turno). Fontes: a documentação oficial do Codex CLI no site/repositório da OpenAI e `codex --help` do CLI instalado (só leitura; não rode sessões).
 - Se a doc só tiver `notify` de fim de turno: mapear só `idle` e registrar em "Não verificado" que "trabalhando/esperando" não existem para o Codex.
-- Se a doc não confirmar nada disso: pare, deixe o PR em rascunho com a pesquisa e escreva **BLOQUEADA** com o motivo.
+- Sem acesso à documentação (sem web) ou se ela não confirmar nada disso: pare, deixe o PR em rascunho com a pesquisa e escreva **BLOQUEADA** com o motivo.
 
 ## Subtasks
 

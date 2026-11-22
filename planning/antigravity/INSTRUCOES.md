@@ -8,7 +8,7 @@ Você vai implementar tasks prontas deste repositório, **uma por vez, em loop**
 - Mostra o estado das sessões do Claude Code (e Gemini) a partir de hooks que gravam `~/.claude/claudebar/<sessão>.json`.
 - Build e testes: `swift build`, `swift test`. Bundle: `./scripts/build-app.sh`.
 - Gates de todo PR: `scripts/dev/gates.sh` (build, testes, docs-check, validação de workflows, build do `.app` se mexer em scripts/bundle). Só abra PR com `gates=ok`.
-- Repositório **público**: `github.com/JaoMcs/ClaudeBar`. `gh` já está logado na conta `JaoMcs`.
+- Repositório **público** no GitHub. O `gh` já está logado com a conta dona do repositório.
 - Regras completas em `CLAUDE.md` e `AGENTS.md` (leia as seções "Regras que todo mundo segue").
 
 ## 2. Regras que não podem quebrar
@@ -40,8 +40,10 @@ Você vai implementar tasks prontas deste repositório, **uma por vez, em loop**
 3. **Entender antes de mudar:** leia só os arquivos da tabela "Arquivos" e o que eles chamam. Se `scripts/dev/ctx.sh` já existir (T50), rode `scripts/dev/ctx.sh <task.md>` primeiro.
 4. **Implementar** o mínimo que cumpre "Subtasks" e "Critérios de aceite". Nada de abstração "para depois". README.md **e** README.pt-BR.md quando o comportamento mudar. Comentários em português, no estilo do código em volta.
 5. **Gates:** `scripts/dev/gates.sh` até `gates=ok`. Se falhar 3 vezes seguidas pelo mesmo motivo, pare a task (ver §5).
-6. **Commit** em português `tipo: descrição` (`feat`, `fix`, `chore`, `docs`, `test`). Não use a linha `Co-Authored-By: Claude`.
-7. **PR:** escreva o corpo num arquivo temporário (o que muda, por quê, como testar e a seção **"Não verificado"** com o que depende de tela, sessão real ou conta) e rode `scripts/dev/pr-open.sh "<PR da task>" <corpo.md>`. Ele faz push, abre o PR e imprime o número.
+6. **Commit** em português `tipo: descrição` (`feat`, `fix`, `chore`, `docs`, `test`). Atribuição: termine a mensagem com `Co-Authored-By: <nome do modelo que de fato rodou> <noreply@google.com>` (é a regra do `AGENTS.md`: o modelo real, nunca o Claude).
+7. **PR:** escreva o corpo num arquivo temporário (o que muda, por quê, como testar e a seção **"Não verificado"** com o que depende de tela, sessão real ou conta), terminando com a linha `Gerado com o Antigravity`. Depois:
+   `scripts/dev/pii-check.sh && git push -u origin <branch> && gh pr create --base main --title "<PR da task>" --body-file <corpo.md>`.
+   Não use o `scripts/dev/pr-open.sh`: ele põe o rodapé do Claude Code.
 8. **CI:** `scripts/dev/ci-wait.sh <pr>`. Vermelho: corrija na mesma branch (`git switch <branch>`), gates, push, espere de novo. No máximo 2 tentativas.
 9. **Não faça merge.** Volte para `main` (`git switch main && git pull --ff-only`) e siga para a próxima task.
 

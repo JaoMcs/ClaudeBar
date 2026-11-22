@@ -33,4 +33,4 @@ Antes de ler arquivos inteiros, o implementador recebe um mapa curto do que a ta
 
 ## Fora do escopo
 
-Mudar o `impl-loop.js`.
+Mudar o `.claude/workflows/impl-loop.js` (o Claude integra depois).

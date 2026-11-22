@@ -27,7 +27,7 @@
 
 ## Critérios de aceite
 
-- Um arquivo de teste com um e-mail em maiúsculas (montado no próprio teste, ex. `printf "Foo%sX.COM" @`) numa branch faz `scripts/dev/pr-open.sh` sair 1 sem PR (testar num repo em `mktemp -d`, sem abrir PR real).
+- Um arquivo de teste com um e-mail em maiúsculas (montado no próprio teste, ex. `printf "Foo%sX.COM" @`) numa branch faz `scripts/dev/pr-open.sh` sair 1 sem PR. Teste isolado: repo em `mktemp -d` com um remoto `git init --bare` local e um `gh` falso no começo do `PATH` (script que só grava os argumentos num arquivo); o teste passa se o `gh` falso **não** foi chamado. Nunca abrir PR real.
 - `scripts/dev/task-lint.sh` acusa critério com caminho inexistente.
 - `scripts/dev/gates.sh` → `gates=ok`.
 
