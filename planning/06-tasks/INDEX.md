@@ -62,10 +62,18 @@
 | [T33](T33-dmg-universal.md) | DMG universal + SHA-256 (só o script) | F23 | Distribuição | T02, T32, T10 | `scripts/build-app.sh`, `scripts/make-dmg.sh` (novo), `.gitignore`, READMEs | 1,5 h | FEITA (#34) |
 | [T34](T34-i18n-base-e-menu.md) | Inglês + português: base, menu, barra e avisos | F21 (1/2) | i18n/a11y | T32 e todas as tasks de UI (T01–T31) | `Resources/{en,pt-BR}.lproj/Localizable.strings` (novos), `scripts/build-app.sh`, `MenuContent.swift`, `SessionStore.swift` (`BarState`), `Notifier.swift`, `LocalizationTests.swift` (novo), testes que comparam texto, READMEs | 2 h | FEITA (#35) |
 | [T35](T35-i18n-dialogos-e-janelas.md) | Inglês + português: diálogos, Ajustes, integração e limites | F21 (2/2) | i18n/a11y | T34 | `SessionStore.swift` (alertas), `SessionTerminator.swift`, `HookSetup.swift`, `HookInstaller.swift` (erros), `SettingsWindow.swift`, `MenuContent.swift` (limites), `.strings`, testes, READMEs | 1,5 h | FEITA (#36) |
-| [T36](T36-popup-entre-spaces.md) | Popup de espera não some ao trocar de Space | F12 | Notificações | T17 | `StatusHUD.swift`, READMEs | 0,5 h | TODO |
-| [T37](T37-nome-awaitbar.md) | O app passa a se chamar Awaitbar | F47 | Distribuição | — | `scripts/*.sh`, textos, `.strings`, `ci.yml`, READMEs | 2 h | TODO |
+| [T36](T36-popup-entre-spaces.md) | Popup de espera não some ao trocar de Space | F12 | Notificações | T17 | `StatusHUD.swift`, READMEs | 0,5 h | FEITA (#39) |
+| [T37](T37-nome-awaitbar.md) | O app passa a se chamar Awaitbar | F47 | Distribuição | — | `scripts/*.sh`, textos, `.strings`, `ci.yml`, READMEs | 2 h | FEITA (#40) |
+| [T38](T38-api-activate-moderna.md) | Trocar `activate(ignoringOtherApps:)` pela API moderna | F48 | Manutenção | — | `SessionStore.swift`, `TODO.md` | 0,5 h | TODO |
+| [T39](T39-elicitation-url.md) | `elicitation_url_dialog` também vira pergunta | F49 | Notificações | — | `HookInstaller.swift`, `SessionStatus.swift`, `HookInstallerTests.swift`, `ROADMAP.md`, READMEs | 0,5 h | TODO |
+| [T40](T40-atalho-proxima-sessao.md) | Atalho global para a próxima sessão esperando | F50 | Navegação | T19, T22 | `SessionNavigator.swift`, `GlobalHotKey.swift` (novo), `SessionStore.swift`, `SettingsWindow.swift`, `claudebar-hook/main.swift`, `.strings`, testes, READMEs | 3 h | TODO |
+| [T41](T41-aviso-limite.md) | Aviso único quando o limite de 5 h passa de um limiar | F51 | Limites | T28, T29 | `RateLimits.swift`, `SessionStore.swift`, `Notifier.swift`, `SettingsWindow.swift`, `.strings`, testes, READMEs | 2 h | TODO |
+| [T42](T42-copiar-diagnostico.md) | Copiar diagnóstico (anonimizado, com prévia) | F52 | Suporte | T30 | `Diagnostics.swift` (novo), `MenuContent.swift`, `HookSetup.swift`, `.strings`, `DiagnosticsTests.swift` (novo), READMEs | 2 h | TODO |
+| [T43](T43-campo-agent.md) | Multiagente 1/2: campo `agent` e rótulo no menu | F53 (1/2) | Multiagente | — | `SessionStatus.swift`, `claudebar-hook/main.swift`, `SessionRow.swift`, `SessionMerge.swift`, `MenuContent.swift`, testes, READMEs | 2 h | TODO |
+| [T44](T44-hooks-gemini.md) | Multiagente 2/2: hooks do Gemini CLI | F53 (2/2) | Multiagente | T43 | `GeminiHooks.swift` (novo), `HookInstaller.swift`, `claudebar-hook/main.swift`, `HookSetup.swift`, `MenuContent.swift`, `GeminiHooksTests.swift` (novo), `TODO.md`, READMEs | 2,5 h | TODO |
+| [T45](T45-rotulo-desktop-terminal.md) | Rótulo app desktop × terminal na linha da sessão | F54 | Navegação | T19 | `SessionTerminator.swift`, `MenuContent.swift`, `.strings`, testes, READMEs | 1,5 h | TODO |
 
-Total: 37 tasks. Nenhuma BLOQUEADA.
+Total: 45 tasks. Nenhuma BLOQUEADA.
 
 ## Gates de todo PR (repetidos em cada task)
 
