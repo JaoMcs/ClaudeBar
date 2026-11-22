@@ -14,20 +14,20 @@ awk '/^## Arquivos/{f=1;next} /^## /{f=0} f && /^\|/ && !/^\| *-/ && !/^\| *Arqu
   is_new=0
   echo "$l" | grep -qiE '(^|[^a-z])nov[oa]s?([^a-z]|$)' && is_new=1
   for p in $(echo "$l" | cut -d'|' -f2 | grep -oE '`[^`]+`' | tr -d '`'); do
-    if [ "$is_new" -eq 1 ]; then
-      echo "== $p (novo)"
-      continue
-    fi
     matches=""
     case "$p" in
       */*)
         matches=$(cd "$root" && ls -d $p 2>/dev/null || true)
         ;;
       *)
-        matches=$(git -C "$root" ls-files | grep -E "(^|/)$p\$" || true)
+        p_esc=$(printf '%s' "$p" | sed 's/[.[\*^$()+?{|]/\\&/g')
+        matches=$(git -C "$root" ls-files | grep -E "(^|/)$p_esc\$" || true)
         ;;
     esac
-    [ -z "$matches" ] && continue
+    if [ -z "$matches" ]; then
+      [ "$is_new" -eq 1 ] && echo "== $p (novo)"
+      continue
+    fi
     for rel in $matches; do
       full="$root/$rel"
       [ -f "$full" ] || continue
