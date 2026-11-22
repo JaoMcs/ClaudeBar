@@ -121,7 +121,7 @@ final class StatusHUD {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
-        panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
+        panel.collectionBehavior = [.canJoinAllSpaces, .ignoresCycle]
         return panel
     }
 

@@ -222,7 +222,7 @@ aquela sessão sair de "esperando" (você respondeu, ela terminou ou foi
 fechada). Clicar no popup leva até a sessão (o mesmo que **Ir para a
 sessão**); o popup de exemplo só fecha. Um "terminou" ou "falhou" nunca cobre um
 popup de espera ainda aberto: você só ouve o som. Com duas sessões esperando,
-o popup mostra a última; o ícone da barra continua avisando da outra.
+o popup mostra a última; o ícone da barra continua avisando da outra. O popup de espera continua visível ao trocar de Space.
 
 Se algum dia o app for assinado com Developer ID, o `Notifier` passa a usar a
 notificação nativa sozinho: ele prefere a nativa e só cai no painel próprio

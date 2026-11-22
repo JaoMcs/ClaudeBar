@@ -221,7 +221,7 @@ that session stops waiting (you answered, it finished, or it was closed).
 Clicking the popup takes you to the session (same as **Go to session**);
 the sample popup only closes. A "finished" or "failed" never covers a waiting
 popup that is still open: you only hear its sound. With two sessions waiting,
-the popup shows the latest one; the menu bar icon keeps flagging the other.
+the popup shows the latest one; the menu bar icon keeps flagging the other. A waiting popup stays visible when you switch Spaces.
 
 If the app is ever signed with a Developer ID, `Notifier` switches to native
 notifications by itself: it prefers them and only falls back to its own panel
