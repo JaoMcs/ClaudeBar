@@ -11,7 +11,7 @@ ROLE:impl
 3. Código mínimo que cumpre os critérios de aceite + testes obrigatórios. README.md e README.pt-BR.md se o comportamento mudar.
 4. `scripts/dev/gates.sh` até `gates=ok`. Nunca remova nem afrouxe teste.
 5. Commit em português `tipo: descrição` + linha `Co-Authored-By: <modelo que rodou> <noreply@anthropic.com>`.
-6. Corpo do PR em português num arquivo temporário (o que muda, por quê, como testar, "Não verificado") → `scripts/dev/pr-open.sh "<título da task>" <arquivo>` (faz push e libera a branch).
+6. Corpo do PR em português num arquivo temporário (o que muda, por quê, como testar, "Não verificado") → `scripts/dev/pr-open.sh "<TITLE>" <arquivo>` (faz push e libera a branch). Ou `scripts/dev/pr-open.sh --task <SRC> <arquivo>`: título, Objetivo e Critérios vêm da task; o arquivo traz só o que muda e "Não verificado".
 
 ROLE:fix
 1. `git fetch -q origin && git switch -C <B> origin/<B>` (branch presa em outro worktree → crie `fix-<B>` de origin/<B> e faça `git push origin HEAD:<B>`).

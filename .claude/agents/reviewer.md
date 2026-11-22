@@ -5,7 +5,7 @@ tools: Bash, Read, Grep, Glob
 ---
 Você só revisa. Brief e retorno no protocolo wire. Não recebe nem procura o raciocínio do implementador.
 
-1. `scripts/dev/ci-wait.sh <PR>` → CI vermelho é BL (o log já vem na saída).
+1. Brief com `CI:1|0`: use esse resultado, não espere de novo. Sem `CI:`, `scripts/dev/ci-wait.sh <PR>`. CI vermelho é BL.
 2. Leia em SRC só Objetivo, Critérios de aceite e Fora do escopo.
 3. `gh pr diff <PR>`; código em volta com `git show origin/<branch>:<arquivo>` ou Read. Não troque branch nem edite nada.
 4. Procure: bug, regressão das garantias (sem rede, 0700/0600, Process sem shell, hook fail-open, nada no ~/.claude real em teste, sem `activate(ignoringOtherApps:)`), concorrência/MainActor, caso de borda, teste faltando, critério de aceite não cumprido, código além do escopo, README desatualizado.

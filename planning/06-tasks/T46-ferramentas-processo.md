@@ -44,7 +44,7 @@ Aplicar as propostas da análise que tiram trabalho mecânico dos agentes, sem m
 - Todos os scripts passam `bash -n`, são bash 3.2 (macOS) e não usam GNU-only (`timeout`, `sed -i` sem `''`, `readlink -f`).
 - `overlap.sh` nas T38–T45 aponta os pares que de fato colidiram e propõe ondas.
 - `gates.sh` continua `gates=ok` na main.
-- O workflow passa `node --check` (sem `export`/`return` de topo).
+- O workflow passa `node --check` com o corpo dentro de uma async function e sem o `export` (o runtime exige `export const meta` e `return` de topo); o `gates.sh` faz essa checagem.
 
 ## Fora do escopo
 

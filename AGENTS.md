@@ -44,14 +44,18 @@ Severidades: `BL` bloqueante (bug, regressão de garantia, critério de aceite n
 
 ## Fluxo de uma task
 
-1. `route.sh` → modelo.
-2. Implementador: `git fetch -q origin && git switch -c <branch> origin/main` → código + testes → `scripts/dev/gates.sh` → commit → `scripts/dev/pr-open.sh`.
-3. Revisor → achados.
-4. Corretor só se houver `BL` ou `SG`, ou CI vermelho. Só `NIT` não abre rodada. No máximo 2 rodadas. Depois da correção não há nova revisão: o merge confia no CI verde e no `blno` (quantos BL o corretor recusou).
-5. Merge (`scripts/dev/merge.sh <pr> <Txx>`) **só** se: CI verde e nenhum `BL` recusado pelo corretor. `BL` recusado (ex.: precisa de teste manual na tela) = task `AGUARDA-USUARIO`, PR aberto, o lote para.
-6. Entre lotes: `scripts/dev/clean.sh`.
+1. `task-lint.sh` (formato) e `task-meta.sh` → `id branch título nota modelo` (o `route.sh` vem embutido).
+2. Implementador recebe branch e título já resolvidos: `git fetch -q origin && git switch -c <branch> origin/main` → código + testes → `scripts/dev/gates.sh` (inclui `docs-check.sh`) → commit → `scripts/dev/pr-open.sh`.
+3. CI esperado uma vez (`ci-wait.sh`); o revisor recebe `CI:1|0` e não espera de novo. Revisor com `haiku` se a nota for ≤ 1, senão o modelo da task.
+4. Corretor só com `BL` ou CI vermelho. `SG` volta no retorno do loop (`sg`) e não abre rodada, salvo em task de nota ≥ 4. No máximo 2 rodadas. Depois da correção não há nova revisão: o merge confia no CI verde e no `blno` (quantos BL o corretor recusou).
+5. Merge (`scripts/dev/merge.sh <pr> <Txx>`) **só** se: CI verde e nenhum `BL` recusado pelo corretor. `BL` recusado (ex.: precisa de teste manual na tela) = task `AGUARDA-USUARIO`, PR aberto, o lote para. PR atrás da main: `rebase-auto.sh <pr>` (via merger) antes do agente de rebase.
+6. Fim do lote: `scripts/dev/index-mark.sh Txx=<pr>…` num PR de docs e `scripts/dev/clean.sh`.
 
-Workflow pronto: `.claude/workflows/impl-loop.js`, args `{"root":"<raiz do clone>","tasks":[{"id":"T19-ir-para-sessao","model":"opus"}]}`.
+Workflow pronto: `.claude/workflows/impl-loop.js`, args `{"root":"<raiz do clone>","tasks":[{"id":"T19-ir-para-sessao","model":"opus","branch":"feat/x","title":"feat: …","score":4}]}`.
+
+## Ondas paralelas
+
+`scripts/dev/overlap.sh <tasks .md…>` lista os pares que citam o mesmo arquivo na tabela Arquivos (README, `Localizable.strings`, `TODO.md` e `INDEX.md` não contam: `merge=union` no `.gitattributes` + `docs-check.sh`) e propõe ondas respeitando `Depende de`. Tasks da mesma onda podem rodar em paralelo (um `impl-loop` por task); a próxima onda só depois do merge da anterior. Limite prático: 3–4 por onda. O script lê o texto da task, não o diff: arquivo tocado fora da tabela escapa.
 
 ## Protocolo entre agentes: `wire`
 
