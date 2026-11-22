@@ -693,3 +693,7 @@ backup; your previous status line comes back), quits
 the app and deletes `~/Applications/ClaudeBar.app`. Without the repository:
 `~/.claude/claudebar/bin/claudebar-hook uninstall`. State and backups stay in
 `~/.claude/claudebar`; delete that folder by hand if you want.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -1,6 +1,6 @@
 # Roadmap
 
-Ideias ainda válidas e decisões que valem lembrar. Itens que dependem do dono (nome, licença, notarização, release) estão no [`PENDENCIAS.md`](PENDENCIAS.md). Multiagente (Codex, Gemini) e a API `activate(ignoringOtherApps:)` estão no [`TODO.md`](TODO.md).
+Ideias ainda válidas e decisões que valem lembrar. Itens que dependem do dono (notarização, release, Homebrew) estão no [`PENDENCIAS.md`](PENDENCIAS.md). Multiagente (Codex, Gemini) e a API `activate(ignoringOtherApps:)` estão no [`TODO.md`](TODO.md).
 
 ## Próximos, por valor
 

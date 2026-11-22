@@ -62,8 +62,10 @@
 | [T33](T33-dmg-universal.md) | DMG universal + SHA-256 (só o script) | F23 | Distribuição | T02, T32, T10 | `scripts/build-app.sh`, `scripts/make-dmg.sh` (novo), `.gitignore`, READMEs | 1,5 h | FEITA (#34) |
 | [T34](T34-i18n-base-e-menu.md) | Inglês + português: base, menu, barra e avisos | F21 (1/2) | i18n/a11y | T32 e todas as tasks de UI (T01–T31) | `Resources/{en,pt-BR}.lproj/Localizable.strings` (novos), `scripts/build-app.sh`, `MenuContent.swift`, `SessionStore.swift` (`BarState`), `Notifier.swift`, `LocalizationTests.swift` (novo), testes que comparam texto, READMEs | 2 h | FEITA (#35) |
 | [T35](T35-i18n-dialogos-e-janelas.md) | Inglês + português: diálogos, Ajustes, integração e limites | F21 (2/2) | i18n/a11y | T34 | `SessionStore.swift` (alertas), `SessionTerminator.swift`, `HookSetup.swift`, `HookInstaller.swift` (erros), `SettingsWindow.swift`, `MenuContent.swift` (limites), `.strings`, testes, READMEs | 1,5 h | FEITA (#36) |
+| [T36](T36-popup-entre-spaces.md) | Popup de espera não some ao trocar de Space | F12 | Notificações | T17 | `StatusHUD.swift`, READMEs | 0,5 h | TODO |
+| [T37](T37-nome-awaitbar.md) | O app passa a se chamar Awaitbar | F47 | Distribuição | — | `scripts/*.sh`, textos, `.strings`, `ci.yml`, READMEs | 2 h | TODO |
 
-Total: 35 tasks, ~58 h. Nenhuma BLOQUEADA.
+Total: 37 tasks. Nenhuma BLOQUEADA.
 
 ## Gates de todo PR (repetidos em cada task)
 

@@ -695,3 +695,7 @@ seu statusline anterior volta), fecha o app e
 apaga `~/Applications/ClaudeBar.app`. Sem o repositório:
 `~/.claude/claudebar/bin/claudebar-hook uninstall`. Estado e backups ficam em
 `~/.claude/claudebar`; apague a pasta à mão se quiser.
+
+## Licença
+
+MIT. Veja [LICENSE](LICENSE).
