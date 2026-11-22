@@ -48,8 +48,16 @@ for (const t of TASKS) {
   if (refusedBL > 0) { out.push({ t: tid, st: 'AGUARDA-USUARIO', pr: impl.pr, why: refused, nv: impl.nv }); log(`${tid}: BL recusado, PR #${impl.pr} aberto`); break }
 
   phase('Merge')
-  const m = await agent(`ROLE:merge PR:${impl.pr} T:${tid} CWD:${ROOT}\nRET:{"m":1,"sha":""}`,
+  let m = await agent(`ROLE:merge PR:${impl.pr} T:${tid} CWD:${ROOT}\nRET:{"m":1,"sha":""}`,
     { label: `merge:${tid}`, phase: 'Merge', agentType: 'merger', effort: 'low', schema: MRG })
+  // Trilhas paralelas: outro PR pode ter entrado antes (README, MenuContent…). Uma rodada de rebase e nova tentativa.
+  if (m && !m.m && /CONFLICT|DIRTY|BEHIND/i.test(m.why || '')) {
+    log(`${tid}: conflito com a main, rebase`)
+    const rb = await agent(`ROLE:fix PR:${impl.pr} B:${impl.b} SRC:${src} CONFLITO:1\nDO:git fetch origin;rebase em origin/main;resolver mantendo as duas mudanças;gates;push --force-with-lease;ci-wait\nRET:{"ci":1,"ok":[],"no":[],"blno":0}`,
+      { label: `rebase:${tid}`, phase: 'Merge', agentType: 'implementer', model, isolation: 'worktree', schema: FIX })
+    if (rb && rb.ci) m = await agent(`ROLE:merge PR:${impl.pr} T:${tid} CWD:${ROOT}\nRET:{"m":1,"sha":""}`,
+      { label: `merge2:${tid}`, phase: 'Merge', agentType: 'merger', effort: 'low', schema: MRG })
+  }
   if (!m || !m.m) { out.push({ t: tid, st: 'BLOQUEADA', pr: impl.pr, why: m ? m.why : 'merge falhou' }); break }
   out.push({ t: tid, st: 'FEITA', pr: impl.pr, sha: m.sha, model, nv: impl.nv, a: rev ? rev.a.length : 0 })
   log(`${tid}: mergeado #${impl.pr} (${model})`)
