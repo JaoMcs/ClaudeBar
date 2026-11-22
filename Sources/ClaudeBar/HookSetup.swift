@@ -8,6 +8,8 @@ import Observation
 @Observable
 final class HookSetup {
     private(set) var state: IntegrationState = .notInstalled
+    /// Gemini CLI instalado: só então aparecem os itens dele no menu.
+    private(set) var geminiDetected = false
     private let defaults = UserDefaults.standard
 
     /// Último estado já oferecido no launch: oferecer de novo só se mudar.
@@ -51,6 +53,7 @@ final class HookSetup {
 
     func refresh() {
         state = HookInstaller.state(bundledBinary: bundledBinary)
+        geminiDetected = GeminiHooks.cliDetected()
         // Voltou ao normal: a próxima quebra (ex.: atualização do app) pode ser oferecida.
         if state == .ok {
             defaults.removeObject(forKey: Self.offeredKey)
@@ -67,10 +70,11 @@ final class HookSetup {
     }
 
     /// Mostra exatamente o que muda e grava só se você clicar na ação.
-    func review(_ action: HookAction, cancelTitle: String = String(localized: "Cancel")) {
+    /// `gemini`: o mesmo fluxo sobre o `~/.gemini/settings.json` (só `.install`/`.uninstall`).
+    func review(_ action: HookAction, gemini: Bool = false, cancelTitle: String = String(localized: "Cancel")) {
         let plan: HookPlan
         do {
-            plan = try HookInstaller.plan(action)
+            plan = try gemini ? GeminiHooks.plan(action) : HookInstaller.plan(action)
         } catch {
             return report(title: String(localized: "Could not read settings.json"), message: error.localizedDescription)
         }
@@ -95,8 +99,11 @@ final class HookSetup {
             return report(title: String(localized: "Nothing to change"), message: plan.settingsURL.path)
         }
 
+        let backups = gemini ? GeminiHooks.backupsURL : HookInstaller.backupsURL
         let alert = NSAlert()
         alert.messageText = switch action {
+        case .install where gemini: String(localized: "Register the Awaitbar hooks in Gemini CLI?")
+        case .uninstall where gemini: String(localized: "Remove the Awaitbar hooks from Gemini CLI?")
         case .install: String(localized: "Register the Awaitbar hooks in Claude Code?")
         case .uninstall: String(localized: "Remove the Awaitbar hooks?")
         case .installStatusLine: String(localized: "Show usage limits in the Claude Code footer?")
@@ -105,7 +112,7 @@ final class HookSetup {
         var info: [String] = []
         if plan.hasChanges {
             info.append(String(localized: "File: \(plan.settingsURL.path)"))
-            info.append(String(localized: "Backup before writing, in \(HookInstaller.backupsURL.path)"))
+            info.append(String(localized: "Backup before writing, in \(backups.path)"))
             if plan.reformats {
                 info.append(String(localized: """
                 The file will be reformatted (key order); outside "hooks" and "statusLine" \
@@ -142,8 +149,11 @@ final class HookSetup {
             info.append(
                 [
                     String(localized: "Only Awaitbar's entries change; your own hooks stay as they are."),
-                    action == .install ? String(localized: "\"Remove hooks…\" in the menu undoes it.") : nil,
-                    String(localized: "Claude Code applies it without restarting."),
+                    action == .install && !gemini ? String(localized: "\"Remove hooks…\" in the menu undoes it.") : nil,
+                    action == .install && gemini ? String(localized: "\"Remove Gemini hooks…\" in the menu undoes it.") : nil,
+                    gemini
+                        ? String(localized: "Gemini CLI sessions already open may need a restart.")
+                        : String(localized: "Claude Code applies it without restarting."),
                 ].compactMap(\.self).joined(separator: " ")
             )
         }
@@ -159,14 +169,14 @@ final class HookSetup {
                 try HookInstaller.installBinary(from: bundledBinary)
             }
             if plan.hasChanges {
-                try HookInstaller.apply(plan)
+                try HookInstaller.apply(plan, backups: backups)
             }
             if removesBinary {
                 try? FileManager.default.removeItem(at: stable)
             }
         } catch HookInstallError.changedSinceReview {
             // Mudou enquanto você lia: mostra a prévia nova, nunca grava às cegas.
-            return review(action, cancelTitle: cancelTitle)
+            return review(action, gemini: gemini, cancelTitle: cancelTitle)
         } catch {
             report(title: String(localized: "Could not write"), message: error.localizedDescription)
         }

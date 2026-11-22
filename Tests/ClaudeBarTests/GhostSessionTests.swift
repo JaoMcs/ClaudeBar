@@ -116,6 +116,12 @@ struct GhostMergeTests {
         #expect(SessionMerge.rows(agents: [], statuses: [semPid]).isEmpty)
     }
 
+    /// Sessão do Gemini (pid 0) não está no `claude agents`: fica mesmo com o CLI respondendo.
+    @Test func pidZeroDeOutroAgenteFica() {
+        let gemini = SessionStatus(sessionId: "g1", state: .working, cwd: "/x", pid: 0, agent: "gemini")
+        #expect(SessionMerge.rows(agents: [], statuses: [gemini]).first?.agent == "gemini")
+    }
+
     @Test func pidZeroApareceSeOCliNaoRespondeu() {
         #expect(SessionMerge.rows(agents: nil, statuses: [semPid]).count == 1)
     }

@@ -168,6 +168,13 @@ struct MenuContent: View {
             Button("Show limits in the Claude Code footer…") { setup.review(.installStatusLine) }
             Button("Stop showing limits in the footer…") { setup.review(.uninstallStatusLine) }
 
+            // Só com o Gemini CLI instalado: sem ele, nada em `~/.gemini`.
+            if setup.geminiDetected {
+                Divider()
+                Button("Install Gemini hooks…") { setup.review(.install, gemini: true) }
+                Button("Remove Gemini hooks…") { setup.review(.uninstall, gemini: true) }
+            }
+
             Divider()
 
             Button("Test integration") {

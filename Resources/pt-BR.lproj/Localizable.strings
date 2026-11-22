@@ -95,6 +95,12 @@
 "Nothing to change" = "Nada a mudar";
 "Register the Awaitbar hooks in Claude Code?" = "Registrar os hooks do Awaitbar no Claude Code?";
 "Remove the Awaitbar hooks?" = "Remover os hooks do Awaitbar?";
+"Register the Awaitbar hooks in Gemini CLI?" = "Registrar os hooks do Awaitbar no Gemini CLI?";
+"Remove the Awaitbar hooks from Gemini CLI?" = "Remover os hooks do Awaitbar do Gemini CLI?";
+"Install Gemini hooks…" = "Instalar hooks do Gemini…";
+"Remove Gemini hooks…" = "Remover hooks do Gemini…";
+"\"Remove Gemini hooks…\" in the menu undoes it." = "\"Remover hooks do Gemini…\" no menu desfaz.";
+"Gemini CLI sessions already open may need a restart." = "Sessões do Gemini CLI já abertas podem precisar ser reiniciadas.";
 "Show usage limits in the Claude Code footer?" = "Mostrar os limites de uso no rodapé do Claude Code?";
 "Stop showing limits in the Claude Code footer?" = "Parar de mostrar os limites no rodapé do Claude Code?";
 "File: %@" = "Arquivo: %@";
@@ -115,6 +121,7 @@
 "settings.json is not valid JSON; nothing was changed" = "o settings.json não é um JSON válido; nada foi alterado";
 "settings.json is read-only; copy the JSON and paste it into the tool that generates it" = "o settings.json é somente leitura; copie o JSON e cole na ferramenta que o gera";
 "settings.json changed after the preview; nothing was changed" = "o settings.json mudou depois da prévia; nada foi alterado";
+"Hooks are turned off in settings.json (hooksConfig.enabled); nothing was changed" = "os hooks estão desligados no settings.json (hooksConfig.enabled); nada foi alterado";
 
 /* Teste da integração */
 "Integration test" = "Teste da integração";

@@ -5,7 +5,7 @@ import Foundation
 // o estado da sessão em ~/.claude/claudebar/<session_id>.json.
 //
 // Uso: claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>] [--agent <nome>]
-//      claudebar-hook install|uninstall [--statusline] [--dry-run]
+//      claudebar-hook install|uninstall [--statusline|--gemini] [--dry-run]
 //      claudebar-hook status [--json]   uma sessão por linha: estado<TAB>projeto<TAB>pasta
 //      claudebar-hook next              traz para a frente a sessão que espera há mais tempo
 //      claudebar-hook statusline        comando do `statusLine` do Claude Code (limites de uso)
@@ -52,18 +52,21 @@ private func value(after flag: String, in arguments: [String]) -> String? {
 
 private func parsePID(_ arguments: [String]) -> Int32 {
     if let pid = value(after: "--pid", in: arguments).flatMap({ Int32($0) }) { return pid }
+    // Outro agente (Gemini): sem pid. A sessão vive pelos hooks (`end`) e pela
+    // regra de sessões fantasmas.
+    if let agent = value(after: "--agent", in: arguments), agent != "claude" { return 0 }
     // Exec form (sem shell) não tem `$PPID`: o pai direto deve ser o Claude
     // Code. Só aceita se for mesmo um `claude`; senão 0 = "sem pid", como antes.
-    // Outro agente (`--agent`) exige `--pid` ou outra checagem aqui (T44).
     let parent = getppid()
     let isClaude = processExecutablePath(parent)?.lowercased().contains("claude") == true
     return isClaude ? parent : 0
 }
 
 /// `install`/`uninstall`: mostra o diff e, sem `--dry-run`, grava com backup.
-private func manage(_ action: HookAction, dryRun: Bool) {
+private func manage(_ action: HookAction, gemini: Bool = false, dryRun: Bool) {
     do {
-        let plan = try HookInstaller.plan(action)
+        if gemini, action == .install, !GeminiHooks.cliDetected() { fail("Gemini CLI não encontrado") }
+        let plan = try gemini ? GeminiHooks.plan(action) : HookInstaller.plan(action)
         print(plan.hasChanges ? plan.diff : "Nada a mudar em \(plan.settingsURL.path).")
         if plan.hasChanges, plan.reformats {
             print("\nO arquivo será reformatado (ordem das chaves); fora de \"hooks\" e \"statusLine\" o conteúdo não muda.")
@@ -75,7 +78,7 @@ private func manage(_ action: HookAction, dryRun: Bool) {
             guard let me = processExecutablePath(getpid()) else { fail("executável não encontrado") }
             try HookInstaller.installBinary(from: URL(fileURLWithPath: me))
         }
-        if plan.hasChanges, let backup = try HookInstaller.apply(plan) {
+        if plan.hasChanges, let backup = try HookInstaller.apply(plan, backups: gemini ? GeminiHooks.backupsURL : HookInstaller.backupsURL) {
             print("Backup: \(backup.path)")
         }
         // Se o statusline ou os hooks ainda o chamam, o executável fica.
@@ -163,12 +166,13 @@ private func run() {
     // Antes de ler o stdin: num terminal, ler o stdin travaria esperando EOF.
     switch command {
     // `--statusline` é opt-in próprio: mexe só no `statusLine`, nunca nos hooks.
+    // `--gemini` mexe só no `~/.gemini/settings.json`.
     case "install":
         let action: HookAction = arguments.contains("--statusline") ? .installStatusLine : .install
-        return manage(action, dryRun: arguments.contains("--dry-run"))
+        return manage(action, gemini: arguments.contains("--gemini"), dryRun: arguments.contains("--dry-run"))
     case "uninstall":
         let action: HookAction = arguments.contains("--statusline") ? .uninstallStatusLine : .uninstall
-        return manage(action, dryRun: arguments.contains("--dry-run"))
+        return manage(action, gemini: arguments.contains("--gemini"), dryRun: arguments.contains("--dry-run"))
     case "status": return printStatus(json: arguments.contains("--json"))
     default: break
     }

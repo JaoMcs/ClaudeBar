@@ -160,6 +160,30 @@ older than the bundled one, so the app offers to update it the same way.
 With an invalid `settings.json` or `disableAllHooks: true`, the app only
 reports it and offers no install.
 
+#### Gemini CLI
+
+Opt-in, and only if Gemini CLI is installed (`gemini` in `/opt/homebrew/bin` or
+`/usr/local/bin`, or a `~/.gemini` folder). Then the integration submenu shows
+**Install Gemini hooks…** / **Remove Gemini hooks…**, with the same preview and
+backup (in `~/.claude/claudebar/backups/gemini`). Without Gemini CLI nothing
+shows up and nothing in `~/.gemini` is created. Only the user file
+`~/.gemini/settings.json` changes, and only Awaitbar's entries; with
+`hooksConfig.enabled: false` nothing is changed.
+
+| Gemini event | State |
+|---|---|
+| `BeforeAgent` | working |
+| `AfterAgent` | ready |
+| `Notification` (`ToolPermission`) | asks for permission |
+| `SessionEnd` | removed |
+
+Gemini rows show `[gemini]`. They have no pid, so **Go to session** doesn't
+show for them, and the `claude agents` cross-check doesn't hide them. A Gemini
+session that dies without `SessionEnd` (best effort in Gemini CLI) stays listed
+until its file in `~/.claude/claudebar` is deleted. Docs: [hooks](https://geminicli.com/docs/hooks/),
+[reference](https://geminicli.com/docs/hooks/reference/),
+[configuration](https://geminicli.com/docs/reference/configuration/).
+
 ### Alerts
 
 Each alert has its own sound: one is informative, the waiting ones block
@@ -555,7 +579,7 @@ Hook CLI usage:
 
 ```
 claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <claude pid>] [--agent <name>]
-claudebar-hook install|uninstall [--statusline] [--dry-run]
+claudebar-hook install|uninstall [--statusline|--gemini] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
 claudebar-hook statusline
@@ -567,7 +591,7 @@ a `session_id` it writes nothing and exits 0. If it
 fails to write, it only logs to stderr and exits cleanly — a hook must never
 break the Claude session. Without `--pid` (exec form has no `$PPID`) it uses
 its parent process, but only if that is a `claude` executable; otherwise it
-writes `pid: 0`. `--kind` is kept only with `waiting`; an unknown value is
+writes `pid: 0`. With `--agent` other than `claude` it always writes `pid: 0`. `--kind` is kept only with `waiting`; an unknown value is
 dropped (generic wait). `--if-waiting` writes only if the session's file
 currently says `waiting`; otherwise (or with no file) it exits 0 without
 touching it. A missing or invalid state exits with **1**, never 2: in Claude

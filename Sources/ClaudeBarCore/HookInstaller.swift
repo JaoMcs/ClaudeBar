@@ -15,6 +15,8 @@ public enum HookInstallError: Error, Equatable, LocalizedError {
     case readOnly
     /// O arquivo mudou entre a prévia e o clique (o próprio Claude Code grava nele).
     case changedSinceReview
+    /// `hooksConfig.enabled: false` no settings do Gemini. Não mexemos nisso.
+    case hooksDisabled
 
     /// No app acha a tradução no `Bundle.main`; no CLI (stderr) fica em inglês.
     public var errorDescription: String? {
@@ -22,6 +24,7 @@ public enum HookInstallError: Error, Equatable, LocalizedError {
         case .invalidSettings: String(localized: "settings.json is not valid JSON; nothing was changed")
         case .readOnly: String(localized: "settings.json is read-only; copy the JSON and paste it into the tool that generates it")
         case .changedSinceReview: String(localized: "settings.json changed after the preview; nothing was changed")
+        case .hooksDisabled: String(localized: "Hooks are turned off in settings.json (hooksConfig.enabled); nothing was changed")
         }
     }
 }
@@ -125,7 +128,8 @@ public enum HookInstaller {
         _ action: HookAction,
         settings: URL = settingsURL,
         binary: String = stableBinary.path,
-        original: URL = StatusDirectory.originalStatusLineURL
+        original: URL = StatusDirectory.originalStatusLineURL,
+        gemini: URL = GeminiHooks.settingsURL
     ) throws -> HookPlan {
         // Settings em dotfiles costuma ser symlink: gravar `.atomic` no link
         // trocaria o link por um arquivo comum e o repositório pararia de mudar.
@@ -159,9 +163,22 @@ public enum HookInstaller {
             hasChanges: current != updated,
             reformats: !bytes.isEmpty && current != bytes,
             statusLineOriginal: statusLineOriginal,
-            binaryInUse: StatusLineInstall.isOurs(next["statusLine"])
-                || handlers(in: next).contains { isOurs($0.handler, binary: binary) }
+            binaryInUse: uses(next, binary: binary) || GeminiHooks.uses(binary: binary, settings: gemini)
         )
+    }
+
+    /// O `statusLine` ou algum hook deste settings chama o executável.
+    static func uses(_ root: [String: Any], binary: String) -> Bool {
+        StatusLineInstall.isOurs(root["statusLine"]) || handlers(in: root).contains { isOurs($0.handler, binary: binary) }
+    }
+
+    /// Só leitura, para o plano do Gemini saber se o Claude ainda usa o executável.
+    /// Arquivo ilegível conta como "usa": na dúvida o executável fica.
+    static func uses(binary: String, settings: URL) -> Bool {
+        let real = settings.resolvingSymlinksInPath()
+        guard FileManager.default.fileExists(atPath: real.path) else { return false }
+        guard let data = try? Data(contentsOf: real), let root = try? parse(data) else { return true }
+        return uses(root, binary: binary)
     }
 
     /// Grava exatamente o que a prévia mostrou. Devolve o backup, se havia arquivo.
@@ -317,13 +334,18 @@ public enum HookInstaller {
     /// Tira só os nossos handlers. Grupo que fica vazio sai, evento vazio sai;
     /// o que é seu fica igual, inclusive no mesmo grupo.
     static func strip(_ root: [String: Any], binary: String) -> [String: Any] {
+        strip(root) { isOurs($0, binary: binary) }
+    }
+
+    /// `strip` com o critério de "nosso" de fora: o Gemini reconhece pelo `command`.
+    static func strip(_ root: [String: Any], where isOurs: ([String: Any]) -> Bool) -> [String: Any] {
         guard let hooks = root["hooks"] as? [String: Any] else { return root }
         var kept = hooks
         for (event, value) in hooks {
             guard let groups = value as? [[String: Any]] else { continue }
             let remaining: [[String: Any]] = groups.compactMap { group in
                 guard let handlers = group["hooks"] as? [[String: Any]] else { return group }
-                let others = handlers.filter { !isOurs($0, binary: binary) }
+                let others = handlers.filter { !isOurs($0) }
                 if others.count == handlers.count { return group }
                 if others.isEmpty { return nil }
                 var group = group
@@ -441,7 +463,7 @@ public enum HookInstaller {
         "'" + path.replacingOccurrences(of: "'", with: #"'\''"#) + "'"
     }
 
-    private static func handlers(in root: [String: Any]) -> [(event: String, matcher: String?, handler: [String: Any])] {
+    static func handlers(in root: [String: Any]) -> [(event: String, matcher: String?, handler: [String: Any])] {
         let hooks = root["hooks"] as? [String: Any] ?? [:]
         return hooks.flatMap { event, value in
             (value as? [[String: Any]] ?? []).flatMap { group in

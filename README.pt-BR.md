@@ -161,6 +161,30 @@ mais velha que a do bundle, e o app oferece atualizá-la do mesmo jeito.
 Com `settings.json` inválido ou `disableAllHooks: true`, o app só avisa e não
 oferece instalar.
 
+#### Gemini CLI
+
+Opt-in, e só se o Gemini CLI estiver instalado (`gemini` em `/opt/homebrew/bin`
+ou `/usr/local/bin`, ou a pasta `~/.gemini`). Aí o submenu da integração mostra
+**Instalar hooks do Gemini…** / **Remover hooks do Gemini…**, com a mesma prévia
+e backup (em `~/.claude/claudebar/backups/gemini`). Sem o Gemini CLI nada
+aparece e nada em `~/.gemini` é criado. Só o arquivo do usuário
+`~/.gemini/settings.json` muda, e só nas entradas do Awaitbar; com
+`hooksConfig.enabled: false` nada é alterado.
+
+| Evento do Gemini | Estado |
+|---|---|
+| `BeforeAgent` | trabalhando |
+| `AfterAgent` | pronto |
+| `Notification` (`ToolPermission`) | pede permissão |
+| `SessionEnd` | some |
+
+A linha do Gemini mostra `[gemini]`. Ela não tem pid, então **Ir para a sessão**
+não aparece, e o cruzamento com o `claude agents` não a esconde. Sessão do Gemini
+que morre sem `SessionEnd` (best effort no Gemini CLI) fica na lista até o
+arquivo dela em `~/.claude/claudebar` ser apagado. Doc: [hooks](https://geminicli.com/docs/hooks/),
+[referência](https://geminicli.com/docs/hooks/reference/),
+[configuração](https://geminicli.com/docs/reference/configuration/).
+
 ### Avisos
 
 Cada aviso tem som próprio: um é informativo, os de espera te bloqueiam e um
@@ -556,7 +580,7 @@ Uso do CLI do hook:
 
 ```
 claudebar-hook <working|idle|waiting|error|end> [--kind <permission|question>] [--if-waiting] [--pid <pid do claude>] [--agent <nome>]
-claudebar-hook install|uninstall [--statusline] [--dry-run]
+claudebar-hook install|uninstall [--statusline|--gemini] [--dry-run]
 claudebar-hook status [--json]
 claudebar-hook next
 claudebar-hook statusline
@@ -568,6 +592,7 @@ Ele lê o payload do hook (`session_id`, `cwd`, `message`; com `error`,
 ao gravar, só registra no stderr e sai normalmente — um hook nunca deve
 derrubar a sessão do Claude. Sem `--pid` (exec form não tem `$PPID`) ele usa o
 processo pai, mas só se for um executável `claude`; senão grava `pid: 0`.
+Com `--agent` diferente de `claude`, grava sempre `pid: 0`.
 `--kind` só vale com `waiting`; valor desconhecido é descartado (espera genérica).
 `--if-waiting` só grava se o arquivo da sessão estiver em `waiting`; senão (ou
 sem arquivo) sai 0 sem tocar nele.
