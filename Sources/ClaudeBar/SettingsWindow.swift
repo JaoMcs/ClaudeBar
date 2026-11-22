@@ -19,7 +19,7 @@ enum SettingsWindow {
             let window = NSWindow(contentViewController: NSHostingController(
                 rootView: SettingsView(notifier: notifier)
             ))
-            window.title = String(localized: "ClaudeBar Settings")
+            window.title = String(localized: "Awaitbar Settings")
             window.styleMask = [.titled, .closable]
             // Quem mantém a janela viva é a referência acima; sem isso o
             // `close()` a liberaria por conta própria.
@@ -92,12 +92,12 @@ private struct SettingsView: View {
                 if let loginError {
                     Text(loginError).font(.caption).foregroundStyle(.red)
                 }
-                Button("About ClaudeBar") {
+                Button("About Awaitbar") {
                     // O clique veio desta janela, então o app já está ativo e o
                     // painel nasce na frente. Nome e versão passados à mão: sem
                     // bundle (`swift run`) não há Info.plist.
                     NSApplication.shared.orderFrontStandardAboutPanel(options: [
-                        .applicationName: "ClaudeBar",
+                        .applicationName: "Awaitbar",
                         .applicationVersion: Bundle.main.object(
                             forInfoDictionaryKey: "CFBundleShortVersionString"
                         ) as? String ?? "dev",

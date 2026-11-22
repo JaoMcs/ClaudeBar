@@ -1,13 +1,14 @@
 #!/bin/bash
-# Instala o ClaudeBar em ~/Applications e registra os hooks no
+# Instala o Awaitbar em ~/Applications e registra os hooks no
 # ~/.claude/settings.json pelo próprio claudebar-hook: mostra a prévia, mexe só
-# nas entradas do ClaudeBar e guarda backup em ~/.claude/claudebar/backups.
+# nas entradas do Awaitbar e guarda backup em ~/.claude/claudebar/backups.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 APP_DIR="$HOME/Applications"
-APP="$APP_DIR/ClaudeBar.app"
+APP="$APP_DIR/Awaitbar.app"
+OLD_APP="$APP_DIR/ClaudeBar.app"
 HOOK="$APP/Contents/MacOS/claudebar-hook"
 
 ./scripts/build-app.sh
@@ -15,7 +16,7 @@ HOOK="$APP/Contents/MacOS/claudebar-hook"
 echo "==> Instalando em $APP"
 mkdir -p "$APP_DIR"
 rm -rf "$APP"
-cp -R build/ClaudeBar.app "$APP"
+cp -R build/Awaitbar.app "$APP"
 
 echo "==> Prévia das mudanças no ~/.claude/settings.json"
 "$HOOK" install --dry-run
@@ -24,6 +25,18 @@ if [[ "$resposta" =~ ^[sS]$ ]]; then
   "$HOOK" install
 else
   echo "Hooks não registrados. Rode \"$HOOK\" install quando quiser."
+fi
+
+# Migra do nome antigo: o install novo reaponta os hooks que estavam dentro do
+# app velho; só depois o app velho some.
+if [[ -d "$OLD_APP" ]]; then
+  echo "==> Migrando do ClaudeBar"
+  if [[ "${resposta:-}" =~ ^[sS]$ ]]; then
+    pkill -x ClaudeBar || true
+    rm -rf "$OLD_APP"
+  else
+    echo "$OLD_APP mantido: hooks antigos ainda podem apontar para ele. Aplique o install e apague-o."
+  fi
 fi
 
 echo "==> Abrindo o app"

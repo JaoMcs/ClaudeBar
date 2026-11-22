@@ -19,7 +19,7 @@ Rode antes de qualquer release. Faça backup do `~/.claude/settings.json` antes.
 |---|---|---|
 | Nome definitivo: **Awaitbar** (decidido) | — | Troca de nome e bundle id na T37. O diretório de estado `~/.claude/claudebar` e o `claudebar-hook` ficam para o PR do multiagente, para não quebrar hooks instalados. |
 | Apple Developer ID + notarização | Gatekeeper sem "Abrir Mesmo Assim", notificação nativa, abrir no login estável, Homebrew, Automação estável | **Decidido: assinar.** Assinar o Apple Developer Program (US$ 99/ano), criar o certificado "Developer ID Application" e uma credencial do `notarytool` (app-specific password ou API key). Depois: script de assinatura e notarização lendo as credenciais de variáveis de ambiente. Assim que o certificado existir, avisar o Claude para fazer o script. |
-| Publicar release | download pronto | Depois de nome + licença (de preferência depois da notarização): `./scripts/make-dmg.sh` gera `dist/ClaudeBar-<versão>.dmg` e o `.sha256`. Criar a tag `v<VERSION>` e anexar os dois arquivos ao release no GitHub. |
+| Publicar release | download pronto | Depois de nome + licença (de preferência depois da notarização): `./scripts/make-dmg.sh` gera `dist/Awaitbar-<versão>.dmg` e o `.sha256`. Criar a tag `v<VERSION>` e anexar os dois arquivos ao release no GitHub. |
 | Tap do Homebrew | instalar com `brew` | Depois do nome e da notarização: criar o repo `homebrew-tap` e um cask apontando para o DMG do release, com o SHA-256. O cask `claudebar` já existe no Homebrew (outro app). |
 | GIF do README | adoção | Gravar uns 10 s do app em uso: barra mudando de estado, menu aberto, popup, clique levando à sessão. Pôr no topo dos dois READMEs. |
 
@@ -28,7 +28,7 @@ Rode antes de qualquer release. Faça backup do `~/.claude/settings.json` antes.
 | Item | Para quê | Próximo passo |
 |---|---|---|
 | Automação por terminal | ir para a aba exata (Terminal, iTerm2, Ghostty), F30 no `ROADMAP.md` | Só quando o F30 for feito: aprovar o prompt de Automação em cada terminal com o build assinado. Com ad-hoc o macOS pede de novo a cada build. Hoje o app não usa Automação. |
-| Payload real de pausa por limite | mostrar o motivo da pausa (F33) | Com o statusline do ClaudeBar instalado, bater o limite de uso e guardar o JSON que chega no `Notification` ou no `StopFailure` (tirar dados pessoais antes de colar numa issue). |
+| Payload real de pausa por limite | mostrar o motivo da pausa (F33) | Com o statusline do Awaitbar instalado, bater o limite de uso e guardar o JSON que chega no `Notification` ou no `StopFailure` (tirar dados pessoais antes de colar numa issue). |
 
 ## 4. Já resolvido pelo dono (22 nov 2026)
 

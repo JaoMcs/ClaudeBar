@@ -28,6 +28,6 @@ jobs:
         run: ./scripts/build-app.sh
       - name: Conferir o bundle (ícone e assinatura)
         run: |
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' build/ClaudeBar.app/Contents/Info.plist)" = AppIcon
-          test -s build/ClaudeBar.app/Contents/Resources/AppIcon.icns
-          codesign --verify --deep --strict build/ClaudeBar.app
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' build/Awaitbar.app/Contents/Info.plist)" = AppIcon
+          test -s build/Awaitbar.app/Contents/Resources/AppIcon.icns
+          codesign --verify --deep --strict build/Awaitbar.app

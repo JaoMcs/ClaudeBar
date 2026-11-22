@@ -133,7 +133,7 @@ struct MenuContent: View {
             store.hookSetup.refresh()
         }
 
-        Button("Quit ClaudeBar") {
+        Button("Quit Awaitbar") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")

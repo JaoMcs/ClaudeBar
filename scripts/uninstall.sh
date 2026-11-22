@@ -1,15 +1,17 @@
 #!/bin/bash
-# Remove o ClaudeBar: tira só as entradas dele do settings.json (com backup),
+# Remove o Awaitbar (e o ClaudeBar antigo, se sobrar): tira só as entradas dele do settings.json (com backup),
 # fecha o app e apaga o bundle. Estado e backups ficam em ~/.claude/claudebar.
 set -euo pipefail
 
 HOOK="$HOME/.claude/claudebar/bin/claudebar-hook"
+[[ -x "$HOOK" ]] || HOOK="$HOME/Applications/Awaitbar.app/Contents/MacOS/claudebar-hook"
 [[ -x "$HOOK" ]] || HOOK="$HOME/Applications/ClaudeBar.app/Contents/MacOS/claudebar-hook"
 
 # Statusline antes: com ele ainda apontando para o hook, o `uninstall` mantém o executável.
 "$HOOK" uninstall --statusline
 "$HOOK" uninstall
+pkill -x Awaitbar || true
 pkill -x ClaudeBar || true
-rm -rf "$HOME/Applications/ClaudeBar.app"
+rm -rf "$HOME/Applications/Awaitbar.app" "$HOME/Applications/ClaudeBar.app"
 
 echo "Removido. Backups do settings.json em ~/.claude/claudebar/backups (apague à mão se quiser)."

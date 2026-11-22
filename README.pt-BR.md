@@ -1,7 +1,14 @@
-# ClaudeBar
+# Awaitbar
+
+Status na barra de menu para sessões do Claude Code.
 
 App nativo de barra de menu do macOS que mostra se o Claude Code terminou de
 processar — em todas as sessões abertas ao mesmo tempo.
+
+> **Antes ClaudeBar.** O app tem um bundle id novo
+> (`io.github.jaomcs.awaitbar`): os Ajustes começam do padrão e "Abrir ao iniciar
+> sessão no Mac" precisa ser ligado de novo. O `./scripts/install.sh` migra os hooks
+> antigos e remove o `ClaudeBar.app`.
 
 ```
 🔸 2      ← duas sessões abertas, alguma querendo sua atenção
@@ -27,7 +34,7 @@ porque trava uma ferramenta que já está em andamento.
 
 > English version: [README.md](README.md). O app segue o idioma do Mac:
 > português (Brasil), ou inglês para qualquer outro idioma. Depois de trocar o
-> idioma do macOS, feche e abra o ClaudeBar de novo.
+> idioma do macOS, feche e abra o Awaitbar de novo.
 
 ## Requisitos
 
@@ -52,7 +59,7 @@ Semanal: 41% · renova sex., 09:00
 Atualizado há 3 min
 ──────────────
 [checkmark.circle.fill]             my-app — pronto (há 2 min)
-[ellipsis.circle]                   ClaudeBar · feat/x — processando (há 10 s)
+[ellipsis.circle]                   Awaitbar · feat/x — processando (há 10 s)
 [exclamationmark.triangle.fill]     api — falhou (há 1 min)
 [hand.raised.fill]                  infra — pede permissão (há 20 s)
 [questionmark.bubble.fill]          docs — fez uma pergunta (há 5 s)
@@ -68,7 +75,7 @@ Ajustes…                 ⌘,
 ──────────────
 Integração com o Claude Code: ok  ▸
 Atualizar
-Sair do ClaudeBar        ⌘Q
+Sair do Awaitbar        ⌘Q
 ```
 
 As linhas de limite vêm de `~/.claude/claudebar/limits.json`, gravado pelo
@@ -96,7 +103,7 @@ Cada linha mostra à esquerda o mesmo SF Symbol que a barra usa para aquele
 estado, e diz o estado em palavras (sem emoji). O submenu **O que os ícones
 significam** lista cada símbolo da barra com o significado.
 
-- **VoiceOver** — o item da barra lê, por exemplo, "ClaudeBar. Sessões: 2.
+- **VoiceOver** — o item da barra lê, por exemplo, "Awaitbar. Sessões: 2.
   Claude está esperando você"; os popups são anunciados (quando o VoiceOver
   permite anúncios de apps em segundo plano).
 
@@ -109,10 +116,10 @@ O submenu **Integração** mostra se os hooks estão no lugar e deixa você cuid
 deles sem o terminal. O título é o estado: `ok`, `hooks não instalados` ou
 `⚠︎ precisa de atenção`; a primeira linha lá dentro diz o que está errado.
 
-- **Instalar hooks… / Reinstalar hooks…** — registra os hooks do ClaudeBar e
+- **Instalar hooks… / Reinstalar hooks…** — registra os hooks do Awaitbar e
   copia o executável do hook para `~/.claude/claudebar/bin/`. Também é assim
   que se repara entrada faltando, desatualizada ou no formato antigo.
-- **Remover hooks…** — tira só as entradas do ClaudeBar e a cópia do
+- **Remover hooks…** — tira só as entradas do Awaitbar e a cópia do
   executável.
 - **Copiar JSON dos hooks** — aparece no lugar de instalar quando o
   `settings.json` é somente leitura (gerado por dotfiles, Nix…): copia o
@@ -198,7 +205,7 @@ conta que a resposta não veio:
   do macOS (toca ao escolher). Permissão e "esperando" dividem o mesmo som. O
   item **Notificações** do menu continua sendo o interruptor geral. A janela
   também tem **Abrir ao iniciar sessão no Mac** (desligado por padrão) e
-  **Sobre o ClaudeBar** (o painel padrão do macOS).
+  **Sobre o Awaitbar** (o painel padrão do macOS).
 
 #### Por que o popup é desenhado pelo app
 
@@ -248,7 +255,7 @@ até o primeiro app comum (terminal, editor, app desktop do Claude) e traz esse
 app para a frente. A sessão também fica marcada como vista.
 
 - **tmux:** dentro do tmux a árvore termina no servidor do tmux, então o
-  ClaudeBar acha o pane pelo TTY da sessão, troca o cliente anexado usado por
+  Awaitbar acha o pane pelo TTY da sessão, troca o cliente anexado usado por
   último para esse pane e traz o terminal desse cliente para a frente. Só o
   socket padrão é suportado, e precisa haver um terminal anexado.
 - **Traz a janela, não a aba.** Escolher a aba exata exigiria permissão de
@@ -328,7 +335,7 @@ Duas origens, cada uma boa no que a outra é ruim:
 claude agents --json ─────────────────────────┐
   (em evento de hook, na saída de processo    │
    e a cada 60 s; ≤ 1 chamada / 2 s)          │
-                                              ├──> ClaudeBar.app ──> 🔸 3
+                                              ├──> Awaitbar.app ──> 🔸 3
 Claude Code ──(hooks)──> claudebar-hook ──────┘
                             │       em que estado cada uma está
                             └─escreve─> ~/.claude/claudebar/<session_id>.json
@@ -415,7 +422,7 @@ seu shell.
 Package.swift                 SwiftPM, macOS 14, 3 targets + testes
 Sources/ClaudeBarCore/        modelo compartilhado + leitura/escrita do diretório de estado
   GitHead.swift               branch lida do .git/HEAD (pelo hook, nunca roda git)
-  HookInstaller.swift         põe/tira só os hooks do ClaudeBar no settings.json (diff, backup)
+  HookInstaller.swift         põe/tira só os hooks do Awaitbar no settings.json (diff, backup)
   RateLimits.swift            limites de uso 5 h/semanal tirados do JSON do statusline
   SessionNavigator.swift      árvore de processos → app, pane do tmux, ativação
   SessionStatus.swift         estado da sessão (working/idle/waiting/error), PID
@@ -443,7 +450,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
 Resources/*.lproj/            traduções (chave = texto em inglês; en.lproj vazio de propósito)
-scripts/build-app.sh          monta build/ClaudeBar.app (LSUIElement, assinado ad-hoc)
+scripts/build-app.sh          monta build/Awaitbar.app (LSUIElement, assinado ad-hoc)
 scripts/install.sh            instala em ~/Applications e registra os hooks
 scripts/uninstall.sh          remove os hooks (só os nossos) e o app
 scripts/make-dmg.sh           DMG universal + SHA-256 em dist/ (não publica nada)
@@ -455,10 +462,10 @@ VERSION                       versão do app (X.Y.Z), lida pelo build-app.sh
 ### Por um DMG
 
 1. Gere com `./scripts/make-dmg.sh` (Xcode completo, não só as Command Line
-   Tools). Ele grava `dist/ClaudeBar-<versão>.dmg` (arm64 + x86_64) e o
+   Tools). Ele grava `dist/Awaitbar-<versão>.dmg` (arm64 + x86_64) e o
    `.sha256` ao lado. Confira com
-   `cd dist && shasum -c ClaudeBar-<versão>.dmg.sha256`.
-2. Abra o DMG e **arraste o ClaudeBar para Aplicações antes de abrir**.
+   `cd dist && shasum -c Awaitbar-<versão>.dmg.sha256`.
+2. Abra o DMG e **arraste o Awaitbar para Aplicações antes de abrir**.
    Aberto direto do DMG, o macOS roda o app de um caminho aleatório e somente
    leitura (App Translocation).
 3. O app é assinado ad-hoc, sem notarização, então o macOS bloqueia a
@@ -467,7 +474,7 @@ VERSION                       versão do app (X.Y.Z), lida pelo build-app.sh
 4. Ao abrir, o app oferece registrar os hooks e mostra o diff antes (veja
    [Integração com o Claude Code](#integração-com-o-claude-code)). Pelo
    terminal:
-   `/Applications/ClaudeBar.app/Contents/MacOS/claudebar-hook install`.
+   `/Applications/Awaitbar.app/Contents/MacOS/claudebar-hook install`.
 
 ### Pelo código-fonte
 
@@ -478,14 +485,14 @@ VERSION                       versão do app (X.Y.Z), lida pelo build-app.sh
 O script:
 
 1. compila o app em release (`scripts/build-app.sh`),
-2. copia para `~/Applications/ClaudeBar.app`,
+2. copia para `~/Applications/Awaitbar.app`,
 3. mostra o diff do bloco `hooks` do `~/.claude/settings.json` e pergunta
    antes de aplicar (`claudebar-hook install`),
 4. abre o app.
 
 Bom saber:
 
-- Só as entradas do ClaudeBar mudam. Hooks seus nos mesmos eventos ficam,
+- Só as entradas do Awaitbar mudam. Hooks seus nos mesmos eventos ficam,
   inclusive no mesmo grupo. Rodar de novo diz que não há nada a mudar.
 - Antes de toda escrita, o arquivo antigo vai para um backup (`0600`) em
   `~/.claude/claudebar/backups/`. Se o `settings.json` não existe, ele é
@@ -503,7 +510,7 @@ Itens de Início. Depois de recompilar o app, ligue de novo.
 
 Os hooks não apontam para dentro do `.app`: rodam uma cópia em
 `~/.claude/claudebar/bin/claudebar-hook`. Mover, renomear ou apagar o
-`ClaudeBar.app` não os quebra. Depois de atualizar o app, a cópia fica mais
+`Awaitbar.app` não os quebra. Depois de atualizar o app, a cópia fica mais
 velha que a do bundle; o app detecta isso (e entradas ausentes, legadas ou
 desatualizadas, `settings.json` somente leitura, `disableAllHooks`) sem
 gravar nada, e oferece o reparo uma vez (veja
@@ -519,11 +526,11 @@ swift test                   # regras de merge, contagem, ícone, avisos, finali
 # muda o estado de uma sessão real (a primeira do CLI com pid)
 s=$(claude agents --json | jq -c '[.[] | select(.pid)][0]')
 echo "$s" | jq -c '{session_id: .sessionId, cwd}' | \
-  build/ClaudeBar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid "$(echo "$s" | jq .pid)"
+  build/Awaitbar.app/Contents/MacOS/claudebar-hook waiting --kind permission --pid "$(echo "$s" | jq .pid)"
 ```
 
 Para achar texto sem tradução:
-`build/ClaudeBar.app/Contents/MacOS/ClaudeBar -AppleLanguages '(pt-BR)' -NSShowNonLocalizedStrings YES`
+`build/Awaitbar.app/Contents/MacOS/Awaitbar -AppleLanguages '(pt-BR)' -NSShowNonLocalizedStrings YES`
 — o que faltar aparece EM MAIÚSCULAS. Texto novo de UI é escrito em inglês
 (é a chave) mais uma linha em `Resources/pt-BR.lproj/Localizable.strings`.
 
@@ -648,7 +655,7 @@ encerrar uma sessão não derruba a irmã.
   binário não está nos caminhos conhecidos. O `claudebar-hook statusline` roda
   o statusline que você já tinha com `/bin/sh -c`, mas esse comando é texto
   que você escreveu nos seus próprios settings e vai como um argumento só; o
-  ClaudeBar não acrescenta nada a ele.
+  Awaitbar não acrescenta nada a ele.
 - **Modo opcional "nunca mostrar conteúdo"** — veja [Avisos](#avisos).
 - **`message` é truncada em 200 caracteres** antes de ser exibida. Em falha,
   só o código e o detalhe do erro da API são gravados, nunca a resposta do
@@ -667,20 +674,20 @@ encerrar uma sessão não derruba a irmã.
 
 ### Confira você mesmo
 
-O ClaudeBar não abre conexão de rede. Um teste (`NoNetworkTests`) faz o
+O Awaitbar não abre conexão de rede. Um teste (`NoNetworkTests`) faz o
 `swift test` falhar se entrar código de rede em `Sources/`. Para conferir o
 app rodando:
 
-    lsof -i -a -c ClaudeBar                     # não imprime nada
-    nettop -p ClaudeBar -L 0 -t external -n     # só a linha de cabeçalho CSV; Ctrl-C para parar
+    lsof -i -a -c Awaitbar                     # não imprime nada
+    nettop -p Awaitbar -L 0 -t external -n     # só a linha de cabeçalho CSV; Ctrl-C para parar
 
-Com o Little Snitch: abra o Network Monitor e busque "ClaudeBar". Não deve
+Com o Little Snitch: abra o Network Monitor e busque "Awaitbar". Não deve
 aparecer conexão nenhuma.
 
-Atenção: o ClaudeBar roda `claude agents --json` (e `claude stop` quando você
+Atenção: o Awaitbar roda `claude agents --json` (e `claude stop` quando você
 encerra um subagente), além de comandos locais do `tmux` quando você vai até
 uma sessão dentro do tmux. Qualquer tráfego dos comandos do `claude` aparece
-como `claude`, não como ClaudeBar: é do Claude Code e segue as configurações
+como `claude`, não como Awaitbar: é do Claude Code e segue as configurações
 dele
 (https://code.claude.com/docs/en/data-usage#telemetry-services).
 
@@ -690,9 +697,9 @@ dele
 ./scripts/uninstall.sh
 ```
 
-Tira só os hooks e o statusline do ClaudeBar do `settings.json` (com backup; o
+Tira só os hooks e o statusline do Awaitbar do `settings.json` (com backup; o
 seu statusline anterior volta), fecha o app e
-apaga `~/Applications/ClaudeBar.app`. Sem o repositório:
+apaga `~/Applications/Awaitbar.app`. Sem o repositório:
 `~/.claude/claudebar/bin/claudebar-hook uninstall`. Estado e backups ficam em
 `~/.claude/claudebar`; apague a pasta à mão se quiser.
 

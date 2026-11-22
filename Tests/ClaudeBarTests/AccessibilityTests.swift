@@ -23,7 +23,7 @@ struct AccessibilityTests {
     /// sessões e o estado.
     @Test func rotuloDaBarraDizAppContagemEEstado() {
         let rotulo = BarState.waiting.accessibilityLabel(openSessions: 2)
-        #expect(rotulo.contains("ClaudeBar"))
+        #expect(rotulo.contains("Awaitbar"))
         #expect(rotulo.contains("2"))
         #expect(rotulo.contains(BarState.waiting.title))
     }
