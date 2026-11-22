@@ -20,6 +20,10 @@
 "Show limits in the Claude Code footer…" = "Mostrar limites no rodapé do Claude Code…";
 "Stop showing limits in the footer…" = "Parar de mostrar limites no rodapé…";
 "Test integration" = "Testar integração";
+"Copy diagnostics…" = "Copiar diagnóstico…";
+"Copy diagnostics?" = "Copiar diagnóstico?";
+"This text goes to the clipboard. No project name, folder, branch or message is included." = "Este texto vai para a área de transferência. Não inclui nome de projeto, pasta, branch nem mensagem.";
+"Copy" = "Copiar";
 
 /* Linhas do menu */
 "[subagent]" = "[subagente]";
