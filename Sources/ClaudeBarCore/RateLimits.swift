@@ -16,6 +16,12 @@ public struct RateWindow: Codable, Sendable, Equatable {
         Int(min(max(usedPercentage, 0), 100).rounded())
     }
 
+    /// Aviso único por janela: passou de `percent`, a janela ainda vale e ainda
+    /// não se avisou desta `resetsAt` (janela nova = `resetsAt` nova).
+    public func crossedThreshold(_ percent: Double, alertedWindow: Date?, now: Date) -> Bool {
+        usedPercentage >= percent && resetsAt > now && alertedWindow != resetsAt
+    }
+
     enum CodingKeys: String, CodingKey {
         case usedPercentage = "used_percentage"
         case resetsAt = "resets_at"

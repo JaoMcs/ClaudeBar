@@ -155,3 +155,8 @@
 "About Awaitbar" = "Sobre o Awaitbar";
 "No network, no login. Doesn't read your conversations." = "Sem rede, sem login. Não lê suas conversas.";
 "Could not change it: %@" = "Não foi possível mudar: %@";
+"5 h limit is running out" = "O limite de 5 h está acabando";
+"Your 5 h limit is almost reached" = "Seu limite de 5 h está quase no fim";
+"5 h limit at %lld%%" = "Limite de 5 h em %lld%%";
+"Alert when the 5 h limit passes" = "Avisar quando o limite de 5 h passar de";
+"%lld%%" = "%lld%%";

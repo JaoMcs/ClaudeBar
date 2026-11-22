@@ -194,6 +194,7 @@ private struct HUDView: View {
         case .permission: "hand.raised.fill"
         case .question: "questionmark.bubble.fill"
         case .failed: "exclamationmark.triangle.fill"
+        case .limit: "gauge.with.dots.needle.67percent"
         }
     }
 
@@ -201,7 +202,7 @@ private struct HUDView: View {
         switch alert {
         case .finished: .green
         case .waiting, .permission, .question: .orange
-        case .failed: .red
+        case .failed, .limit: .red
         }
     }
 }

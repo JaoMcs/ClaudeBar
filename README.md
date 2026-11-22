@@ -81,7 +81,8 @@ The limit lines come from `~/.claude/claudebar/limits.json`, written by
 `claudebar-hook statusline` (see [Command line](#command-line)).
 Without data they read *unavailable*, never 0%. A window that already reset
 reads *reset, waiting for new data* until the next Claude Code reply brings a
-fresh number. The age is not a live clock: it is computed when the menu is
+fresh number. Optionally (**Settings…**, off by default) the app warns once per
+5 h window when usage passes a percentage you pick (50–95%, default 80%). The age is not a live clock: it is computed when the menu is
 built and does not tick while the menu stays open.
 
 Each session row opens a submenu with:

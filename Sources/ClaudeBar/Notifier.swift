@@ -20,6 +20,8 @@ enum Alert {
     /// A resposta falhou por erro de API (limite, sobrecarga…): o turno acabou
     /// sem o "terminou" que você esperava.
     case failed
+    /// O uso da janela de 5 h passou do percentual escolhido nos Ajustes.
+    case limit
 
     init(waiting kind: WaitKind?) {
         self = switch kind {
@@ -36,6 +38,7 @@ enum Alert {
         case .permission: String(localized: "Claude asks for permission")
         case .question: String(localized: "Claude asked a question")
         case .failed: String(localized: "Claude's reply failed")
+        case .limit: String(localized: "5 h limit is running out")
         }
     }
 
@@ -43,7 +46,7 @@ enum Alert {
     var staysUntilAnswered: Bool {
         switch self {
         case .waiting, .permission, .question: true
-        case .finished, .failed: false
+        case .finished, .failed, .limit: false
         }
     }
 
@@ -59,6 +62,7 @@ enum Alert {
         case .waiting, .permission: "Submarine"
         case .question: "Purr"
         case .failed: "Basso"
+        case .limit: "Funk"
         }
     }
 
@@ -69,6 +73,7 @@ enum Alert {
         case .finished: "notifyFinished"
         case .waiting, .permission, .question: "notifyWaiting"
         case .failed: "notifyFailed"
+        case .limit: "notifyLimit"
         }
     }
 
@@ -80,6 +85,7 @@ enum Alert {
         case .waiting, .permission: "soundWaiting"
         case .question: "soundQuestion"
         case .failed: "soundFailed"
+        case .limit: "soundLimit"
         }
     }
 
@@ -87,7 +93,7 @@ enum Alert {
     /// ser o que repete enquanto você não responde.
     var volume: Float {
         switch self {
-        case .finished, .failed: 1
+        case .finished, .failed, .limit: 1
         case .waiting, .permission, .question: 0.75
         }
     }
@@ -124,6 +130,8 @@ final class Notifier {
     static let reminderEnabledKey = "waitingReminderEnabled"
     static let reminderMinutesKey = "waitingReminderMinutes"
     static let hideContentKey = "hideContent"
+    static let limitThresholdKey = "limitAlertThreshold"
+    private static let limitAlertedWindowKey = "limitAlertedWindow"
 
     /// Sons do sistema, sem extensão — é como o `NSSound(named:)` prefere o nome.
     /// Lidos do disco para acompanhar o que o macOS instalado tiver.
@@ -151,10 +159,13 @@ final class Notifier {
             Self.enabledKey: true, Self.soundEnabledKey: true,
             Self.reminderEnabledKey: true, Self.reminderMinutesKey: 5,
         ]
-        for alert in [Alert.finished, .waiting, .permission, .question, .failed] {
+        for alert in [Alert.finished, .waiting, .permission, .question, .failed, .limit] {
             padroes[alert.enabledKey] = true
             padroes[alert.soundKey] = alert.soundName
         }
+        // Aviso de limite é opt-in: o único que nasce desligado.
+        padroes[Alert.limit.enabledKey] = false
+        padroes[Self.limitThresholdKey] = 80
         defaults.register(defaults: padroes)
         isEnabled = defaults.bool(forKey: Self.enabledKey)
 
@@ -183,6 +194,19 @@ final class Notifier {
     /// "Nunca mostrar o conteúdo da mensagem". Lido na hora, sem cópia, para
     /// valer no próximo aviso sem reiniciar.
     var hidesContent: Bool { defaults.bool(forKey: Self.hideContentKey) }
+
+    /// Aviso do limite de 5 h ligado nos Ajustes (e notificações ligadas no menu).
+    var isLimitAlertEnabled: Bool { isEnabled && defaults.bool(forKey: Alert.limit.enabledKey) }
+
+    /// Percentual dos Ajustes a partir do qual avisar.
+    var limitThreshold: Double { Double(defaults.integer(forKey: Self.limitThresholdKey)) }
+
+    /// `resetsAt` da janela de 5 h que já avisou. Persiste: reabrir o app na
+    /// mesma janela não repete o aviso.
+    var limitAlertedWindow: Date? {
+        get { defaults.object(forKey: Self.limitAlertedWindowKey) as? Date }
+        set { defaults.set(newValue, forKey: Self.limitAlertedWindowKey) }
+    }
 
     /// Minutos até o lembrete, nunca menos de 1.
     var reminderMinutes: Int { max(defaults.integer(forKey: Self.reminderMinutesKey), 1) }

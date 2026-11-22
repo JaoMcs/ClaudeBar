@@ -123,6 +123,21 @@ final class SessionStore {
         exitWatcher?.watch(Set(merged.compactMap(\.pid)))
         // Mesmo diretório do watcher: `limits.json` novo também chega aqui.
         limits = StatusDirectory.readLimits()
+        alertLimit()
+    }
+
+    /// Um aviso por janela de 5 h quando o uso passa do percentual dos Ajustes.
+    private func alertLimit() {
+        guard notifier.isLimitAlertEnabled, let window = limits?.fiveHour,
+              window.crossedThreshold(notifier.limitThreshold, alertedWindow: notifier.limitAlertedWindow, now: Date())
+        else { return }
+        notifier.limitAlertedWindow = window.resetsAt
+        notifier.post(
+            .limit,
+            body: notifier.hidesContent
+                ? String(localized: "Your 5 h limit is almost reached")
+                : String(localized: "5 h limit at \(window.displayPercent)%")
+        )
     }
 
     /// Pergunta ao CLI quais sessões existem e recalcula as linhas.

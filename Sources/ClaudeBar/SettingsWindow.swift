@@ -48,6 +48,8 @@ private struct SettingsView: View {
     @AppStorage(Notifier.soundEnabledKey) private var soundEnabled = true
     @AppStorage(Notifier.reminderEnabledKey) private var reminderEnabled = true
     @AppStorage(Notifier.reminderMinutesKey) private var reminderMinutes = 5
+    @AppStorage(Alert.limit.enabledKey) private var notifyLimit = false
+    @AppStorage(Notifier.limitThresholdKey) private var limitThreshold = 80
     @AppStorage(Notifier.hideContentKey) private var hideContent = false
     @AppStorage(Alert.finished.soundKey) private var soundFinished = Alert.finished.soundName
     @AppStorage(Alert.waiting.soundKey) private var soundWaiting = Alert.waiting.soundName
@@ -66,6 +68,9 @@ private struct SettingsView: View {
                 Toggle("Remind once if still waiting", isOn: $reminderEnabled)
                 Stepper("After \(reminderMinutes) min", value: $reminderMinutes, in: 1...60)
                     .disabled(!reminderEnabled)
+                Toggle("Alert when the 5 h limit passes", isOn: $notifyLimit)
+                Stepper("\(limitThreshold)%", value: $limitThreshold, in: 50...95, step: 5)
+                    .disabled(!notifyLimit)
                 Toggle("Never show the message content", isOn: $hideContent)
                 Text("The alert only says \"<project> needs you\". Useful when sharing your screen.")
                     .font(.caption).foregroundStyle(.secondary)
