@@ -188,6 +188,7 @@ struct StatusLineInstallTests {
         let backups = folder.appendingPathComponent("backups")
         let original = folder.appendingPathComponent("state/statusline-original.json")
         let binary = folder.appendingPathComponent("bin/claudebar-hook").path
+        let gemini = folder.appendingPathComponent("gemini.json")
         try Data(#"{"statusLine":{"type":"command","command":"~/x.sh","padding":2}}"#.utf8).write(to: settings)
         func statusLine() throws -> NSDictionary? {
             let root = try JSONSerialization.jsonObject(with: Data(contentsOf: settings)) as? [String: Any]
@@ -195,7 +196,7 @@ struct StatusLineInstallTests {
         }
         let before = try statusLine()
 
-        let install = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
+        let install = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original, gemini: gemini)
         #expect(install.diff.contains("statusline"))
         #expect(install.binaryInUse)
         try HookInstaller.apply(install, backups: backups, original: original)
@@ -207,19 +208,19 @@ struct StatusLineInstallTests {
         #expect(saved.map { NSDictionary(dictionary: $0) } == before)
 
         // Instalar de novo: nada a mudar, e o original fica intacto.
-        let again = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original)
+        let again = try HookInstaller.plan(.installStatusLine, settings: settings, binary: binary, original: original, gemini: gemini)
         #expect(!again.hasChanges)
 
         // Com os hooks ainda instalados o executável fica; sem eles, sai.
-        let hooks = try HookInstaller.plan(.install, settings: settings, binary: binary, original: original)
+        let hooks = try HookInstaller.plan(.install, settings: settings, binary: binary, original: original, gemini: gemini)
         try HookInstaller.apply(hooks, backups: backups, original: original)
-        #expect(try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original).binaryInUse)
+        #expect(try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original, gemini: gemini).binaryInUse)
         try HookInstaller.apply(
-            try HookInstaller.plan(.uninstall, settings: settings, binary: binary, original: original),
+            try HookInstaller.plan(.uninstall, settings: settings, binary: binary, original: original, gemini: gemini),
             backups: backups, original: original
         )
 
-        let uninstall = try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original)
+        let uninstall = try HookInstaller.plan(.uninstallStatusLine, settings: settings, binary: binary, original: original, gemini: gemini)
         #expect(!uninstall.binaryInUse)
         try HookInstaller.apply(uninstall, backups: backups, original: original)
         #expect(try statusLine() == before)

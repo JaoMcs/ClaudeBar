@@ -47,7 +47,7 @@ enum SessionMerge {
                 guard agents != nil else { return true }
                 // Outro agente (Gemini) não aparece no `claude agents`: o CLI não
                 // prova nada sobre ele, e a linha vive pelos hooks dele.
-                if status.agent != nil { return true }
+                if status.agentName != "claude" { return true }
                 return status.pid > 0 && !listedPids.contains(status.pid)
             }
             .map { status in
