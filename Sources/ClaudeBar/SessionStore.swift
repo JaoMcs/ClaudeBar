@@ -2,6 +2,7 @@ import AppKit
 import ClaudeBarCore
 import Foundation
 import Observation
+import os
 
 /// Estado agregado de todas as sessões, que define o ícone na barra.
 enum BarState: CaseIterable {
@@ -100,10 +101,17 @@ final class SessionStore {
         merge()
         startWatching()
         refreshAgents()
-        // Depois do `init`: o alvo de eventos do app precisa existir. Falha aqui
-        // fica em silêncio; ligar de novo nos Ajustes mostra o motivo.
+        // Depois do `init`: o alvo de eventos do app precisa existir. Se falhar,
+        // registra no log e desliga a chave, para o toggle não mentir; ligar de
+        // novo nos Ajustes mostra o motivo.
         if UserDefaults.standard.bool(forKey: GlobalHotKey.enabledKey) {
-            Task { try? self.setGlobalHotKey(true) }
+            Task {
+                do { try self.setGlobalHotKey(true) } catch {
+                    Logger(subsystem: "com.joaomarcos.claudebar", category: "hotkey")
+                        .error("atalho global não registrado: \(String(describing: error), privacy: .public)")
+                    UserDefaults.standard.set(false, forKey: GlobalHotKey.enabledKey)
+                }
+            }
         }
     }
 
