@@ -100,6 +100,26 @@ final class SessionStore {
         merge()
         startWatching()
         refreshAgents()
+        // Depois do `init`: o alvo de eventos do app precisa existir. Falha aqui
+        // fica em silêncio; ligar de novo nos Ajustes mostra o motivo.
+        if UserDefaults.standard.bool(forKey: GlobalHotKey.enabledKey) {
+            Task { try? self.setGlobalHotKey(true) }
+        }
+    }
+
+    /// Liga ou desliga o atalho global (⌃⌥⌘N) para a próxima sessão esperando.
+    func setGlobalHotKey(_ enabled: Bool) throws {
+        guard enabled else { return GlobalHotKey.unregister() }
+        try GlobalHotKey.register { [weak self] in self?.goToNextWaiting() }
+    }
+
+    /// Mesma escolha do `claudebar-hook next`. Sem sessão esperando, nada
+    /// acontece: é um atalho, um alerta seria barulho.
+    func goToNextWaiting() {
+        let waiting = rows.filter { !$0.isSubagent && $0.state == .waiting && ($0.pid ?? 0) > 0 }
+        guard let row = SessionNavigator.oldest(waiting, updatedAt: { $0.updatedAt ?? .distantFuture }, id: \.sessionId)
+        else { return }
+        goToSession(row)
     }
 
     /// Recalcula as linhas a partir das duas origens já em memória/disco.

@@ -39,6 +39,18 @@ public enum SessionNavigator {
         return opened != nil
     }
 
+    /// Sessão que espera há mais tempo, com processo conhecido. Usada pelo
+    /// `claudebar-hook next` e pelo atalho global do app: os dois escolhem igual.
+    public static func nextWaiting(in sessions: [SessionStatus]) -> SessionStatus? {
+        oldest(sessions.filter { $0.state == .waiting && $0.pid > 0 }, updatedAt: \.updatedAt, id: \.sessionId)
+    }
+
+    /// Mais antigo por `updatedAt`; empate decidido pelo id, para não depender
+    /// da ordem da lista (a leitura do diretório não garante ordem).
+    public static func oldest<T>(_ items: [T], updatedAt: (T) -> Date, id: (T) -> String) -> T? {
+        items.min { (updatedAt($0), id($0)) < (updatedAt($1), id($1)) }
+    }
+
     // MARK: - Árvore de processos
 
     /// Primeiro ancestral (incluindo o próprio `pid`) que é um app com janela.
