@@ -10,6 +10,8 @@ root=$(git rev-parse --show-toplevel); cd "$root"
 git fetch -q origin
 w=$(mktemp -d)/wt
 git worktree add -q -b "$b" "$w" origin/main
+# Qualquer saída (pii, commit, pr-open falhando) apaga o worktree temporário criado aqui.
+trap 'cd "$root"; git worktree remove --force "$w" 2>/dev/null; git worktree prune' EXIT
 for f in "$@"; do mkdir -p "$w/$(dirname "$f")"; cp -R "$f" "$w/$f"; done
 cd "$w"
 scripts/dev/pii-check.sh "$@" >&2 || { echo "side-pr: dado pessoal suspeito, nada enviado" >&2; exit 1; }
@@ -18,5 +20,4 @@ git commit -q -m "$t
 
 Co-Authored-By: ${CLAUDE_MODEL_NAME:-Claude Opus 5.5} <noreply@anthropic.com>"
 n=$("$root/scripts/dev/pr-open.sh" "$t" "$body" | tail -1)
-cd "$root"; git worktree remove --force "$w"
 echo "$n"

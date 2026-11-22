@@ -13,7 +13,9 @@ for d in sys.argv[1:]:
     for meta in sorted(glob.glob(os.path.join(d, 'agent-*.meta.json'))):
         m = json.load(open(meta)); lab = m.get('description', '?'); mod = m.get('model', '?')
         i = cw = cr = o = 0
-        for line in open(meta.replace('.meta.json', '.jsonl')):
+        jl = meta.replace('.meta.json', '.jsonl')
+        if not os.path.exists(jl): continue
+        for line in open(jl):
             try: u = json.loads(line).get('message', {}).get('usage')
             except Exception: continue
             if not u: continue

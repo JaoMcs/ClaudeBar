@@ -20,11 +20,11 @@ Fonte: `scripts/dev/wf-report.sh` sobre os registros locais dos workflows. Mesma
 |---|---|---|---|
 | Implementador | 567 mil | 614 mil | +8% |
 | Revisor | 210 mil | 73 mil | **−65%** |
-| Corretor | 278 mil × 24 rodadas | 280 mil × 5 rodadas | **−79% em rodadas** |
+| Corretor | 278 mil; 0,73 rodada por task (24/33) | 280 mil; 0,5 rodada por task (5/10) | **−31% em rodadas por task** |
 | Merge | 99 mil | 13 mil | **−87%** |
-| **Total por task** | **~1,07 mi** | **~0,90 mi** | **−16%** |
+| **Total por task** | **~1,08 mi** (567+210+202+99) | **~0,84 mi** (614+73+140+13) | **−22%** |
 
-O implementador virou ~75% do custo. Revisor, corretor e merge já estão baratos.
+O implementador virou ~73% do custo. Revisor, corretor e merge já estão baratos.
 
 ## Achados
 
