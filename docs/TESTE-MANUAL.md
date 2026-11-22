@@ -67,7 +67,7 @@ Precisa de conta Pro, Max ou Ultra.
 4. Faça o Claude usar `AskUserQuestion` → símbolo de pergunta na hora e ainda pergunta 10 s depois. Anote o que o `ExitPlanMode` mostra. (#18)
 5. Erro de API real (ou rede cortada) → triângulo na barra, linha "failed" (falhou) com o código no submenu. **Mark as seen**, depois outra falha na mesma sessão → acende de novo. (#15)
 6. Sessão nova → aparece em menos de 1 s. `kill -9` no `claude` → some em menos de 1 s. Fechar a aba → some. (#17, #11)
-7. `/clear` → sem linha duplicada. `/compact` com a sessão trabalhando → **não** toca "Claude finished". Se tocar: tirar o `SessionStart` (ver `PENDENCIAS.md`). (#17)
+7. `/clear` → sem linha duplicada. `/compact` com a sessão trabalhando → **não** toca "Claude finished". Já conferido pelo dono em 22 nov 2026: não toca. Se um dia tocar, tirar o `SessionStart` de `HookInstaller.entries`. (#17)
 8. Sessão do app desktop do Claude continua listada. (#11)
 
 ## 5. Ir para a sessão (#21, #22, #23, #24)
