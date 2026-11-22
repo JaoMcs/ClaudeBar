@@ -10,6 +10,9 @@ App macOS de barra de menu (SwiftUI `MenuBarExtra`), SwiftPM sem Xcode project, 
 ## Orquestração
 Papéis, roteamento de modelo por complexidade (`scripts/dev/route.sh`), contexto mínimo e regras do revisor: `AGENTS.md`. Executar tasks: skill `task-loop`. Revisar PR: skill `review-pr`.
 
+## Scripts sem IA (`scripts/dev/`)
+Trabalho mecânico é script, não raciocínio: `route.sh` (modelo), `gates.sh` (build/testes), `pr-open.sh`, `ci-wait.sh`, `merge.sh`, `clean.sh`, `wt-prune.sh`, `pii-check.sh` (dado pessoal antes de publicar), `side-pr.sh` (PR sem trocar a branch do checkout), `install-local.sh` (build para o dono testar), `wf-report.sh` (tokens por papel). Prefira o script a refazer os passos à mão.
+
 ## Worktrees
 - Worktree de agente (`.claude/worktrees/`) é apagado assim que a task termina: o `merge.sh` chama `scripts/dev/wt-prune.sh` depois de cada merge, e o orquestrador roda o mesmo script quando um workflow acaba. Só ficam os com lock (agente ainda trabalhando).
 - Nunca deixe worktree próprio para trás: ao terminar, `git switch --detach` e saia; quem apaga é o prune.
