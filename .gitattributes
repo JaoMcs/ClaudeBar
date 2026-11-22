@@ -1,0 +1,5 @@
+# Arquivos que várias tasks tocam ao mesmo tempo: no rebase local as duas versões ficam (scripts/dev/docs-check.sh confere).
+README.md merge=union
+README.pt-BR.md merge=union
+Resources/*/Localizable.strings merge=union
+TODO.md merge=union
