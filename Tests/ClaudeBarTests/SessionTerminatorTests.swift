@@ -302,3 +302,36 @@ struct ShellTimeoutTests {
         #expect(saida == "oi")
     }
 }
+
+@Suite("Rótulo de onde a sessão roda")
+struct SessionHostTests {
+    @Test func lideraGrupoEhTerminal() {
+        #expect(SessionTerminator.hostKind(for: row(pid: 10), probe: terminalProbe) == .terminal)
+    }
+
+    @Test func foraDoGrupoEhAppDesktop() {
+        #expect(SessionTerminator.hostKind(for: row(pid: 10), probe: desktopProbe) == .desktopApp)
+    }
+
+    @Test func subagenteSemRotulo() {
+        let r = row(pid: 10, backgroundId: "bg", isSubagent: true)
+        #expect(SessionTerminator.hostKind(for: r, probe: terminalProbe) == nil)
+    }
+
+    @Test func semPidSemRotulo() {
+        #expect(SessionTerminator.hostKind(for: row(pid: 0), probe: terminalProbe) == nil)
+        #expect(SessionTerminator.hostKind(for: row(), probe: terminalProbe) == nil)
+    }
+
+    @Test func pidReciclado() {
+        let probe = ProcessProbe(isGroupLeader: { _ in true }, executablePath: { _ in "/bin/zsh" })
+        #expect(SessionTerminator.hostKind(for: row(pid: 10), probe: probe) == nil)
+    }
+
+    @Test func labelComESemRotulo() {
+        #expect(MenuContent.label(for: row(pid: 10), probe: terminalProbe).contains("· terminal"))
+        #expect(MenuContent.label(for: row(pid: 10), probe: desktopProbe).contains("· desktop app"))
+        let sem = MenuContent.label(for: row(), probe: terminalProbe)
+        #expect(!sem.contains("terminal") && !sem.contains("desktop app"))
+    }
+}

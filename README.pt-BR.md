@@ -311,6 +311,9 @@ Encerrar por ali derrubava mais de uma sessão de uma vez. O app agora usa
 `pgid == pid` como discriminador e simplesmente não oferece a opção para sessão
 hospedada — mostra o motivo no lugar do botão.
 
+A mesma regra põe o rótulo `desktop app` ou `terminal` em cada linha de sessão
+interativa (sem rótulo para subagente ou linha sem processo).
+
 Outras guardas no mesmo caminho:
 
 - **`SIGTERM`, não `SIGKILL`**: o Claude Code ainda fecha o transcript e roda o
