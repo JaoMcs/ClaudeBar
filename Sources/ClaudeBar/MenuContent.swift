@@ -175,6 +175,15 @@ struct MenuContent: View {
                 Button("Remove Gemini hooks…") { setup.review(.uninstall, gemini: true) }
             }
 
+            // Só com o Codex CLI instalado: nunca escreve em `~/.codex`.
+            if setup.codexDetected {
+                Divider()
+                Text(setup.codexConfigured
+                    ? String(localized: "Codex: configured")
+                    : String(localized: "Codex: not configured"))
+                Button("Copy Codex configuration…") { setup.copyCodexConfig() }
+            }
+
             Divider()
 
             Button("Test integration") {

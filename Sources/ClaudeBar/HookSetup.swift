@@ -10,6 +10,9 @@ final class HookSetup {
     private(set) var state: IntegrationState = .notInstalled
     /// Gemini CLI instalado: só então aparecem os itens dele no menu.
     private(set) var geminiDetected = false
+    /// Codex CLI instalado: mostra estado (só leitura) e configuração para copiar.
+    private(set) var codexDetected = false
+    private(set) var codexConfigured = false
     private let defaults = UserDefaults.standard
 
     /// Último estado já oferecido no launch: oferecer de novo só se mudar.
@@ -54,6 +57,8 @@ final class HookSetup {
     func refresh() {
         state = HookInstaller.state(bundledBinary: bundledBinary)
         geminiDetected = GeminiHooks.cliDetected()
+        codexDetected = CodexConfig.cliDetected()
+        codexConfigured = codexDetected && CodexConfig.isConfigured()
         // Voltou ao normal: a próxima quebra (ex.: atualização do app) pode ser oferecida.
         if state == .ok {
             defaults.removeObject(forKey: Self.offeredKey)
@@ -190,6 +195,22 @@ final class HookSetup {
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(HookInstaller.snippet(), forType: .string)
+        refresh()
+    }
+
+    /// Codex CLI: nunca escreve em `~/.codex/config.toml`; copia a linha TOML e
+    /// mostra onde colar.
+    func copyCodexConfig() {
+        if let bundledBinary {
+            try? HookInstaller.installBinary(from: bundledBinary)
+        }
+        let snippet = CodexConfig.snippet()
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(snippet, forType: .string)
+        report(
+            title: String(localized: "Codex configuration copied"),
+            message: String(localized: "Paste this line at the top level of \(CodexConfig.configURL.path):\n\n\(snippet)")
+        )
         refresh()
     }
 
