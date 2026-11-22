@@ -73,7 +73,7 @@ Registrar no `~/.gemini/settings.json` os 4 hooks acima, chamando o executável 
 
 ## Não verificado (declarar no PR)
 
-- Que o Gemini CLI executa `command` por shell e expande `$PPID` para o PID do próprio `gemini` (a doc só diz "shell command"). Se não expandir, o `pid` fica 0 e o "Ir para a sessão" não aparece para essas linhas.
+- Que o Gemini CLI executa `command` por shell (a doc só diz "shell command"). Sem `--pid`, a linha do Gemini fica com pid 0 e o "Ir para a sessão" não aparece para ela.
 - Que `~/.gemini/settings.json` aceita a chave `hooks` na versão do CLI instalada pelo dono (a doc não marca como experimental, mas também não afirma que vem ligado por padrão).
 
 ## Limitação conhecida (decisão do dono)
