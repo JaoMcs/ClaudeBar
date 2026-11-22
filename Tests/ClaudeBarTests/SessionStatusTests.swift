@@ -38,6 +38,39 @@ struct SessionStatusTests {
     }
 }
 
+@Suite("Agente da sessão")
+struct AgentFieldTests {
+    @Test func arquivoAntigoSemAgentVaiParaClaude() throws {
+        let json = #"{"sessionId":"s","state":"idle","cwd":"/tmp","pid":1,"updatedAt":0}"#
+        let status = try StatusDirectory.decoder.decode(SessionStatus.self, from: Data(json.utf8))
+        #expect(status.agent == nil)
+        #expect(status.agentName == "claude")
+    }
+
+    @Test func geminiFazRoundTrip() throws {
+        let original = SessionStatus(sessionId: "s", state: .idle, cwd: "/tmp", pid: 1, agent: "gemini")
+        let data = try StatusDirectory.encoder.encode(original)
+        let back = try StatusDirectory.decoder.decode(SessionStatus.self, from: data)
+        #expect(back.agentName == "gemini")
+    }
+
+    @Test func semAgentOuClaudeNaoGravaAChave() throws {
+        for agent in [nil, "claude"] {
+            let data = try StatusDirectory.encoder.encode(
+                SessionStatus(sessionId: "s", state: .working, cwd: "/tmp", pid: 1, agent: agent)
+            )
+            #expect(!String(decoding: data, as: UTF8.self).contains("agent"))
+        }
+    }
+
+    @Test func valorDesconhecidoDecodifica() throws {
+        let data = try StatusDirectory.encoder.encode(
+            SessionStatus(sessionId: "s", state: .idle, cwd: "/tmp", pid: 1, agent: "futuro-x")
+        )
+        #expect(try StatusDirectory.decoder.decode(SessionStatus.self, from: data).agentName == "futuro-x")
+    }
+}
+
 @Suite("Tipo da espera")
 struct WaitKindTests {
     private func status(_ state: SessionState, _ kind: WaitKind? = nil) -> SessionStatus {

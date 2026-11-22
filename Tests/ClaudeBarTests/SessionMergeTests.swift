@@ -124,6 +124,17 @@ struct SessionMergeTests {
         #expect(SessionMerge.openSessionCount(rows: rows) == 1)
     }
 
+    @Test func agentDoHookChegaNaLinhaEORotuloSoParaOutroAgente() throws {
+        let gemini = SessionStatus(sessionId: "g", state: .idle, cwd: "/tmp/a", pid: 1, agent: "gemini")
+        let claude = SessionStatus(sessionId: "c", state: .idle, cwd: "/tmp/b", pid: 2)
+        let rows = SessionMerge.rows(agents: [], statuses: [gemini, claude])
+        let g = try #require(rows.first { $0.sessionId == "g" })
+        let c = try #require(rows.first { $0.sessionId == "c" })
+        #expect(g.agent == "gemini")
+        #expect(MenuContent.label(for: g).hasPrefix("[gemini] "))
+        #expect(!MenuContent.label(for: c).contains("["))
+    }
+
     @Test func branchDoHookChegaNaLinha() throws {
         let comBranch = SessionStatus(
             sessionId: "aaaaaaaa-0000-0000-0000-000000000000",
