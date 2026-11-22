@@ -19,7 +19,7 @@ Stays Claude-only for now: `AgentsProbe` (`claude agents --json`) and
 
 ## Deprecated APIs
 
-- [ ] `NSApplication.shared.activate(ignoringOtherApps:)` (`SessionStore.swift`, 2 calls) is marked by Apple as "will be deprecated in a future release" (`API_TO_BE_DEPRECATED`, no compiler warning yet). Research the replacement (`NSApp.activate()` on macOS 14+, cooperative activation) and stop using it. New code must not use it either
+- [x] `NSApplication.shared.activate(ignoringOtherApps:)` (`SessionStore.swift`, 2 calls) is marked by Apple as "will be deprecated in a future release" (`API_TO_BE_DEPRECATED`, no compiler warning yet). Research the replacement (`NSApp.activate()` on macOS 14+, cooperative activation) and stop using it. New code must not use it either
 
 ## Housekeeping
 

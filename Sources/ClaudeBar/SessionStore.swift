@@ -260,7 +260,10 @@ final class SessionStore {
         alert.addButton(withTitle: String(localized: "Cancel"))
 
         // O app é accessory: sem ativar, o alerta nasce atrás das outras janelas.
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        // `activate()` é só um pedido (ativação cooperativa, o sistema pode
+        // negar), então a janela também sobe de nível.
+        alert.window.level = .floating
+        NSApplication.shared.activate()
         return alert.runModal() == .alertFirstButtonReturn
     }
 
@@ -269,7 +272,8 @@ final class SessionStore {
         alert.alertStyle = .warning
         alert.messageText = title
         alert.informativeText = message
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        alert.window.level = .floating
+        NSApplication.shared.activate()
         alert.runModal()
     }
 
