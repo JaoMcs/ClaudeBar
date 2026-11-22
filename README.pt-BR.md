@@ -127,6 +127,10 @@ deles sem o terminal. O título é o estado: `ok`, `hooks não instalados` ou
   `settings.json` é somente leitura (gerado por dotfiles, Nix…): copia o
   executável e põe o JSON do bloco `hooks` na área de transferência, para
   você colar na ferramenta que gera o arquivo.
+- **Copiar diagnóstico…** — mostra a prévia e, só no clique, copia um texto
+  curto para issue: versões do app e do macOS, estado da integração,
+  sessões por estado e os caminhos usados (home como `~`). Não entra nome de
+  projeto, pasta, branch nem mensagem.
 - **Testar integração** — um teste ponta a ponta e, no fim, o popup de
   exemplo. Responde "por que o ícone não muda?" com ✓/✗ para cada item: hooks
   registrados no `settings.json`; executável do hook presente; executável

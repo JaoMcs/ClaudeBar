@@ -174,6 +174,7 @@ struct MenuContent: View {
                 setup.selfTest(openSessions: store.openSessionCount)
                 store.notifier.showSample()
             }
+            Button("Copy diagnostics…") { setup.copyDiagnostics(rows: store.rows) }
         }
     }
 

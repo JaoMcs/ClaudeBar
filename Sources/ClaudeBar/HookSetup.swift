@@ -235,6 +235,33 @@ final class HookSetup {
         report(title: String(localized: "Integration test"), message: lines.joined(separator: "\n"))
     }
 
+    /// Mostra a prévia e só copia com o clique. Nada de `cwd`, projeto ou mensagem.
+    func copyDiagnostics(rows: [SessionRow]) {
+        var counts: [SessionState: Int] = [:]
+        for row in rows where !row.isSubagent { counts[row.state, default: 0] += 1 }
+        var text = Diagnostics.text(
+            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev",
+            osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+            integration: state,
+            counts: counts,
+            paths: [
+                ("settings", HookInstaller.settingsURL.path),
+                ("hook", HookInstaller.stableBinary.path),
+                ("status", StatusDirectory.url.path),
+            ],
+            home: NSHomeDirectory())
+        text += "\nSubagents: \(rows.filter(\.isSubagent).count)"
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Copy diagnostics?")
+        alert.informativeText = String(localized: "This text goes to the clipboard. No project name, folder, branch or message is included.")
+        alert.accessoryView = codeView(text)
+        alert.addButton(withTitle: String(localized: "Copy"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        guard runInFront(alert) == .alertFirstButtonReturn else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
     /// `nil`: não deu para conferir. Nunca vira ✓.
     private func check(_ passed: Bool?, _ text: String) -> String {
         guard let passed else { return "? " + String(localized: "\(text) (not verified)") }
