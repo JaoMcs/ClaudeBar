@@ -73,8 +73,12 @@
 | [T44](T44-hooks-gemini.md) | Multiagente 2/2: hooks do Gemini CLI | F53 (2/2) | Multiagente | T43 | `GeminiHooks.swift` (novo), `HookInstaller.swift`, `claudebar-hook/main.swift`, `HookSetup.swift`, `MenuContent.swift`, `GeminiHooksTests.swift` (novo), `TODO.md`, READMEs | 2,5 h | TODO |
 | [T45](T45-rotulo-desktop-terminal.md) | Rótulo app desktop × terminal na linha da sessão | F54 | Navegação | T19 | `SessionTerminator.swift`, `MenuContent.swift`, `.strings`, testes, READMEs | 1,5 h | TODO |
 | [T46](T46-ferramentas-processo.md) | Ferramentas do processo de agentes | — | Processo | — | `scripts/dev/*`, `impl-loop.js`, `.gitattributes`, `AGENTS.md` | 2,5 h | TODO |
+| [T47](T47-fechamento-docs.md) | Fechamento dos documentos T36–T46 | — | Processo | — | INDEX, RELATORIO-FINAL, PENDENCIAS, ROADMAP | 1 h | TODO (Antigravity) |
+| [T48](T48-codex-config.md) | Codex CLI: configuração para copiar | F53 | Multiagente | T43, T44 | `CodexConfig.swift` (novo), hook, menu, READMEs | 2,5 h | TODO (Antigravity) |
+| [T49](T49-pii-no-pr-open.md) | pii-check no pr-open e lint dos critérios | — | Processo | — | `pr-open.sh`, `task-lint.sh` | 1 h | TODO (Antigravity) |
+| [T50](T50-ctx-implementador.md) | ctx.sh para o implementador | — | Processo | — | `ctx.sh` (novo), `implementer.md`, `AGENTS.md` | 1,5 h | TODO (Antigravity) |
 
-Total: 46 tasks. Nenhuma BLOQUEADA.
+Total: 50 tasks. Nenhuma BLOQUEADA.
 
 ## Gates de todo PR (repetidos em cada task)
 
