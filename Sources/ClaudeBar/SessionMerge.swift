@@ -9,7 +9,7 @@ enum SessionMerge {
     /// O CLI manda em *quais* sessões existem; o hook, quando presente, manda no
     /// *estado* daquela sessão. Sessão que só os hooks conhecem entra do mesmo
     /// jeito, com duas exceções quando o CLI já respondeu (`agents != nil`):
-    /// - `pid 0`: sem processo para conferir, o CLI é a única prova de vida;
+    /// - `pid 0` do Claude: sem processo para conferir, o CLI é a única prova de vida;
     /// - PID que o CLI lista com outro `sessionId`: sobra de `/clear` ou
     ///   `/resume` cujo `SessionEnd` não rodou.
     ///
@@ -45,6 +45,9 @@ enum SessionMerge {
             .filter { !known.contains($0.sessionId) }
             .filter { status in
                 guard agents != nil else { return true }
+                // Outro agente (Gemini) não aparece no `claude agents`: o CLI não
+                // prova nada sobre ele, e a linha vive pelos hooks dele.
+                if status.agentName != "claude" { return true }
                 return status.pid > 0 && !listedPids.contains(status.pid)
             }
             .map { status in

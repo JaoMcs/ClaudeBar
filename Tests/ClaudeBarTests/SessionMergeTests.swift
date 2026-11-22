@@ -135,6 +135,14 @@ struct SessionMergeTests {
         #expect(!MenuContent.label(for: c).contains("["))
     }
 
+    /// Arquivo gravado com `"agent":"claude"` (decodificado, sem a normalização
+    /// do `init`) segue a regra do PID 0 como qualquer Claude.
+    @Test func agentClaudeComPidZeroSai() throws {
+        let json = #"{"sessionId":"x","state":"idle","cwd":"/tmp","pid":0,"updatedAt":0,"agent":"claude"}"#
+        let status = try JSONDecoder().decode(SessionStatus.self, from: Data(json.utf8))
+        #expect(SessionMerge.rows(agents: [], statuses: [status]).isEmpty)
+    }
+
     @Test func branchDoHookChegaNaLinha() throws {
         let comBranch = SessionStatus(
             sessionId: "aaaaaaaa-0000-0000-0000-000000000000",
