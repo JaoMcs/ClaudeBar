@@ -33,7 +33,7 @@ O orquestrador pode subir um nível (nunca descer) quando a task escreve em arqu
 
 - Subagente recebe **só a task dele**: caminho do `.md` da task, branch e o que precisa devolver. Nada de plano mestre, histórico da conversa, outras tasks ou resultados de outros agentes.
 - Ele lê o que precisa sozinho (task → spec citada → código). Ninguém cola arquivo inteiro no prompt; passa o caminho.
-- `.planning/` é excluída do git e **não existe nos worktrees**: sempre caminho absoluto a partir da raiz do clone principal.
+- `planning/` é versionada e existe em todo worktree: use caminho relativo à raiz do repo.
 - O revisor não recebe o raciocínio nem o resumo do implementador, só o PR. Revisão independente = contexto independente.
 
 ## Revisor: só revisa
@@ -47,7 +47,7 @@ Severidades: `BL` bloqueante (bug, regressão de garantia, critério de aceite n
 1. `route.sh` → modelo.
 2. Implementador: `git fetch -q origin && git switch -c <branch> origin/main` → código + testes → `scripts/dev/gates.sh` → commit → `scripts/dev/pr-open.sh`.
 3. Revisor → achados.
-4. Corretor só se houver `BL` ou `SG`, ou CI vermelho. Só `NIT` não abre rodada. No máximo 2 rodadas.
+4. Corretor só se houver `BL` ou `SG`, ou CI vermelho. Só `NIT` não abre rodada. No máximo 2 rodadas. Depois da correção não há nova revisão: o merge confia no CI verde e no `blno` (quantos BL o corretor recusou).
 5. Merge (`scripts/dev/merge.sh <pr> <Txx>`) **só** se: CI verde e nenhum `BL` recusado pelo corretor. `BL` recusado (ex.: precisa de teste manual na tela) = task `AGUARDA-USUARIO`, PR aberto, o lote para.
 6. Entre lotes: `scripts/dev/clean.sh`.
 

@@ -23,7 +23,7 @@ Severidade: `BL` bloqueante · `SG` sugestão · `NIT`.
 Brief:
 ```
 ROLE:impl T:T19 B:feat/ir-para-sessao
-SRC:/abs/.planning/06-tasks/T19-ir-para-sessao.md
+SRC:/abs/planning/06-tasks/T19-ir-para-sessao.md
 RET:{"ok":1,"pr":0,"nv":""}
 ```
 Retorno: `{"ok":1,"pr":21,"nv":"tmux;iterm2;foco real"}`

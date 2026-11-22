@@ -4,7 +4,7 @@
 # Pontos: esforço (0-2) + arquivos citados (0-2) + risco (0-2) - 1 se não toca Sources/.
 # 0-1 haiku · 2-3 sonnet · >=4 opus. ponytail: heurística por texto; recalibrar se errar de modelo.
 set -eu
-RISCO='settings\.json|MainActor|concorr|sysctl|Process\(|NSPanel|NSWindow|SMAppService|tmux|codesign|notariz|statusLine|kill|SIGTERM|DispatchSource|segurança'
+RISCO='settings\.json|MainActor|concorr|sysctl|Process\(|NSPanel|NSWindow|SMAppService|tmux|codesign|notariz|statusLine|SIGTERM|DispatchSource|segurança'
 for f in "$@"; do
   e=$(grep -o 'Esforço:\*\* [0-9,]*' "$f" | grep -o '[0-9,]*$' | tr ',' '.' || true)
   e=${e:-1}
