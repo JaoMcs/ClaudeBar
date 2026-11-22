@@ -72,8 +72,9 @@
 | [T43](T43-campo-agent.md) | Multiagente 1/2: campo `agent` e rótulo no menu | F53 (1/2) | Multiagente | — | `SessionStatus.swift`, `claudebar-hook/main.swift`, `SessionRow.swift`, `SessionMerge.swift`, `MenuContent.swift`, testes, READMEs | 2 h | TODO |
 | [T44](T44-hooks-gemini.md) | Multiagente 2/2: hooks do Gemini CLI | F53 (2/2) | Multiagente | T43 | `GeminiHooks.swift` (novo), `HookInstaller.swift`, `claudebar-hook/main.swift`, `HookSetup.swift`, `MenuContent.swift`, `GeminiHooksTests.swift` (novo), `TODO.md`, READMEs | 2,5 h | TODO |
 | [T45](T45-rotulo-desktop-terminal.md) | Rótulo app desktop × terminal na linha da sessão | F54 | Navegação | T19 | `SessionTerminator.swift`, `MenuContent.swift`, `.strings`, testes, READMEs | 1,5 h | TODO |
+| [T46](T46-ferramentas-processo.md) | Ferramentas do processo de agentes | — | Processo | — | `scripts/dev/*`, `impl-loop.js`, `.gitattributes`, `AGENTS.md` | 2,5 h | TODO |
 
-Total: 45 tasks. Nenhuma BLOQUEADA.
+Total: 46 tasks. Nenhuma BLOQUEADA.
 
 ## Gates de todo PR (repetidos em cada task)
 
