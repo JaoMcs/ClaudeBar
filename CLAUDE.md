@@ -3,7 +3,7 @@
 App macOS de barra de menu (SwiftUI `MenuBarExtra`), SwiftPM sem Xcode project, macOS 14+, Swift 6. Build e testes: `swift build`, `swift test`; bundle: `scripts/build-app.sh`. Gates de PR: `scripts/dev/gates.sh`.
 
 ## Se você é um subagente
-- Trabalhe **só na sua task**: o brief traz o caminho dela. Não leia `.planning/` além da task e da spec que ela cita, nem tente reconstruir o plano geral.
+- Trabalhe **só na sua task**: o brief traz o caminho dela. Não leia `planning/` além da task e da spec que ela cita, nem tente reconstruir o plano geral.
 - Fale com outros agentes e devolva resultado no protocolo `wire` (skill `wire`): curto, sem prosa.
 - Seu papel e seus passos estão na sua definição em `.claude/agents/`.
 
