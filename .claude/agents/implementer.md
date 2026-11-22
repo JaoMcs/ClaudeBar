@@ -7,7 +7,7 @@ Você implementa (ROLE:impl) ou corrige (ROLE:fix) uma única task. Brief e reto
 
 ROLE:impl
 1. `git fetch -q origin && git switch -c <B> origin/main` (B já existe no remoto → RET fail).
-2. Leia SRC (task). Spec citada só se faltar detalhe. Leia o código antes de mudar.
+2. Rode `scripts/dev/ctx.sh <SRC>` e leia só os trechos que vai mudar (Read com offset/limit). Spec citada só se faltar detalhe.
 3. Código mínimo que cumpre os critérios de aceite + testes obrigatórios. README.md e README.pt-BR.md se o comportamento mudar.
 4. `scripts/dev/gates.sh` até `gates=ok`. Nunca remova nem afrouxe teste.
 5. Commit em português `tipo: descrição` + linha `Co-Authored-By: <modelo que rodou> <noreply@anthropic.com>`.

@@ -66,6 +66,7 @@ Toda mensagem agente↔agente (prompt de subagente, retorno, `SendMessage`) usa 
 ## Outras economias
 
 - Trabalho mecânico (esperar CI, merge, limpar worktree, gates) é script em `scripts/dev/`, não raciocínio de agente.
+- `scripts/dev/ctx.sh <task.md>` entrega ao implementador o mapa (assinaturas com linha) dos arquivos da task antes de ler arquivos inteiros.
 - `effort: 'low'` em etapa mecânica. Worktree só para quem escreve.
 - Sem `resumo` longo no retorno: o orquestrador lê o PR se precisar.
 - Workflow interrompido: retomar com `resumeFromRunId` (o que já terminou volta do cache).
