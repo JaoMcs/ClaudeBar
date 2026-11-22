@@ -66,7 +66,7 @@ struct HookMergeTests {
         #expect(groups.count == 2)
         #expect(pairs.allSatisfy { $0.0 != nil })
         #expect(pairs.contains { $0 == ("permission_prompt", ["waiting", "--kind", "permission"]) })
-        #expect(pairs.contains { $0 == ("elicitation_dialog", ["waiting", "--kind", "question"]) })
+        #expect(pairs.contains { $0 == ("elicitation_dialog|elicitation_url_dialog", ["waiting", "--kind", "question"]) })
     }
 
     @Test func preservaHookDoUsuarioNoMesmoEvento() throws {
@@ -317,6 +317,26 @@ struct HookStateTests {
         // Sem `~/.claude` ainda: não instalado, não somente leitura.
         let missing = f.settings.deletingLastPathComponent().appendingPathComponent("nao-existe/settings.json")
         #expect(HookInstaller.state(bundledBinary: f.bundled, settings: missing, binary: f.stable) == .notInstalled)
+    }
+
+    /// Quem instalou com o matcher antigo (`elicitation_dialog`) vê "desatualizado";
+    /// reinstalar troca o matcher sem duplicar o grupo, e a segunda vez é `.ok`.
+    @Test func matcherAntigoMigraSemDuplicar() throws {
+        let f = try fixture(settings: "{}")
+        defer { try? FileManager.default.removeItem(at: f.settings.deletingLastPathComponent()) }
+        try HookInstaller.installBinary(from: f.bundled, to: f.stable)
+        let novo = String(decoding: try HookInstaller.serialize(HookInstaller.install([:], binary: f.stable.path)), as: UTF8.self)
+        let antigo = novo.replacingOccurrences(of: "elicitation_dialog|elicitation_url_dialog", with: "elicitation_dialog")
+        #expect(antigo != novo)
+        try Data(antigo.utf8).write(to: f.settings)
+        #expect(HookInstaller.state(bundledBinary: f.bundled, settings: f.settings, binary: f.stable) == .hooksOutdated)
+
+        let migrado = HookInstaller.install(try HookInstaller.parse(Data(antigo.utf8)), binary: f.stable.path)
+        let groups = try #require((migrado["hooks"] as? [String: Any])?["Notification"] as? [[String: Any]])
+        #expect(groups.count == 2)
+        #expect(groups.filter { $0["matcher"] as? String == "elicitation_dialog|elicitation_url_dialog" }.count == 1)
+        try HookInstaller.serialize(migrado).write(to: f.settings)
+        #expect(HookInstaller.state(bundledBinary: f.bundled, settings: f.settings, binary: f.stable) == .ok)
     }
 
     /// Settings gerado (dotfiles/Nix): só leitura vira estado próprio, e a

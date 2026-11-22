@@ -368,7 +368,7 @@ reserva.
 | `StopFailure` | `error` (o turno acabou por erro de API) |
 | `PreToolUse` (`AskUserQuestion`) | `waiting --kind question` |
 | `Notification` (`permission_prompt`) | `waiting --kind permission` (ignorado enquanto há pergunta aberta) |
-| `Notification` (`elicitation_dialog`) | `waiting --kind question` |
+| `Notification` (`elicitation_dialog`, `elicitation_url_dialog`) | `waiting --kind question` |
 | `PostToolUse`, `PostToolUseFailure` | `working`, só se a sessão estava `waiting` (uma permissão acabou de ser aprovada) |
 | `SessionEnd` | apaga o arquivo |
 
