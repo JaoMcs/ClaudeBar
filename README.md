@@ -309,6 +309,9 @@ Signalling it that way took down more than one session at once. The app now
 uses `pgid == pid` to tell them apart and does not offer the option for hosted
 sessions — it shows the reason instead of the button.
 
+The same rule labels each interactive session row `desktop app` or `terminal`
+(no label for subagents or rows without a process).
+
 More guards in the same code path:
 
 - **`SIGTERM`, not `SIGKILL`**: Claude Code can still close the transcript and

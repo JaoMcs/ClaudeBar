@@ -50,6 +50,19 @@ enum SessionTerminator {
         return .unavailable
     }
 
+    /// Onde a sessão roda. Mesma regra do `target(for:)`: uma só fonte de verdade.
+    enum Host: Equatable { case desktopApp, terminal }
+
+    /// `nil` para subagente, linha sem processo utilizável ou PID reciclado.
+    static func hostKind(for row: SessionRow, probe: ProcessProbe = .live) -> Host? {
+        guard !row.isSubagent, let pid = row.pid, pid > 0 else { return nil }
+        switch target(for: row, probe: probe) {
+        case .hostedByApp: return .desktopApp
+        case .signal: return .terminal
+        case .backgroundStop, .unavailable: return nil
+        }
+    }
+
     /// Texto do item de menu, para você ver o que vai acontecer antes de clicar.
     /// `nil` quando não há ação possível.
     static func actionTitle(for row: SessionRow, probe: ProcessProbe = .live) -> String? {

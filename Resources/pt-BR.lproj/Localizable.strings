@@ -164,3 +164,5 @@
 "5 h limit at %lld%%" = "Limite de 5 h em %lld%%";
 "Alert when the 5 h limit passes" = "Avisar quando o limite de 5 h passar de";
 "%lld%%" = "%lld%%";
+"desktop app" = "app desktop";
+"terminal" = "terminal";

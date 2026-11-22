@@ -178,13 +178,18 @@ struct MenuContent: View {
         }
     }
 
-    static func label(for row: SessionRow, now: Date = Date()) -> String {
+    static func label(for row: SessionRow, now: Date = Date(), probe: ProcessProbe = .live) -> String {
         var text = row.isSubagent ? String(localized: "[subagent]") + " " : ""
         // O nome do agente não se traduz.
         if let agent = row.agent, agent != "claude" { text += "[\(agent)] " }
         text += row.name
         // A branch distingue duas sessões do mesmo projeto em worktrees diferentes.
         if let branch = row.branch { text += " · \(branch)" }
+        switch SessionTerminator.hostKind(for: row, probe: probe) {
+        case .desktopApp: text += " · " + String(localized: "desktop app")
+        case .terminal: text += " · " + String(localized: "terminal")
+        case nil: break
+        }
         text += " — \(description(for: row))"
         if let updatedAt = row.updatedAt {
             text += " (\(relativeFormatter.localizedString(for: updatedAt, relativeTo: now)))"
