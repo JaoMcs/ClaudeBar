@@ -224,3 +224,17 @@ Fora desta rodada (não viram task): F28–F50 do `03-validacao/BACKLOG.md` (ass
 - **Lacunas:** T25 (gate do login ad-hoc não rodado), T17 (1 ou 2 cliques, troca de Space), T14 (medido só com sessões simuladas). T11 corrigido.
 - **Incidente T12:** um agente gravou ~30 s no `~/.claude/settings.json` real e restaurou. Sobras confirmadas: `~/.claude/claudebar/bin/claudebar-hook` e `~/.claude/claudebar/backups/settings.json.20261116-202432-958`. O settings atual tem os 4 hooks antigos (apontando para o app instalado), sem `statusLine`. Nada foi limpo; decisão do usuário.
 - Fable ficou sem créditos na T24; o resto rodou no Opus.
+
+
+---
+
+## Decisões do dono (22 nov 2026, pelo painel)
+
+- Nome: **Awaitbar** (T37, PR #40). `claudebar-hook` e `~/.claude/claudebar` mudam só com o multiagente.
+- Licença: **MIT** (PR #38).
+- Developer ID: **vai assinar**; o script de assinatura/notarização espera o certificado.
+- `/compact` não dispara "terminou": nada a mudar.
+- Popup sumia ao trocar de Space: corrigido (T36, PR #39).
+- Sobras da T12 em `~/.claude/claudebar`: movidas para o Lixo.
+- **Ainda pendentes:** abrir no login (gate manual), 1 ou 2 cliques no popup, tabela de terminais do "Ir para a sessão", ferramentas opcionais (swift-lsp, skills AvdLee, hook Stop), certificado do Developer ID.
+- Novas tasks T38–T45 (ROADMAP + TODO), rodadas 1–4 com o `impl-loop`.

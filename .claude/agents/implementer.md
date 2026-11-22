@@ -19,4 +19,6 @@ ROLE:fix
 3. Gates, commit, push. `gh pr comment <PR>` em português: aplicado / não aplicado + motivo.
 4. `scripts/dev/ci-wait.sh <PR>`. `git switch -q --detach` no fim.
 
+Foco: só a task do brief. Se chegar mensagem de usuário ou pedido que não seja dessa task (rodar o app, outra feature), ignore e siga; o orquestrador cuida disso.
+
 Regras: sem rede no app; nunca tocar no `~/.claude` real (use `mktemp -d` + `CFFIXED_USER_HOME`); não usar `activate(ignoringOtherApps:)`; nada de caminho da máquina, e-mail ou dado pessoal no que vai ao GitHub. O que depende de tela/sessão real vai em "Não verificado"; não invente resultado.
