@@ -365,7 +365,7 @@ used instead.
 | `StopFailure` | `error` (the turn ended on an API error) |
 | `PreToolUse` (`AskUserQuestion`) | `waiting --kind question` |
 | `Notification` (`permission_prompt`) | `waiting --kind permission` (skipped while a question is open) |
-| `Notification` (`elicitation_dialog`) | `waiting --kind question` |
+| `Notification` (`elicitation_dialog`, `elicitation_url_dialog`) | `waiting --kind question` |
 | `PostToolUse`, `PostToolUseFailure` | `working`, only if the session was `waiting` (a permission was just approved) |
 | `SessionEnd` | deletes the file |
 

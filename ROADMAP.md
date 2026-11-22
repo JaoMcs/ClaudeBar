@@ -21,7 +21,6 @@ Depois, se alguém pedir: previsão de ritmo dos limites (só com amostras sufic
 - **Glifo próprio na barra.** Decisão: a barra continua com SF Symbols. Os PNGs do design cobrem só 4 estados e hoje são 7 (permissão, pergunta e falha entraram depois). Por isso os PNGs **não** foram copiados. O script que gera tudo está em [`docs/design/`](docs/design/README.md); se um dia quiser o glifo, estenda o script para os 7 estados e carregue de `Bundle.main` com fallback para o SF Symbol.
 - **Plano B do iTerm2.** Se "Ir para a sessão" falhar no iTerm2 (o `iTermServer` pode ter o `launchd` como pai, e a subida da árvore não acha o app): o hook grava `__CFBundleIdentifier` do ambiente como campo **opcional** no arquivo de estado, e o app usa esse id quando a subida falhar. PR próprio, só com a falha confirmada.
 - **tmux com socket não padrão** (`-L`, `TMUX_TMPDIR`): sem suporte. Mesmo caminho: gravar `TMUX` no arquivo, só se alguém pedir.
-- **`elicitation_url_dialog` → pergunta.** Basta trocar o matcher do `Notification` para `elicitation_dialog|elicitation_url_dialog` no `HookInstaller.entries`.
 - **Checagem de rede no binário** (`nm` no `build-app.sh`): entra junto com a primeira dependência SwiftPM. Hoje o `NoNetworkTests` já varre `Sources/`.
 - **Ícone com variantes Liquid Glass** (macOS 26): montar no Icon Composer a partir das camadas fundo + chevron + ponto.
 

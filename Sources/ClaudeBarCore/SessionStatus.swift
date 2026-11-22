@@ -21,8 +21,9 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
 public enum WaitKind: String, Sendable {
     /// Aprovar uma ferramenta (`Notification` `permission_prompt`).
     case permission
-    /// Responder uma pergunta (`PreToolUse` `AskUserQuestion`) ou um
-    /// formulário (`Notification` `elicitation_dialog`).
+    /// Responder uma pergunta (`PreToolUse` `AskUserQuestion`), um
+    /// formulário (`Notification` `elicitation_dialog`) ou abrir uma URL
+    /// (`Notification` `elicitation_url_dialog`).
     case question
 }
 

@@ -107,7 +107,8 @@ public enum HookInstaller {
         // Só o que de fato espera você. `idle_prompt`, `auth_success`, `quota_*`
         // nem chamam o binário.
         Entry(event: "Notification", matcher: "permission_prompt", args: ["waiting", "--kind", "permission"]),
-        Entry(event: "Notification", matcher: "elicitation_dialog", args: ["waiting", "--kind", "question"]),
+        // Formulário (`elicitation_dialog`) e pedido de abrir URL (`elicitation_url_dialog`) são a mesma pergunta.
+        Entry(event: "Notification", matcher: "elicitation_dialog|elicitation_url_dialog", args: ["waiting", "--kind", "question"]),
         // Pergunta do Claude aparece na hora, sem esperar o `Notification`. Só
         // o fato de ter perguntado: o `tool_input` (o texto) não é lido.
         Entry(event: "PreToolUse", matcher: "AskUserQuestion", args: ["waiting", "--kind", "question"]),
