@@ -124,7 +124,7 @@ struct SessionMergeTests {
         #expect(SessionMerge.openSessionCount(rows: rows) == 1)
     }
 
-    @Test func agentDoHookChegaNaLinhaEORotuloSoParaOutroAgente() throws {
+    @MainActor @Test func agentDoHookChegaNaLinhaEORotuloSoParaOutroAgente() throws {
         let gemini = SessionStatus(sessionId: "g", state: .idle, cwd: "/tmp/a", pid: 1, agent: "gemini")
         let claude = SessionStatus(sessionId: "c", state: .idle, cwd: "/tmp/b", pid: 2)
         let rows = SessionMerge.rows(agents: [], statuses: [gemini, claude])
