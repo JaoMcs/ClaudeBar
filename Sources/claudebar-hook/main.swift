@@ -141,9 +141,7 @@ private func printStatus(json: Bool) {
 /// `next`: leva você à sessão que espera há mais tempo. Sai 1 se não houver.
 @MainActor
 private func goToNextWaiting() async -> Int32 {
-    let waiting = readSessions()
-        .filter { $0.state == .waiting && $0.pid > 0 }
-        .min { $0.updatedAt < $1.updatedAt }
+    let waiting = SessionNavigator.nextWaiting(in: readSessions())
     guard let waiting else { fail("nenhuma sessão esperando você") }
     // `app(for:)` é síncrono e pede para ficar fora da main actor; aqui tudo
     // bem: é um CLI de vida curta, sem interface para travar.

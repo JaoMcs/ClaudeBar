@@ -267,6 +267,12 @@ brings it to the front. It also marks the session as seen.
 - **No permission needed:** only `sysctl`, `NSRunningApplication` and
   `NSWorkspace`.
 - If the app can't be found, an alert says so; nothing else is opened.
+- **Global shortcut ⌃⌥⌘N** (off by default, turn it on in Settings → System):
+  goes to the session that has waited longest, the same pick as
+  `claudebar-hook next`. With no session waiting, nothing happens. It uses the
+  Carbon hot key API, so it asks for no Accessibility or Input Monitoring
+  permission. While on, the combination is taken system-wide; if another app
+  already uses it, Settings says so and the switch turns back off.
 
 | Host | Status |
 |---|---|
@@ -457,6 +463,7 @@ Sources/ClaudeBar/            SwiftUI app (MenuBarExtra)
   Notifier.swift              sound per alert, toggle, native vs. own popup
   StatusHUD.swift             the app's own popup (floating NSPanel)
   SettingsWindow.swift        settings window (NSWindow, not the Settings scene)
+  GlobalHotKey.swift          opt-in ⌃⌥⌘N shortcut (Carbon hot key, no permission)
 Tests/ClaudeBarTests/         subagents, count, icon, precedence, real kills, no network
 Resources/AppIcon.icns        app icon, copied into the bundle by build-app.sh
 Resources/*.lproj/            translations (key = English text; en.lproj empty on purpose)

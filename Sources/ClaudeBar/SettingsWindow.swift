@@ -13,11 +13,11 @@ import SwiftUI
 enum SettingsWindow {
     private static var window: NSWindow?
 
-    static func show(notifier: Notifier) {
+    static func show(store: SessionStore) {
         // Fechada = janela nova, com estado relido. Aberta = só traz para a frente.
         if window?.isVisible != true {
             let window = NSWindow(contentViewController: NSHostingController(
-                rootView: SettingsView(notifier: notifier)
+                rootView: SettingsView(store: store)
             ))
             window.title = String(localized: "Awaitbar Settings")
             window.styleMask = [.titled, .closable]
@@ -40,7 +40,8 @@ enum SettingsWindow {
 /// cada valor na hora do aviso, então não há cópia para sincronizar. O
 /// interruptor geral "Notificações" fica só no menu.
 private struct SettingsView: View {
-    let notifier: Notifier
+    let store: SessionStore
+    private var notifier: Notifier { store.notifier }
 
     @AppStorage(Alert.finished.enabledKey) private var notifyFinished = true
     @AppStorage(Alert.waiting.enabledKey) private var notifyWaiting = true
@@ -58,6 +59,8 @@ private struct SettingsView: View {
     /// Lido do sistema, nunca guardado: dá para mudar em Ajustes do Sistema sem o app saber.
     @State private var loginStatus = SMAppService.mainApp.status
     @State private var loginError: String?
+    @AppStorage(GlobalHotKey.enabledKey) private var hotKeyEnabled = false
+    @State private var hotKeyError: String?
 
     var body: some View {
         Form {
@@ -97,6 +100,15 @@ private struct SettingsView: View {
                 if let loginError {
                     Text(loginError).font(.caption).foregroundStyle(.red)
                 }
+                Toggle("Global shortcut \(GlobalHotKey.display) to the next waiting session", isOn: Binding(
+                    get: { hotKeyEnabled },
+                    set: { setHotKey($0) }
+                ))
+                Text("Takes this key combination system-wide. No permission needed.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let hotKeyError {
+                    Text(hotKeyError).font(.caption).foregroundStyle(.red)
+                }
                 Button("About Awaitbar") {
                     // O clique veio desta janela, então o app já está ativo e o
                     // painel nasce na frente. Nome e versão passados à mão: sem
@@ -130,6 +142,18 @@ private struct SettingsView: View {
             loginError = String(localized: "Could not change it: \(error.localizedDescription)")
         }
         loginStatus = SMAppService.mainApp.status
+    }
+
+    /// Combinação já tomada por outro app: o interruptor volta a desligado.
+    private func setHotKey(_ enabled: Bool) {
+        do {
+            try store.setGlobalHotKey(enabled)
+            hotKeyEnabled = enabled
+            hotKeyError = nil
+        } catch {
+            hotKeyEnabled = false
+            hotKeyError = String(localized: "Could not change it: \(error.localizedDescription)")
+        }
     }
 
     // `LocalizedStringKey`: com `String` o `Picker` não traduz o título.

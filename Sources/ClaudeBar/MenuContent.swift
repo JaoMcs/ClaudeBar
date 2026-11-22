@@ -120,7 +120,7 @@ struct MenuContent: View {
         }
 
         Button("Settings…") {
-            SettingsWindow.show(notifier: store.notifier)
+            SettingsWindow.show(store: store)
         }
         .keyboardShortcut(",")
 

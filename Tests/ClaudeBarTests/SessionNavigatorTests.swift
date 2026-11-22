@@ -60,3 +60,36 @@ struct TmuxParsingTests {
         #expect(SessionNavigator.mostRecentClient(in: "") == nil)
     }
 }
+
+@Suite("Próxima sessão esperando")
+struct NextWaitingTests {
+    private func status(_ id: String, _ state: SessionState, pid: Int32 = 10, at seconds: TimeInterval) -> SessionStatus {
+        SessionStatus(sessionId: id, state: state, cwd: "/tmp/\(id)", pid: pid, updatedAt: Date(timeIntervalSince1970: seconds))
+    }
+
+    @Test func pegaAMaisAntiga() {
+        let list = [status("b", .waiting, at: 200), status("a", .waiting, at: 100), status("c", .waiting, at: 300)]
+        #expect(SessionNavigator.nextWaiting(in: list)?.sessionId == "a")
+    }
+
+    @Test func ignoraPidZero() {
+        let list = [status("a", .waiting, pid: 0, at: 100), status("b", .waiting, at: 200)]
+        #expect(SessionNavigator.nextWaiting(in: list)?.sessionId == "b")
+    }
+
+    @Test func ignoraOutrosEstados() {
+        let list = [status("a", .working, at: 1), status("b", .idle, at: 2), status("c", .error, at: 3)]
+        #expect(SessionNavigator.nextWaiting(in: list) == nil)
+    }
+
+    @Test func listaVazia() {
+        #expect(SessionNavigator.nextWaiting(in: []) == nil)
+    }
+
+    /// Mesmo horário: decide o id, qualquer que seja a ordem da lista.
+    @Test func empateEstavel() {
+        let a = status("a", .waiting, at: 100), b = status("b", .waiting, at: 100)
+        #expect(SessionNavigator.nextWaiting(in: [a, b])?.sessionId == "a")
+        #expect(SessionNavigator.nextWaiting(in: [b, a])?.sessionId == "a")
+    }
+}

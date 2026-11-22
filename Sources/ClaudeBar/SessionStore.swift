@@ -2,6 +2,7 @@ import AppKit
 import ClaudeBarCore
 import Foundation
 import Observation
+import os
 
 /// Estado agregado de todas as sessões, que define o ícone na barra.
 enum BarState: CaseIterable {
@@ -100,6 +101,33 @@ final class SessionStore {
         merge()
         startWatching()
         refreshAgents()
+        // Depois do `init`: o alvo de eventos do app precisa existir. Se falhar,
+        // registra no log e desliga a chave, para o toggle não mentir; ligar de
+        // novo nos Ajustes mostra o motivo.
+        if UserDefaults.standard.bool(forKey: GlobalHotKey.enabledKey) {
+            Task {
+                do { try self.setGlobalHotKey(true) } catch {
+                    Logger(subsystem: "com.joaomarcos.claudebar", category: "hotkey")
+                        .error("atalho global não registrado: \(String(describing: error), privacy: .public)")
+                    UserDefaults.standard.set(false, forKey: GlobalHotKey.enabledKey)
+                }
+            }
+        }
+    }
+
+    /// Liga ou desliga o atalho global (⌃⌥⌘N) para a próxima sessão esperando.
+    func setGlobalHotKey(_ enabled: Bool) throws {
+        guard enabled else { return GlobalHotKey.unregister() }
+        try GlobalHotKey.register { [weak self] in self?.goToNextWaiting() }
+    }
+
+    /// Mesma escolha do `claudebar-hook next`. Sem sessão esperando, nada
+    /// acontece: é um atalho, um alerta seria barulho.
+    func goToNextWaiting() {
+        let waiting = rows.filter { !$0.isSubagent && $0.state == .waiting && ($0.pid ?? 0) > 0 }
+        guard let row = SessionNavigator.oldest(waiting, updatedAt: { $0.updatedAt ?? .distantFuture }, id: \.sessionId)
+        else { return }
+        goToSession(row)
     }
 
     /// Recalcula as linhas a partir das duas origens já em memória/disco.

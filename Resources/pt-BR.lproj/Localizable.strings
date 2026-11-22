@@ -166,3 +166,7 @@
 "%lld%%" = "%lld%%";
 "desktop app" = "app desktop";
 "terminal" = "terminal";
+"Global shortcut %@ to the next waiting session" = "Atalho global %@ para a próxima sessão esperando";
+"Takes this key combination system-wide. No permission needed." = "Ocupa essa combinação no sistema inteiro. Não pede permissão.";
+"Another app already uses %@." = "Outro app já usa %@.";
+"macOS refused the shortcut (error %@)." = "O macOS recusou o atalho (erro %@).";

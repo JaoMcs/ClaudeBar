@@ -269,6 +269,13 @@ app para a frente. A sessão também fica marcada como vista.
 - **Sem permissão nenhuma:** só `sysctl`, `NSRunningApplication` e
   `NSWorkspace`.
 - Se o app não for encontrado, um alerta avisa; nada mais é aberto.
+- **Atalho global ⌃⌥⌘N** (desligado por padrão, ligue em Ajustes → Sistema):
+  vai para a sessão que espera há mais tempo, a mesma escolha do
+  `claudebar-hook next`. Sem sessão esperando, nada acontece. Usa a API de hot
+  keys do Carbon, então não pede permissão de Acessibilidade nem de
+  Monitoramento de Entrada. Ligado, a combinação fica tomada no sistema
+  inteiro; se outro app já a usa, os Ajustes avisam e o interruptor volta a
+  desligado.
 
 | Onde a sessão roda | Status |
 |---|---|
@@ -458,6 +465,7 @@ Sources/ClaudeBar/            app SwiftUI (MenuBarExtra)
   Notifier.swift              som por tipo de aviso, toggle, nativa vs. popup próprio
   StatusHUD.swift             o popup próprio (NSPanel flutuante)
   SettingsWindow.swift        janela de Ajustes (NSWindow, não a cena Settings)
+  GlobalHotKey.swift          atalho ⌃⌥⌘N opcional (hot key do Carbon, sem permissão)
 Tests/ClaudeBarTests/         subagente, contagem, ícone, precedência, o kill real e rede zero
 Resources/AppIcon.icns        ícone do app, copiado para o bundle pelo build-app.sh
 Resources/*.lproj/            traduções (chave = texto em inglês; en.lproj vazio de propósito)
