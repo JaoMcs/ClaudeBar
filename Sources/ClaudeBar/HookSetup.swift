@@ -37,7 +37,7 @@ final class HookSetup {
         case .notInstalled: String(localized: "Without hooks, the app only sees sessions once a minute")
         case .binaryMissing: String(localized: "The hook executable is gone from ~/.claude/claudebar/bin")
         case .binaryOutdated: String(localized: "The hook executable is from another version of the app")
-        case .hooksOutdated: String(localized: "ClaudeBar hooks are missing from settings.json")
+        case .hooksOutdated: String(localized: "Awaitbar hooks are missing from settings.json")
         case .legacyHooks: String(localized: "Hooks in the old format (path inside the .app)")
         case .invalidSettings: String(localized: "settings.json is not valid JSON — nothing will be changed")
         case .readOnlySettings: String(localized: "settings.json is read-only: paste the JSON into the tool that generates it")
@@ -80,7 +80,7 @@ final class HookSetup {
         if installs, bundledBinary == nil, !FileManager.default.isExecutableFile(atPath: stable.path) {
             return report(
                 title: String(localized: "Hook executable not found"),
-                message: String(localized: "Open ClaudeBar from the .app.")
+                message: String(localized: "Open Awaitbar from the .app.")
             )
         }
         let copiesBinary = installs && bundledBinary.map {
@@ -97,8 +97,8 @@ final class HookSetup {
 
         let alert = NSAlert()
         alert.messageText = switch action {
-        case .install: String(localized: "Register the ClaudeBar hooks in Claude Code?")
-        case .uninstall: String(localized: "Remove the ClaudeBar hooks?")
+        case .install: String(localized: "Register the Awaitbar hooks in Claude Code?")
+        case .uninstall: String(localized: "Remove the Awaitbar hooks?")
         case .installStatusLine: String(localized: "Show usage limits in the Claude Code footer?")
         case .uninstallStatusLine: String(localized: "Stop showing limits in the Claude Code footer?")
         }
@@ -124,7 +124,7 @@ final class HookSetup {
         switch (action, plan.statusLineOriginal) {
         case (.installStatusLine, .save?):
             info.append(String(localized: """
-                Your statusline keeps showing as before. ClaudeBar only reads the limits before \
+                Your statusline keeps showing as before. Awaitbar only reads the limits before \
                 passing it on. The original is kept at \(StatusDirectory.originalStatusLineURL.path).
                 """))
         case (.installStatusLine, _):
@@ -141,7 +141,7 @@ final class HookSetup {
         default:
             info.append(
                 [
-                    String(localized: "Only ClaudeBar's entries change; your own hooks stay as they are."),
+                    String(localized: "Only Awaitbar's entries change; your own hooks stay as they are."),
                     action == .install ? String(localized: "\"Remove hooks…\" in the menu undoes it.") : nil,
                     String(localized: "Claude Code applies it without restarting."),
                 ].compactMap(\.self).joined(separator: " ")

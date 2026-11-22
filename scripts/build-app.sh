@@ -1,12 +1,12 @@
 #!/bin/bash
-# Compila o pacote e monta build/ClaudeBar.app — um app de barra de menu
+# Compila o pacote e monta build/Awaitbar.app — um app de barra de menu
 # (LSUIElement), assinado ad-hoc para as notificações do sistema funcionarem.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-BUNDLE="build/ClaudeBar.app"
-BUNDLE_ID="com.joaomarcos.claudebar"
+BUNDLE="build/Awaitbar.app"
+BUNDLE_ID="io.github.jaomcs.awaitbar"
 
 # Versão visível vem do arquivo VERSION (X.Y.Z, regra da Apple para
 # CFBundleShortVersionString). O build é a contagem de commits: sobe a cada
@@ -35,7 +35,7 @@ echo "==> Montando $BUNDLE"
 rm -rf "$BUNDLE"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 
-cp "$BIN_DIR/ClaudeBar" "$BUNDLE/Contents/MacOS/ClaudeBar"
+cp "$BIN_DIR/ClaudeBar" "$BUNDLE/Contents/MacOS/Awaitbar"
 cp "$BIN_DIR/claudebar-hook" "$BUNDLE/Contents/MacOS/claudebar-hook"
 # O sistema lê o ícone daqui (CFBundleIconFile). Copiar antes de assinar:
 # arquivo que entra depois do codesign invalida o selo.
@@ -52,14 +52,16 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>Awaitbar</string>
     <key>CFBundleExecutable</key>
-    <string>ClaudeBar</string>
+    <string>Awaitbar</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>$BUNDLE_ID</string>
     <key>CFBundleName</key>
-    <string>ClaudeBar</string>
+    <string>Awaitbar</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

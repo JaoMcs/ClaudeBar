@@ -48,7 +48,7 @@ enum BarState: CaseIterable {
     /// Rótulo do item da barra para o VoiceOver. Sem plural de propósito
     /// ("Sessions: 1"): dispensa `.stringsdict`.
     func accessibilityLabel(openSessions: Int) -> String {
-        String(localized: "ClaudeBar. Sessions: \(openSessions). \(title)")
+        String(localized: "Awaitbar. Sessions: \(openSessions). \(title)")
     }
 }
 
