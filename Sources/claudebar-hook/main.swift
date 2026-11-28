@@ -178,7 +178,12 @@ private func run() {
     let agent = value(after: "--agent", in: arguments)
     // Codex `notify` passa o JSON como último argumento (argv), não no stdin;
     // ler stdin sem EOF travaria quando chamado por ele.
-    if agent == "codex", let argData = CodexConfig.payloadData(from: arguments) {
+    if agent == "codex" {
+        // Sem JSON no argv: sai já (fail-open) em vez de cair no stdin.
+        guard let argData = CodexConfig.payloadData(from: arguments) else {
+            FileHandle.standardError.write(Data("claudebar-hook: --agent codex sem payload JSON no argumento\n".utf8))
+            return
+        }
         let codex = CodexConfig.parsePayload(argData)
         guard let sessionId = codex?.resolvedSessionId, !sessionId.isEmpty else { return }
         handleSessionEvent(command: command, sessionId: sessionId, cwd: codex?.cwd, message: nil, errorText: nil, arguments: arguments)

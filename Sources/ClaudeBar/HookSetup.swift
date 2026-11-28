@@ -201,15 +201,18 @@ final class HookSetup {
     /// Codex CLI: nunca escreve em `~/.codex/config.toml`; copia a linha TOML e
     /// mostra onde colar.
     func copyCodexConfig() {
+        var installNote = ""
         if let bundledBinary {
-            try? HookInstaller.installBinary(from: bundledBinary)
+            do { try HookInstaller.installBinary(from: bundledBinary) } catch {
+                installNote = "\n\n" + String(localized: "Could not install the hook executable: \(error.localizedDescription)")
+            }
         }
         let snippet = CodexConfig.snippet()
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(snippet, forType: .string)
         report(
             title: String(localized: "Codex configuration copied"),
-            message: String(localized: "Paste this line at the top level of \(CodexConfig.configURL.path):\n\n\(snippet)")
+            message: String(localized: "Paste this line at the top level of \(CodexConfig.configURL.path):\n\n\(snippet)") + installNote
         )
         refresh()
     }
