@@ -27,6 +27,8 @@ Rode antes de qualquer release. Faça backup do `~/.claude/settings.json` antes.
 | Item | Para quê | Próximo passo |
 |---|---|---|
 | Automação por terminal | ir para a aba exata (Terminal, iTerm2, Ghostty), F30 no `ROADMAP.md` | Só quando o F30 for feito: aprovar o prompt de Automação em cada terminal com o build assinado. Com ad-hoc o macOS pede de novo a cada build. Hoje o app não usa Automação. |
+| Número do limite no statusline é confiável? | aviso perto do limite (T41, #45) | Com o statusline do Awaitbar instalado, comparar o percentual do menu com o `/status` do Claude Code em 2 ou 3 momentos. Se divergir, o aviso fica desligado por padrão (já está). |
+| Hooks disparam nas sessões do app desktop do Claude? | rótulo "app desktop" × "terminal" (T45, #50) e os estados dessas sessões | Abrir uma sessão no app desktop e ver se a linha muda de estado (trabalhando → pronto). Anotar o resultado no README. |
 | Payload real de pausa por limite | mostrar o motivo da pausa (F33) | Com o statusline do Awaitbar instalado, bater o limite de uso e guardar o JSON que chega no `Notification` ou no `StopFailure` (tirar dados pessoais antes de colar numa issue). |
 
 ## 4. Já resolvido (22 nov 2026)
