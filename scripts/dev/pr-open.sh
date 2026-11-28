@@ -24,7 +24,9 @@ printf '\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n'
 if [ "${PII_SKIP:-0}" = 1 ]; then
   echo "aviso: pii-check pulado (PII_SKIP=1)" >&2
 else
+  # arquivos da branch e o corpo do PR
   pii_out=$("$(dirname "$0")/pii-check.sh") || { echo "$pii_out"; rm -f "$body"; exit 1; }
+  pii_out=$("$(dirname "$0")/pii-check.sh" "$body") || { echo "$pii_out"; rm -f "$body"; exit 1; }
 fi
 b=$(git branch --show-current)
 git push -q -u origin "$b"

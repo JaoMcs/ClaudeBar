@@ -7,7 +7,7 @@ set -u
 cd "$(git rev-parse --show-toplevel)"
 # Lista de arquivos (um por linha; diretório vira os arquivos dentro dele).
 lista=$(mktemp); trap 'rm -f "$lista"' EXIT
-if [ $# -eq 0 ]; then git diff --name-only --diff-filter=AM origin/main...HEAD > "$lista"
+if [ $# -eq 0 ]; then git diff --name-only --diff-filter=AM origin/main...HEAD > "$lista" || { echo "pii=ERRO sem origin/main para comparar" >&2; exit 2; }
 else for a in "$@"; do if [ -d "$a" ]; then find "$a" -type f; else echo "$a"; fi; done > "$lista"; fi
 [ -s "$lista" ] || { echo pii=ok; exit 0; }
 pad="$HOME|/Users/$(id -un)|$(id -un)"
