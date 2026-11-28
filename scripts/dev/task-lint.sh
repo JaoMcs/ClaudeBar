@@ -25,6 +25,22 @@ for f in "$@"; do
     done
   done <"$out.l"
   rm -f "$out.l"
+  # caminhos citados na seção Critérios de aceite
+  awk '/^## Critérios de aceite/{f=1;next} /^## /{f=0} f' "$f" >"$out.c"
+  # arquivos que a própria task cria (linha "novo" na tabela Arquivos) contam como existentes
+  novos=$(awk '/^## Arquivos/{f=1;next} /^## /{f=0} f' "$f" | grep -iE '(^|[^a-z])nov[oa]s?([^a-z]|$)' | grep -oE '`[^`]+`' | tr -d '`')
+  while IFS= read -r l; do
+    echo "$l" | grep -qiE '(^|[^a-z])nov[oa]s?([^a-z]|$)' && continue
+    for p in $(echo "$l" | grep -oE '`[^`]+`' | tr -d '`'); do
+      case "$p" in
+        scripts/*|Sources/*|Tests/*|.claude/*)
+          echo "$novos" | grep -qxF "$p" && continue
+          ( cd "$root" && ls -d $p >/dev/null 2>&1 ) || echo "$id: critério cita $p que não existe" >>"$out"
+          ;;
+      esac
+    done
+  done <"$out.c"
+  rm -f "$out.c"
 done
 [ -s "$out" ] && cat "$out" && exit 1
 echo lint=ok
