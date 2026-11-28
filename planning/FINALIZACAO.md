@@ -12,8 +12,8 @@ O dono roda `docs/TESTE-MANUAL.md` no Awaitbar instalado e preenche a coluna **R
 
 | Teste | Seção do roteiro | Resultado (`passou` / `falhou: <sintoma>` / vazio) |
 |---|---|---|
-| Abrir no login: liga, aparece em Itens de Início, abre depois de logout/login | 1 | |
-| Abrir no login: continua ligado depois de rodar `./scripts/build-app.sh` de novo | 1 | |
+| Abrir ao iniciar o Mac (Ajustes → "Abrir ao iniciar sessão no Mac"; não é login de conta): liga, aparece em Itens de Início, abre depois de sair e entrar no usuário do macOS | 1 | |
+| Abrir ao iniciar o Mac: continua ligado depois de rodar `./scripts/build-app.sh` de novo | 1 | |
 | Popup de espera fecha com **1** clique | 6 | |
 | Popup de espera continua visível ao trocar de Space | 6 | |
 | Ir para a sessão — Terminal.app | 5 | |
@@ -25,7 +25,7 @@ O dono roda `docs/TESTE-MANUAL.md` no Awaitbar instalado e preenche a coluna **R
 | Ir para a sessão — tmux | 5 | |
 | Percentual do limite no menu bate com o `/status` do Claude Code | 3 | |
 | Sessão do app desktop do Claude muda de estado (trabalhando → pronto) | 4 | |
-| GIF de ~10 s do app em uso (caminho do arquivo) | — | |
+| GIF de ~10 s do app em uso: coloque o arquivo em `docs/awaitbar.gif` e escreva só "pronto" aqui (nunca um caminho da sua máquina) | — | |
 
 ---
 
@@ -43,8 +43,8 @@ Ordem: F1 e F2 primeiro (não dependem de teste). F3 a F6 só com a linha corres
 - **Fazer:** em `scripts/dev/side-pr.sh`, quando o script sai sem ter aberto o PR (pii suspeito, commit ou push falhando), o `trap` também apaga a branch local criada (`git branch -D <branch>`). Quando o PR abre, a branch fica.
 - **Aceite:** teste num repo em `mktemp -d` com um arquivo contendo um e-mail montado no próprio teste: o script sai 1 e `git branch --list <branch>` fica vazio. `bash -n` ok; bash 3.2 do macOS.
 
-### F3 — Abrir no login: aplicar o resultado do teste
-- **Depende de:** as 2 linhas "Abrir no login" da parte A · **Branch:** `fix/abrir-no-login-resultado` · **PR:** `fix: abrir no login conforme o teste com assinatura ad-hoc`
+### F3 — Abrir ao iniciar o Mac: aplicar o resultado do teste
+- **Depende de:** as 2 linhas "Abrir ao iniciar o Mac" da parte A · **Branch:** `fix/abrir-no-login-resultado` · **PR:** `fix: abrir no login conforme o teste com assinatura ad-hoc`
 - **Se passou nas duas:** tirar dos dois READMEs a frase "After rebuilding the app, turn it on again" / equivalente em português; tirar o #27 de `PENDENCIAS.md`.
 - **Se passou na primeira e falhou na segunda:** manter o toggle e a frase do README; no `PENDENCIAS.md`, trocar a linha do #27 por "funciona; desliga a cada build ad-hoc".
 - **Se falhou na primeira:** plano B de `planning/05-specs/G10-ajustes-privacidade.md` (seção do F15.2, "Falhou"): no lugar do toggle em `Sources/ClaudeBar/SettingsWindow.swift`, só o botão "Abrir Itens de Início…"; README com o passo manual; `PENDENCIAS.md` em "Futuro (com Apple)" com o sintoma anotado.
@@ -71,6 +71,7 @@ Ordem: F1 e F2 primeiro (não dependem de teste). F3 a F6 só com a linha corres
 ### F7 — Release 0.1.0 em rascunho
 - **Depende de:** F1 a F6 mergeadas (ou ESPERANDO anotado) · **Branch:** `chore/release-0.1.0` · **PR:** `chore: notas da versão 0.1.0`
 - **Fazer:**
+  0. Se a linha do GIF da parte A estiver "pronto": referenciar `docs/awaitbar.gif` no topo dos dois READMEs com caminho relativo.
   1. `CHANGELOG.md` (novo) com a seção `0.1.0`: o que o app faz, agrupado (estados e avisos, navegação, limites, integração com Claude/Gemini/Codex, privacidade, idiomas), mais "Limitações conhecidas" (assinatura ad-hoc e "Abrir Mesmo Assim", o que ficou não verificado na parte A).
   2. Merge do PR do changelog.
   3. Na `main` atualizada: `./scripts/make-dmg.sh` → `dist/Awaitbar-0.1.0.dmg` e `.sha256`; conferir com `cd dist && shasum -c Awaitbar-0.1.0.dmg.sha256`.
@@ -98,14 +99,14 @@ Você executa as tasks da parte B **uma por vez, em loop**. Outro agente (Claude
 1. Ler a task na parte B e os arquivos que ela cita. Se `scripts/dev/ctx.sh` servir, use para mapear os arquivos antes de ler inteiros.
 2. `git fetch -q origin && git switch -c <Branch> origin/main`.
 3. Implementar o mínimo. README.md **e** README.pt-BR.md juntos. Comentários e commits em português.
-4. `scripts/dev/gates.sh` até `gates=ok` (3 falhas seguidas pelo mesmo motivo: PR em rascunho com o erro, siga para a próxima).
+4. `scripts/dev/gates.sh` até `gates=ok`. Se falhar 3 vezes seguidas pelo mesmo motivo: não abra PR, anote o erro no relatório, volte para a `main` e siga para a próxima task.
 5. Commit `tipo: descrição` terminando com `Co-Authored-By: <modelo que de fato rodou> <noreply@...>`.
 6. PR: corpo num arquivo temporário (o que muda, por quê, como testar, **"Não verificado"**). Se você é o Claude Code: `scripts/dev/pr-open.sh "<PR>" <corpo.md>`. Outro agente: `scripts/dev/pii-check.sh && scripts/dev/pii-check.sh <corpo.md> && git push -u origin <branch> && gh pr create --base main --title "<PR>" --body-file <corpo.md>`, com a última linha do corpo dizendo qual agente gerou.
 7. `scripts/dev/ci-wait.sh <pr>`; vermelho: corrigir na mesma branch, no máximo 2 vezes.
 8. `git switch main && git pull --ff-only`; próxima task.
 
 ### Se o `gh` falhar por permissão
-O `gh` pode estar ativo em outra conta. **Não troque a conta ativa.** Rode o comando com o token da conta dona do repositório só para ele (`GH_TOKEN=$(gh auth token -u <conta-dona>) gh ...`) ou pare e avise.
+O `gh` pode estar ativo em outra conta. **Não troque a conta e não contorne com token de outra conta.** Pare e avise o dono no relatório: ele roda `gh auth switch` para a conta dona do repositório e você continua de onde parou.
 
 ### Relatório final
 | Task | Estado (PR aberto / mergeado / ESPERANDO / rascunho por erro) | PR ou link | Não verificado | Observações |
