@@ -8,7 +8,8 @@ task="$1"
 [ -f "$task" ] || { echo "arquivo não encontrado: $task" >&2; exit 1; }
 
 root=$(git rev-parse --show-toplevel)
-regex='^[[:space:]]*(public |private |fileprivate |internal |static |@MainActor )*(func|struct|enum|class|extension|protocol|case|let|var) '
+# topo do arquivo ou um nível dentro de um tipo (até 4 espaços): locais de função ficam de fora
+regex='^( {0,4}|\t?)(public |private |fileprivate |internal |open |final |static |nonisolated |override |@MainActor )*(func|struct|enum|class|extension|protocol|case|let|var|actor|typealias) '
 
 awk '/^## Arquivos/{f=1;next} /^## /{f=0} f && /^\|/ && !/^\| *-/ && !/^\| *Arquivo *\|/' "$task" | while IFS= read -r l; do
   is_new=0
