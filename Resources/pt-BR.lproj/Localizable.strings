@@ -177,3 +177,8 @@
 "Takes this key combination system-wide. No permission needed." = "Ocupa essa combinação no sistema inteiro. Não pede permissão.";
 "Another app already uses %@." = "Outro app já usa %@.";
 "macOS refused the shortcut (error %@)." = "O macOS recusou o atalho (erro %@).";
+"Codex: configured" = "Codex: configurado";
+"Codex: not configured" = "Codex: não configurado";
+"Copy Codex configuration…" = "Copiar configuração do Codex…";
+"Codex configuration copied" = "Configuração do Codex copiada";
+"Paste this line at the top level of %@:\n\n%@" = "Cole esta linha no nível principal de %@:\n\n%@";

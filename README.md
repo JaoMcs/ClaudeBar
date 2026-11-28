@@ -184,6 +184,20 @@ until its file in `~/.claude/claudebar` is deleted. Docs: [hooks](https://gemini
 [reference](https://geminicli.com/docs/hooks/reference/),
 [configuration](https://geminicli.com/docs/reference/configuration/).
 
+#### Codex CLI
+
+Read-only integration, shown only if `codex` is installed (`~/.local/bin/codex`,
+`/opt/homebrew/bin/codex`, or `/usr/local/bin/codex`). Because Codex uses
+`~/.codex/config.toml` (TOML) and Awaitbar has no TOML parser or external
+dependencies, the app never edits that file: the integration submenu shows
+**Codex: configured / not configured** (read-only) and **Copy Codex
+configuration…**, which copies the `notify` line and explains where to paste it.
+
+Codex's `notify` only fires on `agent-turn-complete` (mapped to `ready`, with
+the `[codex]` label and no pid) and passes the JSON payload as the last
+command-line argument rather than stdin. Working/waiting states do not exist via
+`notify`.
+
 ### Alerts
 
 Each alert has its own sound: one is informative, the waiting ones block

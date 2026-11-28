@@ -175,6 +175,21 @@ private func run() {
     default: break
     }
 
+    let agent = value(after: "--agent", in: arguments)
+    // Codex `notify` passa o JSON como último argumento (argv), não no stdin;
+    // ler stdin sem EOF travaria quando chamado por ele.
+    if agent == "codex" {
+        // Sem JSON no argv: sai já (fail-open) em vez de cair no stdin.
+        guard let argData = CodexConfig.payloadData(from: arguments) else {
+            FileHandle.standardError.write(Data("claudebar-hook: --agent codex sem payload JSON no argumento\n".utf8))
+            return
+        }
+        let codex = CodexConfig.parsePayload(argData)
+        guard let sessionId = codex?.resolvedSessionId, !sessionId.isEmpty else { return }
+        handleSessionEvent(command: command, sessionId: sessionId, cwd: codex?.cwd, message: nil, errorText: nil, arguments: arguments)
+        return
+    }
+
     let stdinData = FileHandle.standardInput.readDataToEndOfFile()
     if command == "statusline" {
         statusLine(stdinData)
@@ -183,7 +198,24 @@ private func run() {
     // Sem `session_id` não há de quem gravar o estado. Sai bem, sem arquivo: um
     // `unknown.json` juntaria sessões diferentes num só fantasma.
     guard let sessionId = payload?.sessionId, !sessionId.isEmpty else { return }
+    handleSessionEvent(
+        command: command,
+        sessionId: sessionId,
+        cwd: payload?.cwd,
+        message: payload?.message,
+        errorText: errorSummary(payload),
+        arguments: arguments
+    )
+}
 
+private func handleSessionEvent(
+    command: String,
+    sessionId: String,
+    cwd: String?,
+    message: String?,
+    errorText: String?,
+    arguments: [String]
+) {
     if command == "end" {
         StatusDirectory.remove(sessionId: sessionId)
         return
@@ -217,9 +249,9 @@ private func run() {
         return
     }
 
-    let text = state == .error ? errorSummary(payload) : payload?.message
+    let text = state == .error ? errorText : message
 
-    let cwd = payload?.cwd ?? FileManager.default.currentDirectoryPath
+    let cwd = cwd ?? FileManager.default.currentDirectoryPath
     let status = SessionStatus(
         sessionId: sessionId,
         state: state,

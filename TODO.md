@@ -9,10 +9,10 @@ Any agent that can run a command on lifecycle events can feed it.
 - [ ] `claudebar-hook --agent <claude|gemini|codex>`
 - [ ] Show the agent per row in the menu (label or icon)
 - [x] **Gemini CLI**: map hooks `BeforeAgent` → working, `AfterAgent` → idle, `Notification` → waiting, `SessionEnd` → end
-- [ ] **Codex CLI**: `notify` in `~/.codex/config.toml` (JSON comes as argv, not stdin; only "turn done"). Check whether its newer hooks cover working/waiting
+- [x] **Codex CLI**: `notify` in `~/.codex/config.toml` (JSON comes as argv, not stdin; only "turn done"). Check whether its newer hooks cover working/waiting
 - [x] Register Gemini hooks only if the CLI is installed (menu and `claudebar-hook install --gemini`, opt-in)
-- [ ] Register Codex hooks only if the CLI is installed
-- [ ] Verify current event names and payload fields in each tool's docs before building
+- [x] Register Codex hooks only if the CLI is installed
+- [x] Verify current event names and payload fields in each tool's docs before building
 - [ ] Antigravity: IDE, no known hook system. Revisit if one appears
 
 Stays Claude-only for now: `AgentsProbe` (`claude agents --json`) and
